@@ -1,4 +1,8 @@
-__init__.py
 *.pyc
 *.root
 *.log
+__init__.py
+*.log
+*.o
+.DS_Store
+*.so
