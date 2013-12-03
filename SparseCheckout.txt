@@ -1,0 +1,8 @@
+/.gitignore
+Geometry/TrackerGeometryBuilder
+RecoLocalTracker/
+SimGeneral/MixingModule
+SimTracker/SiPhase2Digitizer
+SLHCUpgradeSimulations/Geometry
+SLHCUpgradeSimulations/L1TrackTrigger
+DataFormats/L1TrackTrigger
