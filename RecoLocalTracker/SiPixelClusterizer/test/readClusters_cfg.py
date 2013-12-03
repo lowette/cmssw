@@ -62,7 +62,8 @@ process.MessageLogger = cms.Service("MessageLogger",
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring(
 #   'file:/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC2/src/4400_FourMuPt1_200_UPG2023_BE5D+FourMuPt1_200_UPG2023_BE5D+RECOUP23_BE5D/step2_500Evts_ChannelTreshold10000.root'
-'file:/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC2/src/step2_500Evts.root'
+#'file:/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC2/src/step2_500Evts.root'
+'file:/afs/cern.ch/user/a/aolbrech/public/TrackerUpgradeIIHE/step2_500Evts.root'
 #'file:/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC2/src/4400_FourMuPt1_200_UPG2023_BE5D+FourMuPt1_200_UPG2023_BE5D+RECOUP23_BE5D/step2_500Evts.root'
 #  "/store/data/Run2011A/Commissioning/RECO/PromptReco-v1/000/160/497/102891A0-7250-E011-8061-0030487C90D4.root",
 # R 187446
@@ -101,7 +102,8 @@ process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 #From SLHCUpgradeSimulations/L1TrackTrigger/test/TenMuPt_0_50_ExtendedPhase2TkBE5D_50_GEN_SIM_cfg.py:
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'POSTLS162_V1::All', '')
 
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")# Choose the global tag here:
 #process.GlobalTag.globaltag = "START62_V1::All"
@@ -115,8 +117,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 # OK for 2009 LHC data
 #process.GlobalTag.globaltag = 'CRAFT09_R_V4::All'
 
-#process.analysis = cms.EDAnalyzer("ReadPixClusters_DifferentGeometry",
-process.analysis = cms.EDAnalyzer("ReadPixClusters",
+process.analysis = cms.EDAnalyzer("ReadPixClusters_DifferentGeometry",
+#process.analysis = cms.EDAnalyzer("ReadPixClusters",
     Verbosity = cms.untracked.bool(True),
     src = cms.InputTag("siPixelClusters"),
 )
