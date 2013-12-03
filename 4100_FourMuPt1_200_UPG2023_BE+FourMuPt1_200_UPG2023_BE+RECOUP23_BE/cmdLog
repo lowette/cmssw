@@ -1,0 +1,8 @@
+
+# in: /user_mnt/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC4/src going to execute cd 4100_FourMuPt1_200_UPG2023_BE+FourMuPt1_200_UPG2023_BE+RECOUP23_BE
+ cmsDriver.py FourMuPt_1_200_cfi  --conditions auto:upgradePLS3 -n 10 --eventcontent FEVTDEBUG --relval 10000,100 -s GEN,SIM --datatier GEN-SIM --beamspot Gauss --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,SLHCUpgradeSimulations/Configuration/phase2TkCustomsBE.customise --geometry ExtendedPhase2TkBE --magField 38T_PostLS1 --fileout file:step1.root  > step1_FourMuPt1_200_UPG2023_BE+FourMuPt1_200_UPG2023_BE+RECOUP23_BE.log  2>&1
+ 
+
+# in: /user_mnt/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC4/src going to execute cd 4100_FourMuPt1_200_UPG2023_BE+FourMuPt1_200_UPG2023_BE+RECOUP23_BE
+ cmsDriver.py step2  --conditions auto:upgradePLS3 -n 10 --eventcontent FEVTDEBUG -s DIGI,L1,DIGI2RAW,L1TrackTrigger,RECO:pixeltrackerlocalreco --datatier GEN-SIM-DIGI-RAW --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,SLHCUpgradeSimulations/Configuration/phase2TkCustomsBE.customise,SLHCUpgradeSimulations/Configuration/phase2TkCustomsBE.l1EventContent --geometry ExtendedPhase2TkBE --magField 38T_PostLS1 --filein file:step1.root  --fileout file:step2.root  > step2_FourMuPt1_200_UPG2023_BE+FourMuPt1_200_UPG2023_BE+RECOUP23_BE.log  2>&1
+ 
