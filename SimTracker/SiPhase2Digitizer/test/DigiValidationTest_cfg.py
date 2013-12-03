@@ -13,7 +13,8 @@ process.MessageLogger = cms.Service("MessageLogger",
 )
 process.source = cms.Source("PoolSource",
     fileNames =  cms.untracked.vstring(
-       'file:/afs/cern.ch/work/d/dutta/public/Digitizer/CMSSW_6_1_2_SLHC5/src/prod/SingleMu_TK_BE.root'
+       #'file:/afs/cern.ch/work/d/dutta/public/Digitizer/CMSSW_6_1_2_SLHC5/src/prod/SingleMu_TK_BE.root'
+	'file:/user/aolbrech/TrackTrigger_6XX/CMSSW_6_2_0_SLHC4/src/SuchandraFiles/SingleMu_TK_BE5D_500Events.root'
     )
 )
 process.load('Configuration.StandardSequences.Services_cff')
@@ -21,9 +22,9 @@ process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBEReco_cff')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_cff')
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
+process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
 process.load('IOMC.EventVertexGenerators.VtxSmearedGauss_cfi')
 process.load('GeneratorInterface.Core.genFilterSummary_cff')
@@ -35,7 +36,9 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 # Other statements
 process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'POSTLS161_V15::All', '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, 'POSTLS161_V15::All', '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, 'POSTLS162_V1::All', '') #Global tag for 62Y UPgrade Studies (MC) -- SWGuideFrontierConditions Twiki
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3','') #Global tag used in SingleMuonFlat python file
 
 #-------------
 # Output ROOT file
