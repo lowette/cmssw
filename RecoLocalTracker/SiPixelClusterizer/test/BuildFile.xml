@@ -14,6 +14,6 @@
 <use   name="DataFormats/DetId"/>
 <use   name="RecoLocalTracker/SiPixelClusterizer"/>
 <flags   EDM_PLUGIN="1"/>
-<!<library   file="ReadPixClusters_DifferentGeometry.cc" name="ReadPixClusters_DifferentGeometry">
+<!--<library   file="ReadPixClusters_DifferentGeometry.cc" name="ReadPixClusters_DifferentGeometry">-->
 <library   file="ReadPixClusters.cc" name="ReadPixClusters">
 </library>
