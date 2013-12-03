@@ -6,3 +6,5 @@ SimTracker/SiPhase2Digitizer
 SLHCUpgradeSimulations/Geometry
 SLHCUpgradeSimulations/L1TrackTrigger
 DataFormats/L1TrackTrigger
+4400_FourMuPt1_200_UPG2023_BE5D+FourMuPt1_200_UPG2023_BE5D+RECOUP23_BE5D/
+SparseCheckout.txt

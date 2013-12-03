@@ -1,8 +1,0 @@
-<flags   GENREFLEX_ARGS="--"/>
-<use   name="CondFormats/Common"/>
-<use   name="FWCore/Utilities"/>
-<use   name="rootrflx"/>
-<use   name="CLHEP"/>
-<export>
-  <lib   name="1"/>
-</export>
