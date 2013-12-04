@@ -13,7 +13,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 )
 process.source = cms.Source("PoolSource",
     fileNames =  cms.untracked.vstring(
-       'file:/afs/cern.ch/work/d/dutta/public/Digitizer/CMSSW_6_1_2_SLHC5/src/prod/SingleMu_TK_BE.root'
+       'file:/user/isdebruy/TrackTrigger/CMSSW_6_2_0_SLHC4/src/SingleMu_TK_BE.root'
     )
 )
 process.load('Configuration.StandardSequences.Services_cff')
@@ -21,8 +21,8 @@ process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBEReco_cff')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE_cff')
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
 process.load('IOMC.EventVertexGenerators.VtxSmearedGauss_cfi')

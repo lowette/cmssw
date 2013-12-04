@@ -316,7 +316,7 @@ void DigiValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     nTracks++; 
     float simTk_pt =  simTrkItr->momentum().pt();
     float simTk_eta = simTrkItr->momentum().eta();
-    float simTk_phi = simTrkItr->momentum().eta();
+    float simTk_phi = simTrkItr->momentum().phi();
 
     
     simTrackPt_->Fill(simTk_pt);
