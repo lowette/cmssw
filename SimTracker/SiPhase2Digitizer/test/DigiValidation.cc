@@ -761,10 +761,10 @@ void DigiValidation::createHistograms(unsigned int nLayer) {
   simTrackEtaS_ =  td.make<TH1F>("SimTrackEtaS", "Eta of Secondary Sim Tracks", 50, -2.5, 2.5);
   simTrackPhiS_ =  td.make<TH1F>("SimTrackPhiS", "Phi of Secondary Sim Tracks", 160, -3.2, 3.2);
   
-  trackerLayout_ = td.make<TH2F>("RVsZ", "R vs. z position", 600, -300.0, 300.0, 120, 0.0, 120.0);
-  trackerLayoutXY_ = td.make<TH2F>("XVsY", "x vs. y position", 240, -120.0, 120.0, 240, -120.0, 120.0);
-  trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 240, -120.0, 120.0, 240, -120.0, 120.0);
-  trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 240, -120.0, 120.0, 240, -120.0, 120.0);
+  trackerLayout_ = td.make<TH2F>("RVsZ", "R vs. z position", 6000, -300.0, 300.0, 120, 0.0, 120.0);
+  trackerLayoutXY_ = td.make<TH2F>("XVsY", "x vs. y position", 2400, -120.0, 120.0, 240, -120.0, 120.0);
+  trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 2400, -120.0, 120.0, 240, -120.0, 120.0);
+  trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 2400, -120.0, 120.0, 240, -120.0, 120.0);
 }
 // ------------ method called to create histograms for all layers  ------------
 unsigned int DigiValidation::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDigiSimLink> >& pixelSimLinks, DetId& detId, unsigned int& channel) {
