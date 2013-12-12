@@ -2,5 +2,5 @@ __init__.py
 *.pyc
 *.root
 *.o
-.DS_Store
 *.so
+*.log
