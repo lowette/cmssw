@@ -1,4 +1,3 @@
-
 import FWCore.ParameterSet.Config as cms
 
 #
@@ -22,5 +21,3 @@ siPixelClusters = cms.EDProducer("SiPixelClusterProducer",
     # **************************************
     maxNumberOfClusters = cms.int32(-1), # -1 means no limit.
 )
-
-
