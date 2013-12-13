@@ -1,10 +1,10 @@
 
  // -*- C++ -*-
 //
-// Package:    DigiValidation
-// Class:      DigiValidation
+// Package:    DigiValidationTest
+// Class:      DigiValidationTest
 // 
-/**\class DigiValidation DigiValidation.cc 
+/**\class DigiValidationTest DigiValidationTest.cc 
 
  Description: Test pixel digis. 
  Barrel & Forward digis. Uses root histos.
@@ -100,12 +100,12 @@ using namespace std;
 // class declaration
 //
 
-class DigiValidation : public edm::EDAnalyzer {
+class DigiValidationTest : public edm::EDAnalyzer {
 
 public:
 
-  explicit DigiValidation(const edm::ParameterSet&);
-  ~DigiValidation();
+  explicit DigiValidationTest(const edm::ParameterSet&);
+  ~DigiValidationTest();
   virtual void beginJob();
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob(); 
@@ -180,6 +180,7 @@ private:
 
     TH2F* YposVsXpos;
     TH2F* RVsZpos;
+    TH2F* LocalPosition;
 
     TProfile* ClusterWidthVsSimTrkPt;
     TProfile* ClusterWidthVsSimTrkPtP;
@@ -248,32 +249,32 @@ public:
 //
 // constructors and destructor
 //
-DigiValidation::DigiValidation(const edm::ParameterSet& iConfig) {
+DigiValidationTest::DigiValidationTest(const edm::ParameterSet& iConfig) {
   PRINT = iConfig.getUntrackedParameter<bool>("Verbosity",false);
   src_ =  iConfig.getParameter<edm::InputTag>("src");
   simG4_ = iConfig.getParameter<edm::InputTag>("simG4");
-  if (PRINT) std::cout << ">>> Construct DigiValidation " << std::endl;
+  if (PRINT) std::cout << ">>> Construct DigiValidationTest " << std::endl;
 }
-DigiValidation::~DigiValidation() {
+DigiValidationTest::~DigiValidationTest() {
   // do anything here that needs to be done at desctruction time
   // (e.g. close files, deallocate resources etc.)
-  if (PRINT) std::cout << ">>> Destroy DigiValidation " << std::endl;
+  if (PRINT) std::cout << ">>> Destroy DigiValidationTest " << std::endl;
 }
 
 //
 // member functions
 //
 // ------------ method called at the begining   ------------
-void DigiValidation::beginJob() {
+void DigiValidationTest::beginJob() {
 
    using namespace edm;
-   if (PRINT) std::cout << "Initialize DigiValidation " << std::endl;
+   if (PRINT) std::cout << "Initialize DigiValidationTest " << std::endl;
    createHistograms(19);
   // Create Common Histograms
 }
 
 // ------------ method called to producethe data  ------------
-void DigiValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void DigiValidationTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
 
   //int run       = iEvent.id().run();
@@ -386,6 +387,9 @@ void DigiValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       MeasurementPoint mp(row+0.5, col+0.5 );
 
       if (geomDetUnit) {
+	LocalPoint lPos = geomDetUnit->topology().localPosition( mp );
+	iPos->second.LocalPosition->Fill(lPos.x(), lPos.y());
+	
 	GlobalPoint pdPos = geomDetUnit->surface().toGlobal( geomDetUnit->topology().localPosition( mp ) ) ;
 	iPos->second.YposVsXpos->Fill(pdPos.y(), pdPos.x());
 	iPos->second.RVsZpos->Fill(pdPos.z(), pdPos.perp());
@@ -534,12 +538,12 @@ void DigiValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   }
 }
 // ------------ method called to at the end of the job  ------------
-void DigiValidation::endJob(){
+void DigiValidationTest::endJob(){
   //hFile->Write();
   //hFile->Close();
 }
 // ------------ method called to create histograms for a specific layer  ------------
-void DigiValidation::createLayerHistograms(unsigned int ival) {
+void DigiValidationTest::createLayerHistograms(unsigned int ival) {
   std::ostringstream fname1, fname2;
   
   edm::Service<TFileService> fs;
@@ -717,6 +721,10 @@ void DigiValidation::createLayerHistograms(unsigned int ival) {
   htit18.str("");
   htit18 << "MatchedSimTrackPhiS" << tag.c_str() <<  id;   
   local_histos.matchedSimTrackPhiS_  = td.make<TH1F>(htit18.str().c_str(),  htit18.str().c_str(), 160, -3.2, 3.2);
+  
+  std::ostringstream htit19;
+  htit19 << "LocalPosition" << tag.c_str() <<  id;   
+  local_histos.LocalPosition = td.make<TH2F>(htit19.str().c_str(),htit19.str().c_str(),10000, 0, 10 , 10000, 0 ,10);
 
   layerHistoMap.insert( std::make_pair(ival, local_histos));
 
@@ -735,7 +743,7 @@ void DigiValidation::createLayerHistograms(unsigned int ival) {
 }
 
 // ------------ method called to create histograms for all layers  ------------
-void DigiValidation::createHistograms(unsigned int nLayer) {
+void DigiValidationTest::createHistograms(unsigned int nLayer) {
 
   // NEW way to use root (from 2.0.0?)
   edm::Service<TFileService> fs;
@@ -761,13 +769,13 @@ void DigiValidation::createHistograms(unsigned int nLayer) {
   simTrackEtaS_ =  td.make<TH1F>("SimTrackEtaS", "Eta of Secondary Sim Tracks", 50, -2.5, 2.5);
   simTrackPhiS_ =  td.make<TH1F>("SimTrackPhiS", "Phi of Secondary Sim Tracks", 160, -3.2, 3.2);
   
-  trackerLayout_ = td.make<TH2F>("RVsZ", "R vs. z position", 6000, -300.0, 300.0, 120, 0.0, 120.0);
-  trackerLayoutXY_ = td.make<TH2F>("XVsY", "x vs. y position", 2400, -120.0, 120.0, 240, -120.0, 120.0);
-  trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 2400, -120.0, 120.0, 240, -120.0, 120.0);
-  trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 2400, -120.0, 120.0, 240, -120.0, 120.0);
+  trackerLayout_ = td.make<TH2F>("RVsZ", "R vs. z position", 6000, -300.0, 300.0, 1200, 0.0, 120.0);
+  trackerLayoutXY_ = td.make<TH2F>("XVsY", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
+  trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
+  trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
 }
 // ------------ method called to create histograms for all layers  ------------
-unsigned int DigiValidation::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDigiSimLink> >& pixelSimLinks, DetId& detId, unsigned int& channel) {
+unsigned int DigiValidationTest::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDigiSimLink> >& pixelSimLinks, DetId& detId, unsigned int& channel) {
 
   edm::DetSetVector<PixelDigiSimLink>::const_iterator 
     isearch = pixelSimLinks->find(detId);
@@ -787,7 +795,7 @@ unsigned int DigiValidation::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDi
   return simTrkId;
 }
 
-int DigiValidation::matchedSimTrack(edm::Handle<edm::SimTrackContainer>& SimTk, unsigned int simTrkId) {
+int DigiValidationTest::matchedSimTrack(edm::Handle<edm::SimTrackContainer>& SimTk, unsigned int simTrkId) {
 
   edm::SimTrackContainer sim_tracks = (*SimTk.product());
   for(unsigned int it = 0; it < sim_tracks.size(); it++) {
@@ -800,7 +808,7 @@ int DigiValidation::matchedSimTrack(edm::Handle<edm::SimTrackContainer>& SimTk, 
 //
 // Initialize Digi/Cluster Counters 
 //
-void DigiValidation::initializeVariables() {
+void DigiValidationTest::initializeVariables() {
   for (std::map<unsigned int, DigiHistos>::iterator iPos = layerHistoMap.begin(); iPos != layerHistoMap.end(); iPos++) {
     iPos->second.totNDigis    = 0;
     iPos->second.totNClusters = 0;
@@ -816,7 +824,7 @@ void DigiValidation::initializeVariables() {
 //
 // -- Get Layer Number
 //
-unsigned int DigiValidation::getLayerNumber(const TrackerGeometry* tkgeom,unsigned int& detid) {
+unsigned int DigiValidationTest::getLayerNumber(const TrackerGeometry* tkgeom,unsigned int& detid) {
   unsigned int layer = 999;
   DetId theDetId(detid);
   if (theDetId.subdetId() != 1) 
@@ -847,7 +855,7 @@ unsigned int DigiValidation::getLayerNumber(const TrackerGeometry* tkgeom,unsign
 //
 // -- Get Layer Number
 //
-unsigned int DigiValidation::getLayerNumber(unsigned int& detid) {
+unsigned int DigiValidationTest::getLayerNumber(unsigned int& detid) {
   unsigned int layer = 999;
   DetId theDetId(detid);
   if (theDetId.det() == DetId::Tracker) {
@@ -866,7 +874,7 @@ unsigned int DigiValidation::getLayerNumber(unsigned int& detid) {
 //
 // -- Get Maximun position of a vector
 //
-unsigned int DigiValidation::getMaxPosition(std::vector<float>& charge_vec) {
+unsigned int DigiValidationTest::getMaxPosition(std::vector<float>& charge_vec) {
   unsigned int ipos = 999;
   float max_val = 0.0;
   for (unsigned int ival = 0; ival < charge_vec.size(); ++ival) {
@@ -880,7 +888,7 @@ unsigned int DigiValidation::getMaxPosition(std::vector<float>& charge_vec) {
 //
 //  -- Check if the SimTrack is _Primary or not 
 //
-int DigiValidation::isPrimary(const SimTrack& simTrk, edm::Handle<edm::PSimHitContainer>& simHits) {
+int DigiValidationTest::isPrimary(const SimTrack& simTrk, edm::Handle<edm::PSimHitContainer>& simHits) {
   int result = -1;
   unsigned int trkId = simTrk.trackId();
   if (trkId > 0) {
@@ -901,7 +909,7 @@ int DigiValidation::isPrimary(const SimTrack& simTrk, edm::Handle<edm::PSimHitCo
 //
 //  -- Check if the SimTrack is _Primary or not 
 //
-int DigiValidation::isPrimary(const SimTrack& simTrk, const PSimHit& simHit) {
+int DigiValidationTest::isPrimary(const SimTrack& simTrk, const PSimHit& simHit) {
   int result = -1;
   unsigned int trkId = simTrk.trackId();
   if (trkId > 0) {
@@ -912,7 +920,7 @@ int DigiValidation::isPrimary(const SimTrack& simTrk, const PSimHit& simHit) {
   }
   return result;
 }
-void DigiValidation::fillMatchedSimTrackHistos(DigiHistos& digiHistos, const SimTrack& simTk, int ptype, unsigned int layer){ 
+void DigiValidationTest::fillMatchedSimTrackHistos(DigiHistos& digiHistos, const SimTrack& simTk, int ptype, unsigned int layer){ 
   
   float pt =  simTk.momentum().pt();
   float eta = simTk.momentum().eta();
@@ -938,4 +946,4 @@ void DigiValidation::fillMatchedSimTrackHistos(DigiHistos& digiHistos, const Sim
   digiHistos.matchedSimTrackPhi_->Fill(phi);  
 }
 //define this as a plug-in
-DEFINE_FWK_MODULE(DigiValidation);
+DEFINE_FWK_MODULE(DigiValidationTest);
