@@ -28,7 +28,6 @@ namespace cms {
     		void setupClusterizer();
     		virtual void beginJob( );
     		virtual void produce(edm::Event& e, const edm::EventSetup& c);
-    		void run(const edm::DetSetVector<PixelDigi> & input, edm::ESHandle<TrackerGeometry> & geom, edmNew::DetSetVector<SiPixelCluster> & output);
 
   	private:
     		edm::ParameterSet conf_;

@@ -1,3 +1,4 @@
+import os, sys
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("digiTest")
@@ -16,7 +17,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 
 process.source = cms.Source("PoolSource",
     	fileNames = cms.untracked.vstring(
-       		'file:../../Output/DIGI.root'
+       		'file:' + os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
     	)
 )
 
@@ -41,7 +42,7 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'POSTLS161_V15::All', '')
 
 process.TFileService = cms.Service("TFileService",
-    	fileName = cms.string('../../Output/DigiValidation.root')
+    	fileName = cms.string(os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DigiValidation.root')
 )
 
 process.analysis = cms.EDAnalyzer("DigiValidationTest",

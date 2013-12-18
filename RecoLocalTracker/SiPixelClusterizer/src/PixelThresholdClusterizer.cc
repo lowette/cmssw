@@ -33,22 +33,24 @@ bool PixelThresholdClusterizer::setup(const PixelGeomDetUnit * pixDet) {
 	return true;   
 }
 
-void PixelThresholdClusterizer::clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit * pixDet, edmNew::DetSetVector<SiPixelCluster>::FastFiller& output) {
+void PixelThresholdClusterizer::clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit * pixDet, std::vector<SiPixelCluster> & output) {
 	if (!setup(pixDet)) return;
-	
-	DigiIterator begin = input.begin();
-	DigiIterator end = input.end();
   	
 	detid_ = input.detId();
-  	copy_to_buffer(begin, end);
+  	copy_to_buffer(input.begin(), input.end());
+
+	// Testing !!!
+	int i = 0;
 	
 	for (DigiIterator it = input.begin(); it != input.end(); ++it) {
       		if (it->adc() == 255) {
-	  		SiPixelCluster cluster = make_cluster(SiPixelCluster::PixelPos(it->row(), it->column()), output);
-	 	 	output.push_back(cluster);
+	  		SiPixelCluster cluster = make_cluster(SiPixelCluster::PixelPos(it->row(), it->column()));
+	 	 	// Testing !!!
+			if (i % 2 == 0) output.push_back(cluster);
+			i++;
 		}
     	}
-	clear_buffer(begin, end);
+	clear_buffer(input.begin(), input.end());
 }
 
 void PixelThresholdClusterizer::copy_to_buffer(DigiIterator begin, DigiIterator end) {	
@@ -84,7 +86,7 @@ namespace {
 	};
 }
 
-SiPixelCluster PixelThresholdClusterizer::make_cluster( const SiPixelCluster::PixelPos& pix, edmNew::DetSetVector<SiPixelCluster>::FastFiller& output) {
+SiPixelCluster PixelThresholdClusterizer::make_cluster( const SiPixelCluster::PixelPos& pix) {
 	theBuffer.set_adc(pix, 127);
   
   	AccretionCluster acluster;

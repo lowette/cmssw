@@ -1,3 +1,4 @@
+import os, sys
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('SIM')
@@ -35,7 +36,7 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
     	splitLevel = cms.untracked.int32(0),
     	eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     	outputCommands = process.FEVTDEBUGEventContent.outputCommands,
-    	fileName = cms.untracked.string('file:../../Output/GEN_SIM.root'),
+    	fileName = cms.untracked.string('file:' + os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'),
     	dataset = cms.untracked.PSet(
         	filterName = cms.untracked.string(''),
         	dataTier = cms.untracked.string('GEN-SIM')

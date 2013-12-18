@@ -23,7 +23,7 @@ public:
 	PixelThresholdClusterizer(edm::ParameterSet const& conf);
  	~PixelThresholdClusterizer();
 
-  	void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit * pixDet, edmNew::DetSetVector<SiPixelCluster>::FastFiller& output);
+  	void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit * pixDet, std::vector<SiPixelCluster> & output);
 
 private:
   	edm::ParameterSet conf_;
@@ -36,7 +36,7 @@ private:
 	bool setup(const PixelGeomDetUnit * pixDet);
   	void copy_to_buffer(DigiIterator begin, DigiIterator end);
   	void clear_buffer(DigiIterator begin, DigiIterator end);
-  	SiPixelCluster make_cluster(const SiPixelCluster::PixelPos& pix, edmNew::DetSetVector<SiPixelCluster>::FastFiller& output);
+  	SiPixelCluster make_cluster(const SiPixelCluster::PixelPos& pix);
 };
 
 #endif

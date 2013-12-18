@@ -28,7 +28,8 @@ namespace cms {
     		conf_(conf),
     		clusterizer_(new PixelThresholdClusterizer(conf)),
     		src_(conf.getParameter<edm::InputTag>( "src" )) {
-    		produces<SiPixelClusterCollectionNew>(); 
+		const std::string alias ("siPixelClusters"); 
+    		produces< edm::DetSetVector<SiPixelCluster> >().setBranchAlias(alias); 
 	}
 
   	SiPixelClusterProducer::~SiPixelClusterProducer() { 
@@ -46,22 +47,22 @@ namespace cms {
 		edm::ESHandle<TrackerGeometry> geom;
     		es.get<TrackerDigiGeometryRecord>().get(geom);
 
-    		std::auto_ptr<SiPixelClusterCollectionNew> output(new SiPixelClusterCollectionNew());
-
-    		run(*input, geom, *output);
-
-    		e.put(output);
- 	}
-  	
-	void SiPixelClusterProducer::run(const edm::DetSetVector<PixelDigi>  & input, edm::ESHandle<TrackerGeometry> & geom, edmNew::DetSetVector<SiPixelCluster> & output) {
-    		for(edm::DetSetVector<PixelDigi>::const_iterator DSViter = input.begin(); DSViter != input.end(); DSViter++) {
+    		
+		std::vector<edm::DetSet<SiPixelCluster> > clustersByDet;
+		
+		for(edm::DetSetVector<PixelDigi>::const_iterator DSViter = input->begin(); DSViter != input->end(); DSViter++) {
       			DetId detIdObject(DSViter->detId());
       			const GeomDetUnit* geoUnit = geom->idToDetUnit(detIdObject);
       			const PixelGeomDetUnit * pixDet = dynamic_cast<const PixelGeomDetUnit*>(geoUnit);
       			if (!pixDet) assert(0);
-      			edmNew::DetSetVector<SiPixelCluster>::FastFiller spc(output, DSViter->detId());
-      			clusterizer_->clusterizeDetUnit(*DSViter, pixDet, spc);
-      			if (spc.empty()) spc.abort();
+      			
+			edm::DetSet<SiPixelCluster> clusters(DSViter->detId());
+      			clusterizer_->clusterizeDetUnit(*DSViter, pixDet, clusters.data);
+      			
+			clustersByDet.push_back(clusters);
       		}
+
+		std::auto_ptr< edm::DetSetVector<SiPixelCluster> > output(new edm::DetSetVector<SiPixelCluster>(clustersByDet));
+		e.put(output);
   	}
 } 
