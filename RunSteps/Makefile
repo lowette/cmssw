@@ -12,7 +12,7 @@ clusterizer:
 	cmsRun Clusterizer/python/Clusterizer.py
 
 validation_digitizer:
-	cmsRun Digitizer/test/RunDigitizerValidation.py
+	cmsRun Digitizer/test/RunDigiValidation.py
 
 validation_clusterizer:
-	cmsRun Clusterizer/test/RunClusterizerValidation.py
+	cmsRun Clusterizer/test/RunClusterValidation.py 
