@@ -10,7 +10,7 @@ process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
-process.load('Configuration.StandardSequences.Reconstruction_cff')
+process.load('RunSteps.Clusterizer.Configuration_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
