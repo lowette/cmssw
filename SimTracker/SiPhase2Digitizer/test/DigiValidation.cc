@@ -724,7 +724,7 @@ void DigiValidation::createLayerHistograms(unsigned int ival) {
   
   std::ostringstream htit19;
   htit19 << "LocalPosition" << tag.c_str() <<  id;   
-  local_histos.LocalPosition = td.make<TH2F>(htit19.str().c_str(),htit19.str().c_str(),10000, 0, 10 , 10000, 0 ,10);
+  local_histos.LocalPosition = td.make<TH2F>(htit19.str().c_str(),htit19.str().c_str(),10000, -5, 5 , 10000, -5 ,5);
 
   layerHistoMap.insert( std::make_pair(ival, local_histos));
 
@@ -774,6 +774,7 @@ void DigiValidation::createHistograms(unsigned int nLayer) {
   trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
   trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
 }
+
 // ------------ method called to create histograms for all layers  ------------
 unsigned int DigiValidation::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDigiSimLink> >& pixelSimLinks, DetId& detId, unsigned int& channel) {
 

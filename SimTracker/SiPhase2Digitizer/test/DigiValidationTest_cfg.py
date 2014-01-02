@@ -13,7 +13,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 )
 process.source = cms.Source("PoolSource",
     fileNames =  cms.untracked.vstring(
-       'file:/user/isdebruy/TrackTrigger/CMSSW_6_2_0_SLHC4/src/SingleMu_TK_BE.root'
+       'file:/user/isdebruy/TrackTrigger/CMSSW_6_2_0_SLHC4/src/SimTracker/SiPhase2Digitizer/test/SingleMu_TK_BE.root'
     )
 )
 process.load('Configuration.StandardSequences.Services_cff')
