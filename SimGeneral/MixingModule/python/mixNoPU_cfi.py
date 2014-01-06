@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 # this is a minimum configuration of the Mixing module,
 # to run it in the zero-pileup mode
 #
+<<<<<<< HEAD
 from SimGeneral.MixingModule.aliases_cfi import * 
 from SimGeneral.MixingModule.mixObjects_cfi import * 
 from SimGeneral.MixingModule.pixelDigitizer_cfi import *
@@ -34,6 +35,14 @@ mix = cms.EDProducer("MixingModule",
       	trackingParticles
       )
     ),
+=======
+from SimGeneral.MixingModule.mixObjects_cfi import theMixObjects
+from SimGeneral.MixingModule.mixPoolSource_cfi import *
+from SimGeneral.MixingModule.digitizers_cfi import *
+
+mix = cms.EDProducer("MixingModule",
+    digitizers = cms.PSet(theDigitizers),
+>>>>>>> tags/CMSSW_6_2_0_SLHC5
     LabelPlayback = cms.string(''),
     maxBunch = cms.int32(3),
     minBunch = cms.int32(-5), ## in terms of 25 ns
@@ -44,23 +53,7 @@ mix = cms.EDProducer("MixingModule",
 
     playback = cms.untracked.bool(False),
     useCurrentProcessOnly = cms.bool(False),
-    mixObjects = cms.PSet(
-        mixCH = cms.PSet(
-            mixCaloHits
-        ),
-        mixTracks = cms.PSet(
-            mixSimTracks
-        ),
-        mixVertices = cms.PSet(
-            mixSimVertices
-        ),
-        mixSH = cms.PSet(
-            mixSimHits
-        ),
-        mixHepMC = cms.PSet(
-            mixHepMCProducts
-        )
-    )
+    mixObjects = cms.PSet(theMixObjects)
 )
 
 
