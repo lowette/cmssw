@@ -1,21 +1,3 @@
-
- // -*- C++ -*-
-//
-// Package:    DigiValidationTest
-// Class:      DigiValidationTest
-// 
-/**\class DigiValidationTest DigiValidationTest.cc 
-
- Description: Test pixel digis. 
- Barrel & Forward digis. Uses root histos.
-
-*/
-//
-// Author:  Suchandra Dutta
-// Created:  July 2013
-//
-//
-// system include files
 #include <memory>
 
 // user include files
@@ -80,6 +62,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "CommonTools/Utils/interface/TFileDirectory.h"
+
+#include <memory>
 
 // For ROOT
 #include <TROOT.h>

@@ -14,13 +14,12 @@
 
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <vector>
 #include <memory>
 #include <string>
 #include <iostream>
-
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 namespace cms {
 
@@ -50,7 +49,7 @@ namespace cms {
     		
 		std::vector<edm::DetSet<SiPixelCluster> > clustersByDet;
 		
-		for(edm::DetSetVector<PixelDigi>::const_iterator DSViter = input->begin(); DSViter != input->end(); DSViter++) {
+		for(edm::DetSetVector<PixelDigi>::const_iterator DSViter = input->begin(); DSViter != input->end(); ++DSViter) {
       			DetId detIdObject(DSViter->detId());
       			const GeomDetUnit* geoUnit = geom->idToDetUnit(detIdObject);
       			const PixelGeomDetUnit * pixDet = dynamic_cast<const PixelGeomDetUnit*>(geoUnit);

@@ -1,5 +1,7 @@
 import os, sys
 import FWCore.ParameterSet.Config as cms
+from Configuration.AlCa.GlobalTag import GlobalTag
+from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D 
 
 process = cms.Process('SIM')
 
@@ -7,7 +9,6 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
@@ -27,8 +28,8 @@ process.source = cms.Source("EmptySource")
 process.options = cms.untracked.PSet()
 
 process.configurationMetadata = cms.untracked.PSet(
-    	version = cms.untracked.string('$Revision: 1.20 $'),
-    	annotation = cms.untracked.string('FourMuPt_1_200_cfi nevts:10'),
+    	version = cms.untracked.string('$Revision: 0.1 $'),
+    	annotation = cms.untracked.string('RunSteps Generator'),
     	name = cms.untracked.string('Applications')
 )
 
@@ -47,7 +48,7 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
 )
 
 process.genstepfilter.triggerConditions=cms.vstring("generation_step")
-from Configuration.AlCa.GlobalTag import GlobalTag
+
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 
 process.generator = cms.EDProducer("FlatRandomPtGunProducer",
@@ -67,16 +68,18 @@ process.generator = cms.EDProducer("FlatRandomPtGunProducer",
 )
 
 process.generation_step = cms.Path(process.pgen)
+
 process.simulation_step = cms.Path(process.psim)
+
 process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
+
 process.endjob_step = cms.EndPath(process.endOfProcess)
+
 process.FEVTDEBUGoutput_step = cms.EndPath(process.FEVTDEBUGoutput)
 
 process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.endjob_step,process.FEVTDEBUGoutput_step)
 
 for path in process.paths:
-	getattr(process,path)._seq = process.generator * getattr(process,path)._seq 
-
-from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D 
+	getattr(process, path)._seq = process.generator * getattr(process, path)._seq 
 
 process = cust_phase2_BE5D(process)

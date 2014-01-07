@@ -6,12 +6,11 @@
 
 #include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
 
+#include "CondFormats/SiPixelObjects/interface/SiPixelGainCalibrationOffline.h"
+
 #include <stack>
 #include <vector>
 #include <iostream>
-
-
-#include "CondFormats/SiPixelObjects/interface/SiPixelGainCalibrationOffline.h"
 
 using namespace std;
 
@@ -92,7 +91,7 @@ SiPixelCluster PixelClusterizer::make_cluster( const SiPixelCluster::PixelPos& p
   	AccretionCluster acluster;
   	acluster.add(pix, 255);
   
-  	while ( ! acluster.empty()) {
+  	while (! acluster.empty()) {
       		auto curInd = acluster.top(); 
 		acluster.pop();
       		for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
@@ -106,7 +105,7 @@ SiPixelCluster PixelClusterizer::make_cluster( const SiPixelCluster::PixelPos& p
 	    		}
 		}
       
-    	}  // while accretion
+    	} 
   
 	SiPixelCluster cluster(acluster.isize, acluster.adc, acluster.x, acluster.y, acluster.xmin, acluster.ymin);
  	
