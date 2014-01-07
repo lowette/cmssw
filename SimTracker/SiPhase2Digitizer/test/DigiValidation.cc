@@ -133,6 +133,11 @@ private:
   TH1F* simTrackPtSEC_;  
   TH1F* simTrackEtaS_;  
   TH1F* simTrackPhiS_;  
+  
+  TH2F* trackerLayout_;
+  TH2F* trackerLayoutXY_;
+  TH2F* trackerLayoutXYBar_;
+  TH2F* trackerLayoutXYEC_;
 
   struct DigiHistos {	
     TH1F* NumberOfDigis;
@@ -175,6 +180,7 @@ private:
 
     TH2F* YposVsXpos;
     TH2F* RVsZpos;
+    TH2F* LocalPosition;
 
     TProfile* ClusterWidthVsSimTrkPt;
     TProfile* ClusterWidthVsSimTrkPtP;
@@ -263,7 +269,7 @@ void DigiValidation::beginJob() {
 
    using namespace edm;
    if (PRINT) std::cout << "Initialize DigiValidation " << std::endl;
-   createHistograms(15);
+   createHistograms(19);
   // Create Common Histograms
 }
 
@@ -316,7 +322,7 @@ void DigiValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     nTracks++; 
     float simTk_pt =  simTrkItr->momentum().pt();
     float simTk_eta = simTrkItr->momentum().eta();
-    float simTk_phi = simTrkItr->momentum().eta();
+    float simTk_phi = simTrkItr->momentum().phi();
 
     
     simTrackPt_->Fill(simTk_pt);
@@ -381,9 +387,19 @@ void DigiValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       MeasurementPoint mp(row+0.5, col+0.5 );
 
       if (geomDetUnit) {
+	LocalPoint lPos = geomDetUnit->topology().localPosition( mp );
+	iPos->second.LocalPosition->Fill(lPos.x(), lPos.y());
+	
 	GlobalPoint pdPos = geomDetUnit->surface().toGlobal( geomDetUnit->topology().localPosition( mp ) ) ;
 	iPos->second.YposVsXpos->Fill(pdPos.y(), pdPos.x());
 	iPos->second.RVsZpos->Fill(pdPos.z(), pdPos.perp());
+	trackerLayout_->Fill(pdPos.z(), pdPos.perp());
+	trackerLayoutXY_->Fill(pdPos.y(), pdPos.x());
+	if (layer < 100) {
+	  trackerLayoutXYBar_->Fill(pdPos.y(), pdPos.x());
+	}else{
+	  trackerLayoutXYEC_->Fill(pdPos.y(), pdPos.x());
+	}
       }
       int iSimTrk = matchedSimTrack(simTracks, simTkId);
 
@@ -705,6 +721,10 @@ void DigiValidation::createLayerHistograms(unsigned int ival) {
   htit18.str("");
   htit18 << "MatchedSimTrackPhiS" << tag.c_str() <<  id;   
   local_histos.matchedSimTrackPhiS_  = td.make<TH1F>(htit18.str().c_str(),  htit18.str().c_str(), 160, -3.2, 3.2);
+  
+  std::ostringstream htit19;
+  htit19 << "LocalPosition" << tag.c_str() <<  id;   
+  local_histos.LocalPosition = td.make<TH2F>(htit19.str().c_str(),htit19.str().c_str(),10000, -5, 5 , 10000, -5 ,5);
 
   layerHistoMap.insert( std::make_pair(ival, local_histos));
 
@@ -748,7 +768,13 @@ void DigiValidation::createHistograms(unsigned int nLayer) {
   simTrackPtSEC_  = td.make<TH1F>("SimTrackPtSEC", "Pt of Secondary Sim Tracks( eta > 1.6)", 101, -0.5, 100.5);
   simTrackEtaS_ =  td.make<TH1F>("SimTrackEtaS", "Eta of Secondary Sim Tracks", 50, -2.5, 2.5);
   simTrackPhiS_ =  td.make<TH1F>("SimTrackPhiS", "Phi of Secondary Sim Tracks", 160, -3.2, 3.2);
+  
+  trackerLayout_ = td.make<TH2F>("RVsZ", "R vs. z position", 6000, -300.0, 300.0, 1200, 0.0, 120.0);
+  trackerLayoutXY_ = td.make<TH2F>("XVsY", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
+  trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
+  trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
 }
+
 // ------------ method called to create histograms for all layers  ------------
 unsigned int DigiValidation::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDigiSimLink> >& pixelSimLinks, DetId& detId, unsigned int& channel) {
 

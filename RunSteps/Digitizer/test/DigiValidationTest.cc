@@ -1,3 +1,21 @@
+
+ // -*- C++ -*-
+//
+// Package:    DigiValidation
+// Class:      DigiValidation
+// 
+/**\class DigiValidation DigiValidation.cc 
+
+ Description: Test pixel digis. 
+ Barrel & Forward digis. Uses root histos.
+
+*/
+//
+// Author:  Suchandra Dutta
+// Created:  July 2013
+//
+//
+// system include files
 #include <memory>
 
 // user include files
@@ -62,8 +80,6 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "CommonTools/Utils/interface/TFileDirectory.h"
-
-#include <memory>
 
 // For ROOT
 #include <TROOT.h>
@@ -237,12 +253,12 @@ DigiValidationTest::DigiValidationTest(const edm::ParameterSet& iConfig) {
   PRINT = iConfig.getUntrackedParameter<bool>("Verbosity",false);
   src_ =  iConfig.getParameter<edm::InputTag>("src");
   simG4_ = iConfig.getParameter<edm::InputTag>("simG4");
-  if (PRINT) std::cout << ">>> Construct DigiValidationTest " << std::endl;
+  if (PRINT) std::cout << ">>> Construct DigiValidation " << std::endl;
 }
 DigiValidationTest::~DigiValidationTest() {
   // do anything here that needs to be done at desctruction time
   // (e.g. close files, deallocate resources etc.)
-  if (PRINT) std::cout << ">>> Destroy DigiValidationTest " << std::endl;
+  if (PRINT) std::cout << ">>> Destroy DigiValidation " << std::endl;
 }
 
 //
@@ -252,7 +268,7 @@ DigiValidationTest::~DigiValidationTest() {
 void DigiValidationTest::beginJob() {
 
    using namespace edm;
-   if (PRINT) std::cout << "Initialize DigiValidationTest " << std::endl;
+   if (PRINT) std::cout << "Initialize DigiValidation " << std::endl;
    createHistograms(19);
   // Create Common Histograms
 }
@@ -708,7 +724,7 @@ void DigiValidationTest::createLayerHistograms(unsigned int ival) {
   
   std::ostringstream htit19;
   htit19 << "LocalPosition" << tag.c_str() <<  id;   
-  local_histos.LocalPosition = td.make<TH2F>(htit19.str().c_str(),htit19.str().c_str(),10000, 0, 10 , 10000, 0 ,10);
+  local_histos.LocalPosition = td.make<TH2F>(htit19.str().c_str(),htit19.str().c_str(),10000, -5, 5 , 10000, -5 ,5);
 
   layerHistoMap.insert( std::make_pair(ival, local_histos));
 
@@ -758,6 +774,7 @@ void DigiValidationTest::createHistograms(unsigned int nLayer) {
   trackerLayoutXYBar_ = td.make<TH2F>("XVsYBar", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
   trackerLayoutXYEC_ = td.make<TH2F>("XVsYEC", "x vs. y position", 2400, -120.0, 120.0, 2400, -120.0, 120.0);
 }
+
 // ------------ method called to create histograms for all layers  ------------
 unsigned int DigiValidationTest::getSimTrackId(edm::Handle<edm::DetSetVector<PixelDigiSimLink> >& pixelSimLinks, DetId& detId, unsigned int& channel) {
 
