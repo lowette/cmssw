@@ -41,6 +41,7 @@ void PixelClusterizer::clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, c
 	for (DigiIterator it = input.begin(); it != input.end(); ++it) {
       		if (it->adc() == 255) {
 	  		SiPixelCluster cluster = make_cluster(SiPixelCluster::PixelPos(it->row(), it->column()));
+	  		output.push_back(cluster);
 		}
     	}
 	clear_buffer(input.begin(), input.end());
