@@ -3,6 +3,20 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.AlCa.GlobalTag import GlobalTag
 from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D 
 
+n = 10
+output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'
+
+for i in range(2, len(sys.argv)):
+        if (sys.argv[i] == '_n' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
+                n = sys.argv[i+1]
+                i += 1
+	if (sys.argv[i] == '_output' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
+		output_file = sys.argv[i+1]
+		i += 1
+
+print 'Number of events: ' + n
+print 'Output file: ' + output_file
+
 process = cms.Process('SIM')
 
 process.load('Configuration.StandardSequences.Services_cff')
@@ -20,7 +34,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-	input = cms.untracked.int32(10)
+	input = cms.untracked.int32(n)
 )
 
 process.source = cms.Source("EmptySource")
@@ -37,7 +51,7 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
     	splitLevel = cms.untracked.int32(0),
     	eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     	outputCommands = process.FEVTDEBUGEventContent.outputCommands,
-    	fileName = cms.untracked.string('file:' + os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'),
+    	fileName = cms.untracked.string('file:' + output_file),
     	dataset = cms.untracked.PSet(
         	filterName = cms.untracked.string(''),
         	dataTier = cms.untracked.string('GEN-SIM')
@@ -53,8 +67,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 
 process.generator = cms.EDProducer("FlatRandomPtGunProducer",
     	PGunParameters = cms.PSet(
-        	MaxPt = cms.double(200.0),
-        	MinPt = cms.double(0.9),
+        	MaxPt = cms.double(200.),
+        	MinPt = cms.double(1.),
         	PartID = cms.vint32(-13),
        	 	MaxEta = cms.double(2.5),
         	MaxPhi = cms.double(3.14159265359),
@@ -62,8 +76,8 @@ process.generator = cms.EDProducer("FlatRandomPtGunProducer",
         	MinPhi = cms.double(-3.14159265359)
     	),
     	Verbosity = cms.untracked.int32(0),
-    	psethack = cms.string('Four mu pt 1 to 200'),
-    	AddAntiParticle = cms.bool(True),
+    	psethack = cms.string('One mu pt 1 to 200'),
+    	AddAntiParticle = cms.bool(False),
     	firstRun = cms.untracked.uint32(1)
 )
 

@@ -3,6 +3,21 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.AlCa.GlobalTag import GlobalTag
 from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D 
 
+input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'
+output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
+
+for i in range(2, len(sys.argv)):
+        if (sys.argv[i] == '_output' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
+                output_file = sys.argv[i+1]
+                i += 1
+	elif (sys.argv[i] == '_input' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
+		input_file = sys.argv[i+1]
+                i += 1
+
+
+print 'Input file: ' + input_file
+print 'Output file: ' + output_file
+
 process = cms.Process('DIGI')
 
 process.load('Configuration.StandardSequences.Services_cff')
@@ -21,7 +36,7 @@ process.maxEvents = cms.untracked.PSet(
 
 process.source = cms.Source("PoolSource",
     	secondaryFileNames = cms.untracked.vstring(),
-    	fileNames = cms.untracked.vstring('file:' + os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root')
+    	fileNames = cms.untracked.vstring('file:' + input_file) 
 )
 
 process.options = cms.untracked.PSet()
@@ -36,7 +51,7 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     outputCommands = process.FEVTDEBUGEventContent.outputCommands,
-    fileName = cms.untracked.string('file:' + os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'),
+    fileName = cms.untracked.string('file:' + output_file),
     dataset = cms.untracked.PSet(
         filterName = cms.untracked.string(''),
         dataTier = cms.untracked.string('GEN-SIM-DIGI')
