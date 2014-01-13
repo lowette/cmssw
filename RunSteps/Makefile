@@ -1,4 +1,9 @@
-all: generation digitizer clusterizer validation_digitizer validation_clusterizer
+all:
+	cmsRun Generation/python/Generation.py _n $(n)
+	cmsRun Digitizer/python/Digitizer.py 
+	cmsRun Clusterizer/python/Clusterizer.py
+	cmsRun Digitizer/test/RunDigiValidation.py 
+	cmsRun Clusterizer/test/RunClusterValidation.py
 
 validation: validation_digitizer validation_clusterizer
 
@@ -28,6 +33,6 @@ help:
 	@echo "| make clusterizer input=<path> output=<path>            |"
 	@echo "| make validation_digitizer input=<path> output=<path>   |"
 	@echo "| make validation_clusterizer input=<path> output=<path> |"
-	@echo "| make all                                               |"
+	@echo "| make all n=<int>                                       |"
 	@echo "| make validation                                        |"
 	@echo "+--------------------------------------------------------+" 

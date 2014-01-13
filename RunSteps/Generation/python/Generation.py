@@ -8,13 +8,13 @@ output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GE
 
 for i in range(2, len(sys.argv)):
         if (sys.argv[i] == '_n' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
-                n = sys.argv[i+1]
+                n = int(sys.argv[i+1])
                 i += 1
 	if (sys.argv[i] == '_output' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
 		output_file = sys.argv[i+1]
 		i += 1
 
-print 'Number of events: ' + n
+print 'Number of events: ' + str(n)
 print 'Output file: ' + output_file
 
 process = cms.Process('SIM')
