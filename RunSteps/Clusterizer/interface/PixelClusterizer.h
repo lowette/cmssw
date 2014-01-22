@@ -25,8 +25,8 @@ public:
     ~PixelClusterizer();
 
 
-    bool setup(const PixelGeomDetUnit * pixDet);
-    void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit * pixDet, std::vector<SiPixelCluster> & output);
+    bool setup(const PixelGeomDetUnit* pixDet);
+    void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit* pixDet, std::vector<SiPixelCluster> & output);
 
 private:
     edm::ParameterSet conf_;
@@ -35,6 +35,16 @@ private:
     int  nrows_;
     int  ncols_;
     uint32_t detid_;
+
+    int32_t DigiSearchWidthX_;
+    int32_t DigiSearchWidthY_;
+    int32_t MinimumWidthX_;
+    int32_t MaximumWidthX_;
+    int32_t MinimumWidthY_;
+    int32_t MaximumWidthY_;
+    int32_t MinimumNumberOfDigis_;
+    int32_t MaximumNumberOfDigis_;
+    bool SplitIfOverThresholds_;
 
     void copy_to_buffer(DigiIterator begin, DigiIterator end);
     void clear_buffer(DigiIterator begin, DigiIterator end);

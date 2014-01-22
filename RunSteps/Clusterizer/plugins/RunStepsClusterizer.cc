@@ -26,8 +26,8 @@ namespace cms {
     RunStepsClusterizer::RunStepsClusterizer(edm::ParameterSet const& conf) :
         conf_(conf),
         clusterizer_(new PixelClusterizer(conf)),
-        src_(conf.getParameter<edm::InputTag>( "src" )) {
-        const std::string alias ("siPixelClusters");
+        src_(conf.getParameter<edm::InputTag>("src")) {
+        const std::string alias("siPixelClusters");
         produces< edm::DetSetVector<SiPixelCluster> >().setBranchAlias(alias);
 
         std::cout << "------------------------------------------------------------" << std::endl
