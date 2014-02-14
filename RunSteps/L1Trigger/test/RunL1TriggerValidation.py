@@ -4,8 +4,8 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.AlCa.GlobalTag import GlobalTag
 
 # Default parameters
-input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
-output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/ClusterValidation.root'
+input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
+output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/L1TriggerValidation.root'
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
@@ -18,28 +18,28 @@ for i in range(2, len(sys.argv)):
 
 # Greetings
 print '------------------------------------------------------------'
-print '-- Running the ClusterValidation step with the following arguments:'
+print '-- Running the L1TriggerValidation step with the following arguments:'
 print '-- Input file: ' + input_file
 print '-- Output file: ' + output_file
 print '------------------------------------------------------------'
 
 # Create a new CMS process
-process = cms.Process('cluTest')
+process = cms.Process('RunStepsL1TriggerValidation')
+
 
 # Import all the necessary files
-process.load('Configuration.StandardSequences.Services_cff')
-process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.EventContent.EventContent_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
+process.load('Geometry.TrackerGeometryBuilder.StackedTrackerGeometry_cfi')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
-process.load('Configuration.StandardSequences.EndOfProcess_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
+
 
 # Input file
 process.source = cms.Source('PoolSource',
@@ -54,19 +54,12 @@ process.TFileService = cms.Service('TFileService',
     fileName = cms.string('file:' + output_file)
 )
 
-# DEBUG
-process.MessageLogger = cms.Service('MessageLogger',
-	debugModules = cms.untracked.vstring('siPixelClusters'),
-	destinations = cms.untracked.vstring('cout'),
-	cout = cms.untracked.PSet(
-		threshold = cms.untracked.string('ERROR')
-	)
-)
-
 # Analyzer
-process.analysis = cms.EDAnalyzer('RunStepsClusterValidation',
-    src = cms.InputTag('siPixelClusters')
+process.AnalyzerClusterStub = cms.EDAnalyzer('RunStepsL1TriggerValidation',
+    DebugMode = cms.bool(True)
 )
 
 # Processes to run
-process.p = cms.Path(process.analysis)
+process.p = cms.Path(process.AnalyzerClusterStub)
+
+

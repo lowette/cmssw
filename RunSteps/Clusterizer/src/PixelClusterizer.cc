@@ -4,7 +4,10 @@
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
 #include "Geometry/CommonTopologies/interface/PixelTopology.h"
 
+#include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
+#include "DataFormats/SiPixelDetId/interface/PXFDetId.h"
+#include "DataFormats/SiPixelDetId/interface/PixelBarrelName.h"
 
 #include "CondFormats/SiPixelObjects/interface/SiPixelGainCalibrationOffline.h"
 
@@ -18,18 +21,11 @@ PixelClusterizer::PixelClusterizer(edm::ParameterSet const& conf) :
 	conf_(conf),
 	nrows_(0),
 	ncols_(0),
-	detid_(0),
-        DigiSearchWidthX_(conf.getParameter< int32_t >("DigiSearchWidthX")), 
-        DigiSearchWidthY_(conf.getParameter< int32_t >("DigiSearchWidthY")), 
-	MinimumWidthX_(conf.getParameter< int32_t >("MinimumWidthX")),
-        MaximumWidthX_(conf.getParameter< int32_t >("MaximumWidthX")),
-        MinimumWidthY_(conf.getParameter< int32_t >("MinimumWidthY")),
-        MaximumWidthY_(conf.getParameter< int32_t >("MaximumWidthY")),
-        MinimumNumberOfDigis_(conf.getParameter< int32_t >("MinimumNumberOfDigis")),
-        MaximumNumberOfDigis_(conf.getParameter< int32_t >("MaximumNumberOfDigis")),
-        SplitIfOverThresholds_(conf.getParameter< bool >("SplitIfOverThresholds")) {
+	detid_(0) {
 	// Create a 2D matrix for this detector
-	theBuffer.setSize(nrows_, ncols_);
+    hitArray.setSize(nrows_, ncols_);
+    // Create a 2D matrix for the weight of the pixels
+	weightArray.setSize(nrows_, ncols_);
 }
 
 PixelClusterizer::~PixelClusterizer() {}
@@ -39,7 +35,11 @@ bool PixelClusterizer::setup(const PixelGeomDetUnit* pixDet) {
 	const PixelTopology & topol = pixDet->specificTopology();
 	nrows_ = topol.nrows();
 	ncols_ = topol.ncolumns();
-	if (nrows_ > theBuffer.rows() || ncols_ > theBuffer.columns()) theBuffer.setSize(nrows_, ncols_);
+	if (nrows_ > hitArray.rows() || ncols_ > hitArray.columns()) {
+        hitArray.setSize(nrows_, ncols_);
+        weightArray.setSize(nrows_, ncols_);
+        maskedArray.setSize(nrows_, ncols_);
+    }
 	return true;
 }
 
@@ -48,118 +48,124 @@ void PixelClusterizer::clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, c
 	if (!setup(pixDet)) return;
 
 	detid_ = input.detId();
+    // unsigned int layer = getLayerNumber(detid_);
 
 	// Fill the 2D matrix with the ADC values
   	copy_to_buffer(input.begin(), input.end());
 
-  	// Go over the Digis
-	for (DigiIterator it = input.begin(); it != input.end(); ++it) {
-		// Check if the Digi can be used
-		// Non hit pixels have a value of 0
-		// Hit pixels have a value of 255
-		// Hit pixels that have already been used in other clusters have a value of 127
-      		if (theBuffer(it->row(), it->column()) == 255) {
-      			// Use the Digi to form a cluster
-			SiPixelCluster cluster = make_cluster(SiPixelCluster::PixelPos(it->row(), it->column()));
-			// Add the cluster to the list (Here would come some cuts on the size, ...)
-	  		if (cluster.size() > 0) output.push_back(cluster);
-		}
-    	}
-    	// Reset the matrix
+    // Compute the weight
+    for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
+        for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
+            int weight = 6 * hitArray(row, col)
+                       + 3 * (hitArray(row + 1, col) + hitArray(row - 1, col) + hitArray(row, col + 1) + hitArray(row, col + 1))
+                       + 1 * (hitArray(row + 1, col + 1) + hitArray(row - 1, col + 1) + hitArray(row - 1, col - 1) + hitArray(row + 1, col - 1));
+            weightArray.set(row, col, weight);
+            maskedArray.set(row, col, weight);
+        }
+    }
+
+    // Apply a second mask
+    for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
+        for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
+            int weight = weightArray(row, col);
+
+            if (weightArray(row - 1, col) < weight) maskedArray.set(row - 1, col, 0);
+            if (weightArray(row + 1, col) < weight) maskedArray.set(row + 1, col, 0);
+            if (weightArray(row, col - 1) < weight) maskedArray.set(row, col - 1, 0);
+            if (weightArray(row, col + 1) < weight) maskedArray.set(row, col + 1, 0);
+            if (weightArray(row - 1, col - 1) < weight) maskedArray.set(row - 1, col - 1, 0);
+            if (weightArray(row - 1, col + 1) < weight) maskedArray.set(row - 1, col + 1, 0);
+            if (weightArray(row + 1, col - 1) < weight) maskedArray.set(row + 1, col - 1, 0);
+            if (weightArray(row + 1, col + 1) < weight) maskedArray.set(row + 1, col + 1, 0);
+        }
+    }
+
+    // Loop over the Digis
+    // cout << "--------------------" << endl;
+    for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
+        for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
+            // If the Digi is active
+            if (maskedArray(row, col)) {
+                // Try to form a cluster
+                SiPixelCluster cluster = make_cluster(row, col);
+                // Add the cluster to the list
+                output.push_back(cluster);
+                // cout << "- Pixel(" << layer << ", " << row << ", " << col << ")\t" << weightArray(row, col) << "\t" << maskedArray(row, col) << endl;
+            }
+        }
+    }
+
+    // Reset the matrix
 	clear_buffer(input.begin(), input.end());
 }
 
 void PixelClusterizer::copy_to_buffer(DigiIterator begin, DigiIterator end) {
 	// Copy the value of the Digis' ADC to the 2D matrix
-	for (DigiIterator di = begin; di != end; ++di) theBuffer.set_adc(di->row(), di->column(), di->adc());
+	for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc() / 255);
 }
 
 void PixelClusterizer::clear_buffer(DigiIterator begin, DigiIterator end) {
 	// Resets the matrix
-	for (DigiIterator di = begin; di != end; ++di) theBuffer.set_adc(di->row(), di->column(), 0);
+	for (DigiIterator di = begin; di != end; ++di) {
+        hitArray.set(di->row(), di->column(), 0);
+        weightArray.set(di->row(), di->column(), 0);
+        maskedArray.set(di->row(), di->column(), 0);
+    }
 }
 
-namespace {
-	struct AccretionCluster {
-		static constexpr unsigned short MAXSIZE = 256;
-		unsigned short adc[256];
-		unsigned short x[256];
-		unsigned short y[256];
-		unsigned short xmin = 16000;
-		unsigned short xmax = 0;
-		unsigned short ymin = 16000;
-		unsigned short ymax = 0;
-		unsigned int isize = 0;
-		unsigned int curr = 0;
-		unsigned short top() const { return curr; }
-		void pop() { ++curr; }
-		bool empty() { return curr == isize; }
-		bool add(SiPixelCluster::PixelPos const & p, unsigned short const iadc) {
-			if (isize == MAXSIZE) return false;
-			xmin = std::min(xmin, (unsigned short) p.row());
-			xmax = std::max(xmax, (unsigned short) p.row());
-			ymin = std::min(ymin, (unsigned short) p.col());
-			ymax = std::max(ymax, (unsigned short) p.col());
-			adc[isize] = iadc;
-			x[isize] = p.row();
-			y[isize++] = p.col();
-			return true;
-		}
-		unsigned short size() { return isize; }
-		unsigned short xsize() { return xmax - xmin + 1; }
-		unsigned short ysize() { return ymax - ymin + 1; }
-	};
-}
+SiPixelCluster PixelClusterizer::make_cluster(int row, int col) {
+    // Get the weight of the pixel we are trying to form a cluster with
+    int weight = maskedArray(row, col);
 
-SiPixelCluster PixelClusterizer::make_cluster( const SiPixelCluster::PixelPos& pix) {
-	// Set the value of this pixel to 127 as it is used to form a Digi
-	theBuffer.set_adc(pix, 127);
+	// Set the value of this pixel to 0 as it is used to form a Digi
+	maskedArray.set(row, col, 0);
 
 	// Create a temporary cluster (this allows to them easily form a "real" cluster with CMSSW data format)
   	AccretionCluster acluster;
-  	// Add the pixel to the cluster
-  	acluster.add(pix, 255);
+    // Create a pixel entry for the cluster
+    SiPixelCluster::PixelPos firstpix(row, col);
+  	// Add the first pixel to the cluster
+  	acluster.add(firstpix, 255);
 
   	// Go over all the pixels in the cluster
   	while (!acluster.empty()) {
   		// Get the current pixel we are looking at
-      		auto curInd = acluster.top();
+      	auto curInd = acluster.top();
 		acluster.pop();
 
-		// Look left and right (this will look in a rectangle of size (2 * DigiSearchWidthX_ + 1) x (2 * DigiSearchWidthY_ + 1)
-      		for (auto r = acluster.x[curInd] - DigiSearchWidthX_; r <= acluster.x[curInd] + DigiSearchWidthX_; ++r) {
-      			// Look bottom and top
-	  		for (auto c = acluster.y[curInd] - DigiSearchWidthY_; c <= acluster.y[curInd] + DigiSearchWidthY_; ++c) {
-	  			// If the pixel is hit and unused
-	      			if (theBuffer(r, c) == 255) {
-	      				// Add it to the cluster
+		// Look left and right
+      	for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
+      		// Look bottom and top
+	  		for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
+	  			// If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
+	      		if (maskedArray(r, c) == weight) {
+                    // Add it to the cluster
 		  			SiPixelCluster::PixelPos newpix(r, c);
-		  			if (!acluster.add(newpix, theBuffer(r, c))) break;
+		  			if (!acluster.add(newpix, maskedArray(r, c))) break;
 		  			// And change its value
-		  			theBuffer.set_adc(newpix, 127);
-				
-					// Check the threshold and if the Split parameter is set, split the cluster if it gets too big. Otherwhise let it run and it will be rejected later
-					if ((acluster.xsize() >= MaximumWidthX_ || acluster.ysize() >= MaximumWidthY_ || acluster.size() >= MaximumNumberOfDigis_) && SplitIfOverThresholds_)  {
-						cout << "Cluster split" << endl;
-						goto form_cluster_label;
-					}
+		  			maskedArray.set(newpix, 0);
 				}
-	    		}
+	    	}
 		}
-	}
-
-	if (acluster.xsize() >= MaximumWidthX_ || acluster.ysize() >= MaximumWidthY_ || acluster.size() >= MaximumNumberOfDigis_) {
-		cout << "Cluster rejected because above threshold" << endl; 
-		return SiPixelCluster();
-	}	
-
-	form_cluster_label:
-
-	if (acluster.xsize() < MinimumWidthX_ || acluster.ysize() < MinimumWidthY_ || acluster.size() < MinimumNumberOfDigis_) {
-		cout << "Cluster rejected because below thresholds" << endl;
-		return SiPixelCluster();
 	}
 
  	// Form a "real" CMSSW cluster
 	return  SiPixelCluster(acluster.isize, acluster.adc, acluster.x, acluster.y, acluster.xmin, acluster.ymin);
+}
+
+unsigned int PixelClusterizer::getLayerNumber(unsigned int & detid) {
+    unsigned int layer = 999;
+    DetId theDetId(detid);
+    if (theDetId.det() == DetId::Tracker) {
+        if (theDetId.subdetId() == PixelSubdetector::PixelBarrel) {
+            PXBDetId pb_detId = PXBDetId(detid);
+            layer = pb_detId.layer();
+        }
+        else if (theDetId.subdetId() == PixelSubdetector::PixelEndcap) {
+            PXFDetId pf_detId = PXFDetId(detid);
+            layer = 100 * pf_detId.side() + pf_detId.disk();
+        }
+        else std::cout << ">>> Invalid subdetId() = " << theDetId.subdetId() << std::endl;
+    }
+    return layer;
 }

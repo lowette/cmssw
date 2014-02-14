@@ -27,7 +27,7 @@ namespace cms {
     		virtual ~RunStepsClusterizer();
     		void setupClusterizer();
     		virtual void beginJob( );
-    		virtual void produce(edm::Event& e, const edm::EventSetup& c);
+    		virtual void produce(edm::Event& e, const edm::EventSetup& eventSetup);
 
   	private:
     		edm::ParameterSet conf_;

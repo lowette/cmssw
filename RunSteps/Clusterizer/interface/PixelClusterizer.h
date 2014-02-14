@@ -31,24 +31,49 @@ public:
 private:
     edm::ParameterSet conf_;
     std::vector<SiPixelCluster> theClusters;
-    SiPixelArrayBuffer theBuffer;
+    SiPixelArrayBuffer hitArray;
+    SiPixelArrayBuffer weightArray;
+    SiPixelArrayBuffer maskedArray;
     int  nrows_;
     int  ncols_;
     uint32_t detid_;
 
-    int32_t DigiSearchWidthX_;
-    int32_t DigiSearchWidthY_;
-    int32_t MinimumWidthX_;
-    int32_t MaximumWidthX_;
-    int32_t MinimumWidthY_;
-    int32_t MaximumWidthY_;
-    int32_t MinimumNumberOfDigis_;
-    int32_t MaximumNumberOfDigis_;
-    bool SplitIfOverThresholds_;
-
     void copy_to_buffer(DigiIterator begin, DigiIterator end);
     void clear_buffer(DigiIterator begin, DigiIterator end);
-    SiPixelCluster make_cluster(const SiPixelCluster::PixelPos& pix);
+    SiPixelCluster make_cluster(int row, int col);
+    unsigned int getLayerNumber(unsigned int & detid);
+
+    //
+
+    struct AccretionCluster {
+        static constexpr unsigned short MAXSIZE = 256;
+        unsigned short adc[256];
+        unsigned short x[256];
+        unsigned short y[256];
+        unsigned short xmin = 16000;
+        unsigned short xmax = 0;
+        unsigned short ymin = 16000;
+        unsigned short ymax = 0;
+        unsigned int isize = 0;
+        unsigned int curr = 0;
+        unsigned short top() const { return curr; }
+        void pop() { ++curr; }
+        bool empty() { return curr == isize; }
+        bool add(SiPixelCluster::PixelPos const & p, unsigned short const iadc) {
+            if (isize == MAXSIZE) return false;
+            xmin = std::min(xmin, (unsigned short) p.row());
+            xmax = std::max(xmax, (unsigned short) p.row());
+            ymin = std::min(ymin, (unsigned short) p.col());
+            ymax = std::max(ymax, (unsigned short) p.col());
+            adc[isize] = iadc;
+            x[isize] = p.row();
+            y[isize++] = p.col();
+            return true;
+        }
+        unsigned short size() { return isize; }
+        unsigned short xsize() { return xmax - xmin + 1; }
+        unsigned short ysize() { return ymax - ymin + 1; }
+    };
 };
 
 #endif

@@ -47,7 +47,7 @@ process.source = cms.Source('PoolSource',
 )
 
 # TAG
-process.GlobalTag = GlobalTag(process.GlobalTag, 'POSTLS161_V15::All', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 
 # Output
 process.TFileService = cms.Service('TFileService',

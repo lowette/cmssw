@@ -38,11 +38,11 @@ int SiPixelArrayBuffer::operator()(const SiPixelCluster::PixelPos& pix) const {
 }
 
 // Set an element of the matrix
-void SiPixelArrayBuffer::set_adc(int row, int col, int adc) {
+void SiPixelArrayBuffer::set(int row, int col, int adc) {
     pixel_vec[index(row,col)] = adc;
 }
 
 // Set an element of the matrix (get the row and column from the pixel data)
-void SiPixelArrayBuffer::set_adc(const SiPixelCluster::PixelPos& pix, int adc) {
+void SiPixelArrayBuffer::set(const SiPixelCluster::PixelPos& pix, int adc) {
     pixel_vec[index(pix)] = adc;
 }

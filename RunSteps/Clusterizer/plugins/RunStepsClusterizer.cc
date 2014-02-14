@@ -31,7 +31,7 @@ namespace cms {
         produces< edm::DetSetVector<SiPixelCluster> >().setBranchAlias(alias);
 
         std::cout << "------------------------------------------------------------" << std::endl
-                  << "-- Running RunSteps Clusterizer v0.0" << std::endl
+                  << "-- Running RunSteps Clusterizer v0.2" << std::endl
                   << "------------------------------------------------------------" << std::endl;
     }
 
@@ -43,12 +43,12 @@ namespace cms {
         edm::LogInfo("SiPixelClusterizer") << "[SiPixelClusterizer::beginJob]";
     }
 
-    void RunStepsClusterizer::produce(edm::Event& e, const edm::EventSetup& es) {
+    void RunStepsClusterizer::produce(edm::Event& e, const edm::EventSetup& eventSetup) {
         edm::Handle< edm::DetSetVector<PixelDigi> >  input;
         e.getByLabel(src_, input);
 
         edm::ESHandle<TrackerGeometry> geom;
-        es.get<TrackerDigiGeometryRecord>().get(geom);
+        eventSetup.get<TrackerDigiGeometryRecord>().get(geom);
 
         // Global container for the clusters of each detector
         std::vector<edm::DetSet<SiPixelCluster> > clustersByDet;

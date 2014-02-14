@@ -3,6 +3,7 @@ all:
 	cmsRun Digitizer/python/Digitizer.py
 	cmsRun Clusterizer/python/Clusterizer.py
 	cmsRun Digitizer/test/RunDigiValidation.py
+	cmsRun L1Trigger/test/RunL1TriggerValidation.py
 	cmsRun Clusterizer/test/RunClusterValidation.py
 
 generation:
@@ -17,10 +18,13 @@ clusterizer:
 validation_digitizer:
 	cmsRun Digitizer/test/RunDigiValidation.py _input $(input) _output $(output)
 
+validation_l1trigger:
+	cmsRun L1Trigger/test/RunL1TriggerValidation.py _input $(input) _output $(output)
+
 validation_clusterizer:
 	cmsRun Clusterizer/test/RunClusterValidation.py _input $(input) _output $(output)
 
-validation: validation_digitizer validation_clusterizer
+validation: validation_digitizer validation_clusterizer validation_l1trigger
 
 help:
 	@echo "+--------------------------------------------------------+"
@@ -33,6 +37,7 @@ help:
 	@echo "| make digitizer input=<path> output=<path>              |"
 	@echo "| make clusterizer input=<path> output=<path>            |"
 	@echo "| make validation_digitizer input=<path> output=<path>   |"
+	@echo "| make validation_l1trigger input=<path> output=<path>   |"
 	@echo "| make validation_clusterizer input=<path> output=<path> |"
 	@echo "| make validation                                        |"
 	@echo "+--------------------------------------------------------+"

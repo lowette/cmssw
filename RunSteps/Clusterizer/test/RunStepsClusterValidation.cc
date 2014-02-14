@@ -263,7 +263,7 @@ unsigned int RunStepsClusterValidation::getLayerNumber(const TrackerGeometry* tk
     return layer;
 }
 
-unsigned int RunStepsClusterValidation::getLayerNumber(unsigned int& detid) {
+unsigned int RunStepsClusterValidation::getLayerNumber(unsigned int & detid) {
     unsigned int layer = 999;
     DetId theDetId(detid);
     if (theDetId.det() == DetId::Tracker) {
