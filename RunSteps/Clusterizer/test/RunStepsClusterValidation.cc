@@ -208,7 +208,8 @@ void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
         fname1 << "Barrel";
         fname2 << "Layer_" << id;
         tag = "_layer_";
-    } else {
+    }
+    else {
         int side = ival / 100;
         id = ival - side*100;
         std::cout << " Creating histograms for Disc " << id << " with " << ival << std::endl;

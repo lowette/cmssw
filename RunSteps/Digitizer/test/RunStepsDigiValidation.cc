@@ -208,8 +208,8 @@ RunStepsDigiValidation::RunStepsDigiValidation(const ParameterSet& iConfig) {
     simG4_ = iConfig.getParameter<InputTag>("simG4");
 
     cout << "------------------------------------------------------------" << endl
-              << "-- Running RunSteps DigiValidation v0.1" << endl
-              << "------------------------------------------------------------" << endl;
+         << "-- Running RunSteps DigiValidation v0.1" << endl
+         << "------------------------------------------------------------" << endl;
 }
 RunStepsDigiValidation::~RunStepsDigiValidation() { }
 
@@ -293,7 +293,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
     nSimTracks_->Fill(nTracks++);
 
     // Loop Over Digis and Fill Histograms
-    for(DetSetVector<PixelDigi>::const_iterator DSViter = pixelDigis->begin(); DSViter != pixelDigis->end(); ++DSViter) {
+    for (DetSetVector<PixelDigi>::const_iterator DSViter = pixelDigis->begin(); DSViter != pixelDigis->end(); ++DSViter) {
         // Detector id
         unsigned int rawid = DSViter->id;
         DetId detId(rawid);

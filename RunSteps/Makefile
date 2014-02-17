@@ -26,6 +26,10 @@ validation_clusterizer:
 
 validation: validation_digitizer validation_clusterizer validation_l1trigger
 
+configure:
+	mkdir -p Output
+	scram b -j 16
+
 help:
 	@echo "+--------------------------------------------------------+"
 	@echo "|                        RunSteps                        |"
@@ -40,4 +44,6 @@ help:
 	@echo "| make validation_l1trigger input=<path> output=<path>   |"
 	@echo "| make validation_clusterizer input=<path> output=<path> |"
 	@echo "| make validation                                        |"
+	@echo "| make configure                                         |"
+	@echo "| make help                                              |"
 	@echo "+--------------------------------------------------------+"
