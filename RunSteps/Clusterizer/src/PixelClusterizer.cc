@@ -141,7 +141,7 @@ SiPixelCluster PixelClusterizer::make_cluster(int row, int col) {
 	      		if (maskedArray(r, c) == weight) {
                     // Add it to the cluster
 		  			SiPixelCluster::PixelPos newpix(r, c);
-		  			if (!acluster.add(newpix, maskedArray(r, c))) break;
+		  			if (!acluster.add(newpix, 255)) break;
 		  			// And change its value
 		  			maskedArray.set(newpix, 0);
 				}
