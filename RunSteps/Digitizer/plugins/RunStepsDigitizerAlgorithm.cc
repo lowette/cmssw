@@ -104,6 +104,13 @@ using namespace sipixelobjects;
 
 #define TP_DEBUG // protect all LogDebug with ifdef. Takes too much CPU
 
+//Add a .root file to investigate variables used in this code!
+#include <TFile.h>
+#include <TH1.h>
+TH1F h_signalInElectrons("signalInElec","signalInElec",200,-100,500);
+TH1F h_thePixelThresholdInE("pixelThreshold","pixelThreshold",200,-100,500);
+
+//========================================================================
 
 void RunStepsDigitizerAlgorithm::init(const edm::EventSetup& es) {
   if(use_ineff_from_db_){// load gain calibration service fromdb...
@@ -273,8 +280,9 @@ RunStepsDigitizerAlgorithm::RunStepsDigitizerAlgorithm(const edm::ParameterSet& 
 
 }
 
-std::map<int, RunStepsDigitizerAlgorithm::CalParameters, std::less<int> >
-RunStepsDigitizerAlgorithm::initCal() const {
+//====================================================================================
+
+std::map<int, RunStepsDigitizerAlgorithm::CalParameters, std::less<int> > RunStepsDigitizerAlgorithm::initCal() const {
 
   using std::cerr;
   using std::cout;
@@ -367,8 +375,18 @@ RunStepsDigitizerAlgorithm::initCal() const {
 
 //=========================================================================
 RunStepsDigitizerAlgorithm::~RunStepsDigitizerAlgorithm() {
+
+  TFile* fout = new TFile("DigitizerAlgorithmOutput.root","RECREATE");
+  fout->cd();
+
+  h_signalInElectrons.Write();
+  h_thePixelThresholdInE.Write();
+  fout->Close();
+
   LogDebug ("PixelDigitizer")<<"RunStepsDigitizerAlgorithm deleted";
 }
+
+//=========================================================================
 
 RunStepsDigitizerAlgorithm::PixelEfficiencies::PixelEfficiencies(const edm::ParameterSet& conf, bool AddPixelInefficiency, int NumberOfBarrelLayers, int NumberOfEndcapDisks) {
   // pixel inefficiency
@@ -1092,6 +1110,8 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
   for (signal_map_const_iterator i = theSignal.begin(); i != theSignal.end(); ++i) {
 
     float signalInElectrons = (*i).second ;   // signal in electrons
+    h_signalInElectrons.Fill(signalInElectrons);
+    h_thePixelThresholdInE.Fill(thePixelThresholdInE);
 
     // Do the miss calibration for calibration studies only.
     //if(doMissCalibrate) signalInElectrons = missCalibrate(signalInElectrons)
