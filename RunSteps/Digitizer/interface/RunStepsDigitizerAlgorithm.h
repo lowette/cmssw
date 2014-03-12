@@ -86,21 +86,29 @@ class RunStepsDigitizerAlgorithm  {
       _amp(amp), _frac(1, frac), _hitInfo() {
       //in case of digi from noisypixels
       //the MC information are removed
+	//std::cout << " Value of frac (no SimLinks): " << frac << std::endl;
+	//std::cout << " Value of amp (no SimLinks): " << amp << std::endl;
       if (_frac[0]<-0.5) {
 	_frac.pop_back();
       }
-    }
+ 	//std::cout << " Value of frac (no SimLinks - after pop_back): " << frac << std::endl;
+	//std::cout << " Value of amp (no SimLinks - after pop_back): " << amp << std::endl;
+     }
 
     Amplitude( float amp, const PSimHit* hitp, float frac) :
       _amp(amp), _frac(1, frac), _hitInfo(new SimHitInfoForLinks(hitp)) {
 
     //in case of digi from noisypixels
       //the MC information are removed
-      if (_frac[0]<-0.5) {
+	//std::cout << " Value of frac (SimLinks): " << frac << std::endl;
+	//std::cout << " Value of amp (SimLinks): " << amp << std::endl;
+     if (_frac[0]<-0.5) {
 	_frac.pop_back();
 	_hitInfo->trackIds_.pop_back();
       }
-    }
+	//std::cout << " Value of frac (SimLinks - after pop_back): " << frac << std::endl;
+	//std::cout << " Value of amp (SimLinks - after pop_back): " << amp << std::endl;
+     }
 
     // can be used as a float by convers.
     operator float() const { return _amp;}
