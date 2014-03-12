@@ -104,11 +104,58 @@ using namespace sipixelobjects;
 
 #define TP_DEBUG // protect all LogDebug with ifdef. Takes too much CPU
 
+///////////////////////////
+//   Histograms added!   //
+///////////////////////////
 //Add a .root file to investigate variables used in this code!
 #include <TFile.h>
 #include <TH1.h>
-TH1F h_signalInElectrons("signalInElec","signalInElec",200,-100,500);
-TH1F h_thePixelThresholdInE("pixelThreshold","pixelThreshold",200,-100,500);
+#include "TDirectory.h"
+
+//make_digis histograms
+TH1F h_signalInElectrons("signalInElec","signalInElec",1000,-100,50000);
+TH1F h_signalInElectronsNotZero("signalInElecNotZero","signalInElecNotZero",100,-100,50000);
+TH1F h_thePixelThresholdInE("pixelThreshold","pixelThreshold",1000,-20,5000);
+TH1F h_chan("channel","channel",200,-10,500);
+TH1F h_IPx("InteractionPointX_NotFilled","InteractionPointX - Not Filled",200,-150,150);
+TH1F h_IPy("InteractionPointY_NotFilled","InteractionPointY - Not Filled",200,-150,150);
+TH1F h_adc("ADC","ADC",200,0,400);
+TH1F h_iStarSecondHitInfo("HitInfo_NotFilled","HitInfo - Not Filled",200,-200,500);
+TH1F h_iStarSecondTrackIds("TrackIds _NotFilled","TrackIds - Not Filled",200,-100,500);
+TH1F h_digisSize("DigisSize","DigisSize",200,0,80);
+TH1F h_signalInElecTrackIdsConstr("signalInElecTrackIdsConstr","signalInElectrons when size of trackIds > 0",1000,-100,50000);
+TH1F h_sumSameChannel("sumSameChannel","sumSameChannel",200,0,300);
+TH1F h_fraction("fraction","fraction = sum_sameChannel/signalInElectrons",200,-10,20);
+
+//induce_signal histograms
+TH1F h_CloudRight("cloudRight","CloudRight",200,-20,20);
+TH1F h_CloudLeft("CloudLeft","CloudLeft",200,-20,20);
+TH1F h_CloudUp("CloudUp","CloudUp",200,-20,20);
+TH1F h_CloudDown("CloudDown","CloudDown",200,-20,20);
+TH1F h_IPixRightUpX("IPixRightUpX","IPixRightUpX",200,-10,600);
+TH1F h_IPixRightUpY("IPixRightUpY","IPixRightUpY",200,-10,1000);
+TH1F h_IPixLeftDownX("IPixLeftDownX","IPixLeftDownX",200,-10,600);
+TH1F h_IPixLeftDownY("IPixLeftDownY","IPixLeftDownY",200,-10,1000);
+TH1F h_numColumns("numColumns","numColumns",200,0,40);
+TH1F h_numRows("numRows","numRows",200,0,200);
+TH1F h_IPixRightUpXFinal("IPixRightUpXFinal","IPixRightUpXFinal",200,-10,600);
+TH1F h_IPixRightUpYFinal("IPixRightUpYFinal","IPixRightUpYFinal",200,-10,1000);
+TH1F h_IPixLeftDownXFinal("IPixLeftDownXFinal","IPixLeftDownXFinal",200,-10,600);
+TH1F h_IPixLeftDownYFinal("IPixLeftDownYFinal","IPixLeftDownYFinal",200,-10,1000);
+TH1F h_xUB("xUB","xUB",200,-10,20);
+TH1F h_xLB("xLB","xLB",200,-10,20);
+TH1F h_xLowerBound("xLowerBound","xLowerBound",200,-10,20);
+TH1F h_xUpperBound("xUpperBound","xUpperBound",200,-10,20);
+TH1F h_xTotalIntegrationRange("xTotalIntegrationRange","xTotalIntegrationRange",200,-10,20);
+TH1F h_yUB("yUB","yUB",200,-10,20);
+TH1F h_yLB("yLB","yLB",200,-10,20);
+TH1F h_yLowerBound("yLowerBound","yLowerBound",200,-10,20);
+TH1F h_yUpperBound("yUpperBound","yUpperBound",200,-10,20);
+TH1F h_yTotalIntegrationRange("yTotalIntegrationRange","yTotalIntegrationRange",200,-10,20);
+TH1F h_chargeFraction("chargeFraction","chargeFraction",400,-10,800);
+TH1F h_hitSignalChan("hitSignalChan","hitSignalChan",400,-10,800);
+TH1F h_chanFromTopol("chanFromTopol","chanFromTopol",400,-10,800);
+
 
 //========================================================================
 
@@ -186,9 +233,10 @@ RunStepsDigitizerAlgorithm::RunStepsDigitizerAlgorithm(const edm::ParameterSet& 
   // Pixel threshold in units of noise:
   // thePixelThreshold(conf.getParameter<double>("ThresholdInNoiseUnits")),
   // Pixel threshold in electron units.
-  theThresholdInE_FPix(conf.getParameter<double>("ThresholdInElectrons_FPix")),
+  theThresholdInE_FPix(4500),//conf.getParameter<double>("ThresholdInElectrons_FPix")),
   theThresholdInE_BPix(conf.getParameter<double>("ThresholdInElectrons_BPix")),
   theThresholdInE_BPix_L1(conf.exists("ThresholdInElectrons_BPix_L1")?conf.getParameter<double>("ThresholdInElectrons_BPix_L1"):theThresholdInE_BPix),
+
 
   // Add threshold gaussian smearing:
   theThresholdSmearing_FPix(conf.getParameter<double>("ThresholdSmearing_FPix")),
@@ -265,6 +313,11 @@ RunStepsDigitizerAlgorithm::RunStepsDigitizerAlgorithm(const edm::ParameterSet& 
   smearedThreshold_BPix_(addThresholdSmearing ? new CLHEP::RandGaussQ(eng, theThresholdInE_BPix , theThresholdSmearing_BPix) : 0),
   smearedThreshold_BPix_L1_(addThresholdSmearing ? new CLHEP::RandGaussQ(eng, theThresholdInE_BPix_L1 , theThresholdSmearing_BPix_L1) : 0)
 {
+
+std::cout << " Value of theThresholdInE_FPix in constructor function : " << theThresholdInE_FPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+std::cout << " Value of theThresholdInE_BPix in constructor function : " << theThresholdInE_BPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << theThresholdInE_BPix_L1 << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+
   LogInfo ("PixelDigitizer ") <<"RunStepsDigitizerAlgorithm constructed"
 			      <<"Configuration parameters:"
 			      << "Threshold/Gain = "
@@ -273,266 +326,311 @@ RunStepsDigitizerAlgorithm::RunStepsDigitizerAlgorithm(const edm::ParameterSet& 
 			      << "threshold in electron BPix = "
 			      << theThresholdInE_BPix
                               << "threshold in electron BPix Layer1 = "
-                              << theThresholdInE_BPix_L1
-			      <<" " << theElectronPerADC << " " << theAdcFullScale
-			      << " The delta cut-off is set to " << tMax
-			      << " pix-inefficiency "<<AddPixelInefficiency;
+				      << theThresholdInE_BPix_L1
+				      <<" " << theElectronPerADC << " " << theAdcFullScale
+				      << " The delta cut-off is set to " << tMax
+				      << " pix-inefficiency "<<AddPixelInefficiency;
 
-}
-
-//====================================================================================
-
-std::map<int, RunStepsDigitizerAlgorithm::CalParameters, std::less<int> > RunStepsDigitizerAlgorithm::initCal() const {
-
-  using std::cerr;
-  using std::cout;
-  using std::endl;
-
-  std::map<int, RunStepsDigitizerAlgorithm::CalParameters, std::less<int> > calmap;
-  // Prepare for the analog amplitude miss-calibration
-  LogDebug ("PixelDigitizer ")
-    << " miss-calibrate the pixel amplitude ";
-
-  const bool ReadCalParameters = false;
-  if(ReadCalParameters) {   // Read the calibration files from file
-    // read the calibration constants from a file (testing only)
-    std::ifstream in_file;  // data file pointer
-    char filename[80] = "phCalibrationFit_C0.dat";
-
-    in_file.open(filename, std::ios::in ); // in C++
-    if(in_file.bad()) {
-      cout << " File not found " << endl;
-      return calmap; // signal error
-    }
-    cout << " file opened : " << filename << endl;
-
-    char line[500];
-    for (int i = 0; i < 3; i++) {
-      in_file.getline(line, 500,'\n');
-      cout<<line<<endl;
-    }
-
-    cout << " test map" << endl;
-
-    float par0,par1,par2,par3;
-    int colid,rowid;
-    std::string name;
-    // Read MC tracks
-    for(int i=0;i<(52*80);i++)  { // loop over tracks
-      in_file >> par0 >> par1 >> par2 >> par3 >> name >> colid >> rowid;
-      if(in_file.bad()) { // check for errors
-        cerr << "Cannot read data file" << endl;
-        return calmap;
-      }
-      if( in_file.eof() != 0 ) {
-        cerr << in_file.eof() << " " << in_file.gcount() << " "
-             << in_file.fail() << " " << in_file.good() << " end of file "
-             << endl;
-        return calmap;
-      }
-
-      //cout << " line " << i << " " <<par0<<" "<<par1<<" "<<par2<<" "<<par3<<" "
-      //   <<colid<<" "<<rowid<<endl;
-
-      CalParameters onePix;
-      onePix.p0=par0;
-      onePix.p1=par1;
-      onePix.p2=par2;
-      onePix.p3=par3;
-
-      // Convert ROC pixel index to channel
-      int chan = PixelIndices::pixelToChannelROC(rowid,colid);
-      calmap.insert(std::pair<int,CalParameters>(chan,onePix));
-
-      // Testing the index conversion, can be skipped
-      std::pair<int,int> p = PixelIndices::channelToPixelROC(chan);
-      if(rowid!=p.first) cout<<" wrong channel row "<<rowid<<" "<<p.first<<endl;
-      if(colid!=p.second) cout<<" wrong channel col "<<colid<<" "<<p.second<<endl;
-
-    } // pixel loop in a ROC
-
-    cout << " map size  " << calmap.size() <<" max "<<calmap.max_size() << " "
-         <<calmap.empty()<< endl;
-
-//     cout << " map size  " << calmap.size()  << endl;
-//     map<int,CalParameters,std::less<int> >::iterator ix,it;
-//     map<int,CalParameters,std::less<int> >::const_iterator ip;
-//     for (ix = calmap.begin(); ix != calmap.end(); ++ix) {
-//       int i = (*ix).first;
-//       std::pair<int,int> p = channelToPixelROC(i);
-//       it  = calmap.find(i);
-//       CalParameters y  = (*it).second;
-//       CalParameters z = (*ix).second;
-//       cout << i <<" "<<p.first<<" "<<p.second<<" "<<y.p0<<" "<<z.p0<<" "<<calmap[i].p0<<endl;
-
-//       //int dummy=0;
-//       //cin>>dummy;
-//     }
-
-  } // end if readparameters
-  return calmap;
-} // end initCal()
-
-//=========================================================================
-RunStepsDigitizerAlgorithm::~RunStepsDigitizerAlgorithm() {
-
-  TFile* fout = new TFile("DigitizerAlgorithmOutput.root","RECREATE");
-  fout->cd();
-
-  h_signalInElectrons.Write();
-  h_thePixelThresholdInE.Write();
-  fout->Close();
-
-  LogDebug ("PixelDigitizer")<<"RunStepsDigitizerAlgorithm deleted";
-}
-
-//=========================================================================
-
-RunStepsDigitizerAlgorithm::PixelEfficiencies::PixelEfficiencies(const edm::ParameterSet& conf, bool AddPixelInefficiency, int NumberOfBarrelLayers, int NumberOfEndcapDisks) {
-  // pixel inefficiency
-  // Don't use Hard coded values, read inefficiencies in from python or don't use any
-  int NumberOfTotLayers = NumberOfBarrelLayers + NumberOfEndcapDisks;
-  FPixIndex=NumberOfBarrelLayers;
-  if (AddPixelInefficiency){
-		     int i=0;
- 	  	     thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix1");
- 	  	     thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix2");
- 	  	     thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix3");
-		     if (NumberOfBarrelLayers>=4){thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix4");}
-		     //
-		     i=0;
-		     thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix1");
-                     thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix2");
-                     thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix3");
-                     if (NumberOfBarrelLayers>=4){thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix4");}
-		     //
-                     i=0;
-		     thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix1");
-                     thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix2");
-                     thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix3");
-                     if (NumberOfBarrelLayers>=4){thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix4");}
-		     // The next is needed for Phase2 Tracker studies
-		     if (NumberOfBarrelLayers>=5){
-			if (NumberOfTotLayers>20){throw cms::Exception("Configuration") <<"MyDigitizer was given more layers than it can handle";}
-			// For Phase2 tracker layers just set the outermost BPix inefficiency to 99.9%
-			for (int j=5 ; j<=NumberOfBarrelLayers ; j++){
-			    thePixelColEfficiency[j-1]=0.999;
-			    thePixelEfficiency[j-1]=0.999;
-			    thePixelChipEfficiency[j-1]=0.999;
-			}
-		     }
-		     //
-                     i=FPixIndex;
-                     thePixelColEfficiency[i++]   = conf.getParameter<double>("thePixelColEfficiency_FPix1");
-                     thePixelColEfficiency[i++]   = conf.getParameter<double>("thePixelColEfficiency_FPix2");
-                     if (NumberOfEndcapDisks>=3){thePixelColEfficiency[i++]   = conf.getParameter<double>("thePixelColEfficiency_FPix3");}
-                     i=FPixIndex;
-                     thePixelEfficiency[i++]      = conf.getParameter<double>("thePixelEfficiency_FPix1");
-                     thePixelEfficiency[i++]      = conf.getParameter<double>("thePixelEfficiency_FPix2");
-                     if (NumberOfEndcapDisks>=3){thePixelEfficiency[i++]      = conf.getParameter<double>("thePixelEfficiency_FPix3");}
-                     i=FPixIndex;
-                     thePixelChipEfficiency[i++]  = conf.getParameter<double>("thePixelChipEfficiency_FPix1");
-                     thePixelChipEfficiency[i++]  = conf.getParameter<double>("thePixelChipEfficiency_FPix2");
-                     if (NumberOfEndcapDisks>=3){thePixelChipEfficiency[i++]  = conf.getParameter<double>("thePixelChipEfficiency_FPix3");}
-                     // The next is needed for Phase2 Tracker studies
-                     if (NumberOfEndcapDisks>=4){
-                        if (NumberOfTotLayers>20){throw cms::Exception("Configuration") <<"MyDigitizer was given more layers than it can handle";}
-                        // For Phase2 tracker layers just set the extra FPix disk inefficiency to 99.9%
-                        for (int j=4+FPixIndex ; j<=NumberOfEndcapDisks+NumberOfBarrelLayers ; j++){
-                            thePixelColEfficiency[j-1]=0.999;
-                            thePixelEfficiency[j-1]=0.999;
-                            thePixelChipEfficiency[j-1]=0.999;
-                        }
-                     }
-  }
-  // the first "NumberOfBarrelLayers" settings [0],[1], ... , [NumberOfBarrelLayers-1] are for the barrel pixels
-  // the next  "NumberOfEndcapDisks"  settings [NumberOfBarrelLayers],[NumberOfBarrelLayers+1], ... [NumberOfEndcapDisks+NumberOfBarrelLayers-1]
-  if(!AddPixelInefficiency) {  // No inefficiency, all 100% efficient
-    for (int i=0; i<NumberOfTotLayers;i++) {
-      thePixelEfficiency[i]     = 1.;  // pixels = 100%
-      thePixelColEfficiency[i]  = 1.;  // columns = 100%
-      thePixelChipEfficiency[i] = 1.;  // chips = 100%
-    }
-  }
-}
-
-//=========================================================================
-void RunStepsDigitizerAlgorithm::accumulateSimHits(std::vector<PSimHit>::const_iterator inputBegin,
-                                                  std::vector<PSimHit>::const_iterator inputEnd,
-                                                  const PixelGeomDetUnit* pixdet,
-                                                  const GlobalVector& bfield) {
-    // produce SignalPoint's for all SimHit's in detector
-    // Loop over hits
-
-    uint32_t detId = pixdet->geographicalId().rawId();
-    for (std::vector<PSimHit>::const_iterator ssbegin = inputBegin; ssbegin != inputEnd; ++ssbegin) {
-      // skip hits not in this detector.
-      if((*ssbegin).detUnitId() != detId) {
-        continue;
-      }
-
-#ifdef TP_DEBUG
-      LogDebug ("Pixel Digitizer")
-	<< (*ssbegin).particleType() << " " << (*ssbegin).pabs() << " "
-	<< (*ssbegin).energyLoss() << " " << (*ssbegin).tof() << " "
-	<< (*ssbegin).trackId() << " " << (*ssbegin).processType() << " "
-	<< (*ssbegin).detUnitId()
-	<< (*ssbegin).entryPoint() << " " << (*ssbegin).exitPoint() ;
-#endif
-
-
-      std::vector<EnergyDepositUnit> ionization_points;
-      std::vector<SignalPoint> collection_points;
-
-      // fill collection_points for this SimHit, indpendent of topology
-      // Check the TOF cut
-      if (  ((*ssbegin).tof() - pixdet->surface().toGlobal((*ssbegin).localPosition()).mag()/30.)>= theTofLowerCut &&
-	    ((*ssbegin).tof()- pixdet->surface().toGlobal((*ssbegin).localPosition()).mag()/30.) <= theTofUpperCut ) {
-	primary_ionization(*ssbegin, ionization_points); // fills _ionization_points
-	drift (*ssbegin, pixdet, bfield, ionization_points, collection_points);  // transforms _ionization_points to collection_points
-	// compute induced signal on readout elements and add to _signal
-	induce_signal(*ssbegin, pixdet, collection_points); // *ihit needed only for SimHit<-->Digi link
-      } //  end if
-    } // end for
-
-}
-
-//============================================================================
-void RunStepsDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
-                                         std::vector<PixelDigi>& digis,
-                                         std::vector<PixelDigiSimLink>& simlinks, const TrackerTopology *tTopo) {
-
-   // Pixel Efficiency moved from the constructor to this method because
-   // the information of the det are not available in the constructor
-   // Effciency parameters. 0 - no inefficiency, 1-low lumi, 10-high lumi
-
-   uint32_t detID = pixdet->geographicalId().rawId();
-   const signal_map_type& theSignal = _signal[detID];
-
-   const PixelTopology* topol=&pixdet->specificTopology();
-   int numColumns = topol->ncolumns();  // det module number of cols&rows
-   int numRows = topol->nrows();
-
-    // Noise already defined in electrons
-    //thePixelThresholdInE = thePixelThreshold * theNoiseInElectrons ;
-    // Find the threshold in noise units, needed for the noiser.
-
-  unsigned int Sub_detid=DetId(detID).subdetId();
-
-  float thePixelThresholdInE = 0.;
-
-  if(theNoiseInElectrons>0.){
-    if(Sub_detid == PixelSubdetector::PixelBarrel){ // Barrel modules
-      int lay = tTopo->pxbLayer(detID);
-      if(addThresholdSmearing) {
-	if(lay==1) {
-	  thePixelThresholdInE = smearedThreshold_BPix_L1_->fire(); // gaussian smearing
-	} else {
-	  thePixelThresholdInE = smearedThreshold_BPix_->fire(); // gaussian smearing
 	}
-      } else {
-	if(lay==1) {
-	  thePixelThresholdInE = theThresholdInE_BPix_L1;
+
+	//====================================================================================
+
+	std::map<int, RunStepsDigitizerAlgorithm::CalParameters, std::less<int> > RunStepsDigitizerAlgorithm::initCal() const {
+
+	  using std::cerr;
+	  using std::cout;
+	  using std::endl;
+
+	  std::map<int, RunStepsDigitizerAlgorithm::CalParameters, std::less<int> > calmap;
+	  // Prepare for the analog amplitude miss-calibration
+	  LogDebug ("PixelDigitizer ")
+	    << " miss-calibrate the pixel amplitude ";
+
+	  const bool ReadCalParameters = false;
+	  if(ReadCalParameters) {   // Read the calibration files from file
+	    // read the calibration constants from a file (testing only)
+	    std::ifstream in_file;  // data file pointer
+	    char filename[80] = "phCalibrationFit_C0.dat";
+
+	    in_file.open(filename, std::ios::in ); // in C++
+	    if(in_file.bad()) {
+	      cout << " File not found " << endl;
+	      return calmap; // signal error
+	    }
+	    cout << " file opened : " << filename << endl;
+
+	    char line[500];
+	    for (int i = 0; i < 3; i++) {
+	      in_file.getline(line, 500,'\n');
+	      cout<<line<<endl;
+	    }
+
+	    cout << " test map" << endl;
+
+	    float par0,par1,par2,par3;
+	    int colid,rowid;
+	    std::string name;
+	    // Read MC tracks
+	    for(int i=0;i<(52*80);i++)  { // loop over tracks
+	      in_file >> par0 >> par1 >> par2 >> par3 >> name >> colid >> rowid;
+	      if(in_file.bad()) { // check for errors
+		cerr << "Cannot read data file" << endl;
+		return calmap;
+	      }
+	      if( in_file.eof() != 0 ) {
+		cerr << in_file.eof() << " " << in_file.gcount() << " "
+		     << in_file.fail() << " " << in_file.good() << " end of file "
+		     << endl;
+		return calmap;
+	      }
+
+	      //cout << " line " << i << " " <<par0<<" "<<par1<<" "<<par2<<" "<<par3<<" "
+	      //   <<colid<<" "<<rowid<<endl;
+
+	      CalParameters onePix;
+	      onePix.p0=par0;
+	      onePix.p1=par1;
+	      onePix.p2=par2;
+	      onePix.p3=par3;
+
+	      // Convert ROC pixel index to channel
+	      int chan = PixelIndices::pixelToChannelROC(rowid,colid);
+	      calmap.insert(std::pair<int,CalParameters>(chan,onePix));
+
+	      // Testing the index conversion, can be skipped
+	      std::pair<int,int> p = PixelIndices::channelToPixelROC(chan);
+	      if(rowid!=p.first) cout<<" wrong channel row "<<rowid<<" "<<p.first<<endl;
+	      if(colid!=p.second) cout<<" wrong channel col "<<colid<<" "<<p.second<<endl;
+
+	    } // pixel loop in a ROC
+
+	    cout << " map size  " << calmap.size() <<" max "<<calmap.max_size() << " "
+		 <<calmap.empty()<< endl;
+
+	//     cout << " map size  " << calmap.size()  << endl;
+	//     map<int,CalParameters,std::less<int> >::iterator ix,it;
+	//     map<int,CalParameters,std::less<int> >::const_iterator ip;
+	//     for (ix = calmap.begin(); ix != calmap.end(); ++ix) {
+	//       int i = (*ix).first;
+	//       std::pair<int,int> p = channelToPixelROC(i);
+	//       it  = calmap.find(i);
+	//       CalParameters y  = (*it).second;
+	//       CalParameters z = (*ix).second;
+	//       cout << i <<" "<<p.first<<" "<<p.second<<" "<<y.p0<<" "<<z.p0<<" "<<calmap[i].p0<<endl;
+
+	//       //int dummy=0;
+	//       //cin>>dummy;
+	//     }
+
+	  } // end if readparameters
+	  return calmap;
+	} // end initCal()
+
+	//=========================================================================
+	RunStepsDigitizerAlgorithm::~RunStepsDigitizerAlgorithm() {
+
+	  TFile* fout = new TFile("DigitizerAlgorithmOutput.root","RECREATE");
+	  fout->cd();
+
+	  TDirectory* makeDigisDir= fout->mkdir("make_digisHist","histograms obtained from the make_digis function");
+	  TDirectory* induceSignalDir= fout->mkdir("induce_signalHist","histograms obtained from the induce_signal function");
+
+	  makeDigisDir->cd();
+	  h_signalInElectrons.Write();
+	  h_signalInElectronsNotZero.Write();
+	  h_thePixelThresholdInE.Write();
+	  h_chan.Write();
+	  h_IPx.Write();
+	  h_IPy.Write();
+	  h_adc.Write();
+	  h_iStarSecondHitInfo.Write();
+	  h_iStarSecondTrackIds.Write();
+	  h_digisSize.Write();
+	  h_signalInElecTrackIdsConstr.Write();
+	  h_sumSameChannel.Write();
+	  h_fraction.Write();
+
+	  induceSignalDir->cd();
+	  h_CloudRight.Write();
+	h_CloudLeft.Write();
+	h_CloudUp.Write();
+	h_CloudDown.Write();
+	h_IPixRightUpX.Write();
+	h_IPixRightUpY.Write();
+	h_IPixLeftDownX.Write();
+	h_IPixLeftDownY.Write();
+	h_numColumns.Write();
+	h_numRows.Write();
+	h_IPixRightUpXFinal.Write();
+	h_IPixRightUpYFinal.Write();
+	h_IPixLeftDownXFinal.Write();
+	h_IPixLeftDownYFinal.Write();
+		h_xUB.Write();
+		h_xLB.Write();
+		h_xLowerBound.Write();
+		h_xUpperBound.Write();
+		h_xTotalIntegrationRange.Write();
+		h_yUB.Write();
+		h_yLB.Write();
+		h_yLowerBound.Write();
+		h_yUpperBound.Write();
+		h_yTotalIntegrationRange.Write();
+		h_chargeFraction.Write();
+		h_hitSignalChan.Write();
+		h_chanFromTopol.Write();
+
+	  fout->Close();
+
+	  LogDebug ("PixelDigitizer")<<"RunStepsDigitizerAlgorithm deleted";
+	}
+
+	//=========================================================================
+
+	RunStepsDigitizerAlgorithm::PixelEfficiencies::PixelEfficiencies(const edm::ParameterSet& conf, bool AddPixelInefficiency, int NumberOfBarrelLayers, int NumberOfEndcapDisks) {
+	  // pixel inefficiency
+	  // Don't use Hard coded values, read inefficiencies in from python or don't use any
+	  int NumberOfTotLayers = NumberOfBarrelLayers + NumberOfEndcapDisks;
+	  FPixIndex=NumberOfBarrelLayers;
+	  if (AddPixelInefficiency){
+			     int i=0;
+			     thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix1");
+			     thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix2");
+			     thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix3");
+			     if (NumberOfBarrelLayers>=4){thePixelColEfficiency[i++] = conf.getParameter<double>("thePixelColEfficiency_BPix4");}
+			     //
+			     i=0;
+			     thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix1");
+			     thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix2");
+			     thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix3");
+			     if (NumberOfBarrelLayers>=4){thePixelEfficiency[i++] = conf.getParameter<double>("thePixelEfficiency_BPix4");}
+			     //
+			     i=0;
+			     thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix1");
+			     thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix2");
+			     thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix3");
+			     if (NumberOfBarrelLayers>=4){thePixelChipEfficiency[i++] = conf.getParameter<double>("thePixelChipEfficiency_BPix4");}
+			     // The next is needed for Phase2 Tracker studies
+			     if (NumberOfBarrelLayers>=5){
+				if (NumberOfTotLayers>20){throw cms::Exception("Configuration") <<"MyDigitizer was given more layers than it can handle";}
+				// For Phase2 tracker layers just set the outermost BPix inefficiency to 99.9%
+				for (int j=5 ; j<=NumberOfBarrelLayers ; j++){
+				    thePixelColEfficiency[j-1]=0.999;
+				    thePixelEfficiency[j-1]=0.999;
+				    thePixelChipEfficiency[j-1]=0.999;
+				}
+			     }
+			     //
+			     i=FPixIndex;
+			     thePixelColEfficiency[i++]   = conf.getParameter<double>("thePixelColEfficiency_FPix1");
+			     thePixelColEfficiency[i++]   = conf.getParameter<double>("thePixelColEfficiency_FPix2");
+			     if (NumberOfEndcapDisks>=3){thePixelColEfficiency[i++]   = conf.getParameter<double>("thePixelColEfficiency_FPix3");}
+			     i=FPixIndex;
+			     thePixelEfficiency[i++]      = conf.getParameter<double>("thePixelEfficiency_FPix1");
+			     thePixelEfficiency[i++]      = conf.getParameter<double>("thePixelEfficiency_FPix2");
+			     if (NumberOfEndcapDisks>=3){thePixelEfficiency[i++]      = conf.getParameter<double>("thePixelEfficiency_FPix3");}
+			     i=FPixIndex;
+			     thePixelChipEfficiency[i++]  = conf.getParameter<double>("thePixelChipEfficiency_FPix1");
+			     thePixelChipEfficiency[i++]  = conf.getParameter<double>("thePixelChipEfficiency_FPix2");
+			     if (NumberOfEndcapDisks>=3){thePixelChipEfficiency[i++]  = conf.getParameter<double>("thePixelChipEfficiency_FPix3");}
+			     // The next is needed for Phase2 Tracker studies
+			     if (NumberOfEndcapDisks>=4){
+				if (NumberOfTotLayers>20){throw cms::Exception("Configuration") <<"MyDigitizer was given more layers than it can handle";}
+				// For Phase2 tracker layers just set the extra FPix disk inefficiency to 99.9%
+				for (int j=4+FPixIndex ; j<=NumberOfEndcapDisks+NumberOfBarrelLayers ; j++){
+				    thePixelColEfficiency[j-1]=0.999;
+				    thePixelEfficiency[j-1]=0.999;
+				    thePixelChipEfficiency[j-1]=0.999;
+				}
+			     }
+	  }
+	  // the first "NumberOfBarrelLayers" settings [0],[1], ... , [NumberOfBarrelLayers-1] are for the barrel pixels
+	  // the next  "NumberOfEndcapDisks"  settings [NumberOfBarrelLayers],[NumberOfBarrelLayers+1], ... [NumberOfEndcapDisks+NumberOfBarrelLayers-1]
+	  if(!AddPixelInefficiency) {  // No inefficiency, all 100% efficient
+	    for (int i=0; i<NumberOfTotLayers;i++) {
+	      thePixelEfficiency[i]     = 1.;  // pixels = 100%
+	      thePixelColEfficiency[i]  = 1.;  // columns = 100%
+	      thePixelChipEfficiency[i] = 1.;  // chips = 100%
+	    }
+	  }
+	}
+
+	//=========================================================================
+	void RunStepsDigitizerAlgorithm::accumulateSimHits(std::vector<PSimHit>::const_iterator inputBegin,
+							  std::vector<PSimHit>::const_iterator inputEnd,
+							  const PixelGeomDetUnit* pixdet,
+							  const GlobalVector& bfield) {
+	    // produce SignalPoint's for all SimHit's in detector
+	    // Loop over hits
+
+	    uint32_t detId = pixdet->geographicalId().rawId();
+	    for (std::vector<PSimHit>::const_iterator ssbegin = inputBegin; ssbegin != inputEnd; ++ssbegin) {
+	      // skip hits not in this detector.
+	      if((*ssbegin).detUnitId() != detId) {
+		continue;
+	      }
+
+	#ifdef TP_DEBUG
+	      LogDebug ("Pixel Digitizer")
+		<< (*ssbegin).particleType() << " " << (*ssbegin).pabs() << " "
+		<< (*ssbegin).energyLoss() << " " << (*ssbegin).tof() << " "
+		<< (*ssbegin).trackId() << " " << (*ssbegin).processType() << " "
+		<< (*ssbegin).detUnitId()
+		<< (*ssbegin).entryPoint() << " " << (*ssbegin).exitPoint() ;
+	#endif
+
+
+	      std::vector<EnergyDepositUnit> ionization_points;
+	      std::vector<SignalPoint> collection_points;
+
+	      // fill collection_points for this SimHit, indpendent of topology
+	      // Check the TOF cut
+	      if (  ((*ssbegin).tof() - pixdet->surface().toGlobal((*ssbegin).localPosition()).mag()/30.)>= theTofLowerCut &&
+		    ((*ssbegin).tof()- pixdet->surface().toGlobal((*ssbegin).localPosition()).mag()/30.) <= theTofUpperCut ) {
+		primary_ionization(*ssbegin, ionization_points); // fills _ionization_points
+		drift (*ssbegin, pixdet, bfield, ionization_points, collection_points);  // transforms _ionization_points to collection_points
+		// compute induced signal on readout elements and add to _signal
+		induce_signal(*ssbegin, pixdet, collection_points); // *ihit needed only for SimHit<-->Digi link
+	      } //  end if
+	    } // end for
+
+	}
+
+	//============================================================================
+	void RunStepsDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
+						 std::vector<PixelDigi>& digis,
+						 std::vector<PixelDigiSimLink>& simlinks, const TrackerTopology *tTopo) {
+
+	   // Pixel Efficiency moved from the constructor to this method because
+	   // the information of the det are not available in the constructor
+	   // Effciency parameters. 0 - no inefficiency, 1-low lumi, 10-high lumi
+
+	   uint32_t detID = pixdet->geographicalId().rawId();
+	   const signal_map_type& theSignal = _signal[detID];
+
+	   const PixelTopology* topol=&pixdet->specificTopology();
+	   int numColumns = topol->ncolumns();  // det module number of cols&rows
+	   int numRows = topol->nrows();
+
+	    // Noise already defined in electrons
+	    //thePixelThresholdInE = thePixelThreshold * theNoiseInElectrons ;
+	    // Find the threshold in noise units, needed for the noiser.
+
+	  unsigned int Sub_detid=DetId(detID).subdetId();
+
+	  float thePixelThresholdInE = 0.;
+
+	  if(theNoiseInElectrons>0.){
+	    if(Sub_detid == PixelSubdetector::PixelBarrel){ // Barrel modules
+	      int lay = tTopo->pxbLayer(detID);
+	      if(addThresholdSmearing) {
+		if(lay==1) {
+		  thePixelThresholdInE = smearedThreshold_BPix_L1_->fire(); // gaussian smearing
+		} else {
+		  thePixelThresholdInE = smearedThreshold_BPix_->fire(); // gaussian smearing
+		}
+	      } else {
+		if(lay==1) {
+		  thePixelThresholdInE = theThresholdInE_BPix_L1;
 	} else {
 	  thePixelThresholdInE = theThresholdInE_BPix; // no smearing
 	}
@@ -858,6 +956,7 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
 			                      const PixelGeomDetUnit* pixdet,
                                               const std::vector<SignalPoint>& collection_points) {
 
+	//std::cout<< " In induce_signal part " << std::endl;
   // X  - Rows, Left-Right, 160, (1.6cm)   for barrel
   // Y  - Columns, Down-Up, 416, (6.4cm)
 
@@ -908,6 +1007,10 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
      float CloudLeft  = CloudCenterX - ClusterWidth*SigmaX;
      float CloudUp    = CloudCenterY + ClusterWidth*SigmaY;
      float CloudDown  = CloudCenterY - ClusterWidth*SigmaY;
+     h_CloudRight.Fill(CloudRight);
+	h_CloudLeft.Fill(CloudLeft);
+	h_CloudUp.Fill(CloudUp);
+	h_CloudDown.Fill(CloudDown);
 
      // Define 2D cloud limit points
      LocalPoint PointRightUp  = LocalPoint(CloudRight,CloudUp);
@@ -925,6 +1028,8 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
 
      int IPixRightUpX = int( floor( mp.x()));
      int IPixRightUpY = int( floor( mp.y()));
+	h_IPixRightUpX.Fill(IPixRightUpX);
+	h_IPixRightUpY.Fill(IPixRightUpY);
 
 #ifdef TP_DEBUG
      LogDebug ("Pixel Digitizer") << " right-up " << PointRightUp << " "
@@ -936,6 +1041,9 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
 
      int IPixLeftDownX = int( floor( mp.x()));
      int IPixLeftDownY = int( floor( mp.y()));
+	h_IPixLeftDownX.Fill(IPixLeftDownX);
+	h_IPixLeftDownY.Fill(IPixLeftDownY);
+
 
 #ifdef TP_DEBUG
      LogDebug ("Pixel Digitizer") << " left-down " << PointLeftDown << " "
@@ -946,11 +1054,18 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
      // Check detector limits to correct for pixels outside range.
      int numColumns = topol->ncolumns();  // det module number of cols&rows
      int numRows = topol->nrows();
+	h_numColumns.Fill(numColumns);
+	h_numRows.Fill(numRows);
 
      IPixRightUpX = numRows>IPixRightUpX ? IPixRightUpX : numRows-1 ;
      IPixRightUpY = numColumns>IPixRightUpY ? IPixRightUpY : numColumns-1 ;
      IPixLeftDownX = 0<IPixLeftDownX ? IPixLeftDownX : 0 ;
      IPixLeftDownY = 0<IPixLeftDownY ? IPixLeftDownY : 0 ;
+	h_IPixRightUpXFinal.Fill(IPixRightUpX);
+	h_IPixRightUpYFinal.Fill(IPixRightUpY);
+	h_IPixLeftDownXFinal.Fill(IPixLeftDownX);
+	h_IPixLeftDownYFinal.Fill(IPixLeftDownY);
+
 
      x.clear(); // clear temporary integration array
      y.clear();
@@ -959,7 +1074,8 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
      int ix; // TT for compatibility
      for (ix=IPixLeftDownX; ix<=IPixRightUpX; ix++) {  // loop over x index
        float xUB, xLB, UpperBound, LowerBound;
-
+	xUB = 0;
+	xLB = 0;
        // Why is set to 0 if ix=0, does it meen that we accept charge
        // outside the sensor? CHeck How it was done in ORCA?
        //if(ix == 0) LowerBound = 0.;
@@ -979,7 +1095,13 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
 	 UpperBound = 1. - calcQ((xUB-CloudCenterX)/SigmaX);
        }
 
+	h_xUB.Fill(xUB);
+	h_xLB.Fill(xLB);
+	h_xLowerBound.Fill(LowerBound);
+	h_xUpperBound.Fill(UpperBound);
+
        float   TotalIntegrationRange = UpperBound - LowerBound; // get strip
+	h_xTotalIntegrationRange.Fill(TotalIntegrationRange);
        x[ix] = TotalIntegrationRange; // save strip integral
        //if(SigmaX==0 || SigmaY==0)
        //cout<<TotalIntegrationRange<<" "<<ix<<std::endl;
@@ -990,7 +1112,8 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
     int iy; // TT for compatibility
     for (iy=IPixLeftDownY; iy<=IPixRightUpY; iy++) { //loope over y ind
       float yUB, yLB, UpperBound, LowerBound;
-
+	yUB = 0;
+	yLB = 0;
       if(iy == 0 || SigmaY==0.)
 	LowerBound = 0.;
       else {
@@ -1006,8 +1129,13 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
         yUB = topol->localPosition(mp).y();
 	UpperBound = 1. - calcQ((yUB-CloudCenterY)/SigmaY);
       }
+	h_yUB.Fill(yUB);
+	h_yLB.Fill(yLB);
+	h_yLowerBound.Fill(LowerBound);
+	h_yUpperBound.Fill(UpperBound);
 
       float   TotalIntegrationRange = UpperBound - LowerBound;
+	h_yTotalIntegrationRange.Fill(TotalIntegrationRange);
       y[iy] = TotalIntegrationRange; // save strip integral
       //if(SigmaX==0 || SigmaY==0)
       //cout<<TotalIntegrationRange<<" "<<iy<<std::endl;
@@ -1019,17 +1147,19 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
       for (iy=IPixLeftDownY; iy<=IPixRightUpY; iy++) { //loope over y ind
 
         float ChargeFraction = Charge*x[ix]*y[iy];
+	h_chargeFraction.Fill(ChargeFraction);
 
         if( ChargeFraction > 0. ) {
 	  chan = PixelDigi::pixelToChannel( ix, iy);  // Get index
           // Load the amplitude
           hit_signal[chan] += ChargeFraction;
+	h_hitSignalChan.Fill(hit_signal[chan]);
 	} // endif
-
 
 	mp = MeasurementPoint( float(ix), float(iy) );
 	LocalPoint lp = topol->localPosition(mp);
 	chan = topol->channel(lp);
+	h_chanFromTopol.Fill(chan);
 
 #ifdef TP_DEBUG
 	LogDebug ("Pixel Digitizer")
@@ -1066,9 +1196,13 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
 
   // Fill the global map with all hit pixels from this event
 
+int HitCounter = 0; 
   for ( hit_map_type::const_iterator im = hit_signal.begin();
 	im != hit_signal.end(); ++im) {
+	//std::cout << " Looking at event : " << HitCounter << " in the loop over the hit_map_types !"<< std::endl;
+	HitCounter++;
     int chan =  (*im).first;
+	//std::cout << " Value loaded into Amplitude in induce_signal : " << (*im).second << std::endl;
     theSignal[chan] += (makeDigiSimLinks_ ? Amplitude( (*im).second, &hit, (*im).second) : Amplitude( (*im).second, (*im).second) )  ;
 
 #ifdef TP_DEBUG
@@ -1090,6 +1224,8 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
                                            std::vector<PixelDigiSimLink>& simlinks,
 					   const TrackerTopology *tTopo) const  {
 
+	//std::cout << " In make_digis part " << std::endl;
+
 #ifdef TP_DEBUG
   LogDebug ("Pixel Digitizer") << " make digis "<<" "
 			       << " pixel threshold FPix" << theThresholdInE_FPix << " "
@@ -1104,14 +1240,22 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
   if (it == _signal.end()) {
     return;
   }
+//std::cout << " Calling iterator of signalMaps (it). _signal is defined as a SignalMap and should access Amplitude information! " << std::endl;
 
   const signal_map_type& theSignal = (*it).second;
+//std::cout << " Calling (*it).second, which creates a signal_map_type " << std::endl;
 
+	int LoopCounter = 0;
   for (signal_map_const_iterator i = theSignal.begin(); i != theSignal.end(); ++i) {
 
+	//std::cout << " Looking at element : " << LoopCounter << " in the loop over the elements of theSignal " << std::endl;
+	LoopCounter++;
     float signalInElectrons = (*i).second ;   // signal in electrons
+//std::cout << " Value of signalInElectrons : " << signalInElectrons << std::endl;
     h_signalInElectrons.Fill(signalInElectrons);
+    if(signalInElectrons != 0) h_signalInElectronsNotZero.Fill(signalInElectrons);
     h_thePixelThresholdInE.Fill(thePixelThresholdInE);
+	//std::cout << " signalInElectrons & pixelThreshold filled " << std::endl;
 
     // Do the miss calibration for calibration studies only.
     //if(doMissCalibrate) signalInElectrons = missCalibrate(signalInElectrons)
@@ -1122,9 +1266,14 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
 
       int chan =  (*i).first;  // channel number
       std::pair<int,int> ip = PixelDigi::channelToPixel(chan);
+      h_chan.Fill(chan);
+      //h_IPx.Fill( ip.first() );
+      //h_IPy.Fill(ip.second());
 //    int adc=0;  // ADC count as integer
 
       int adc=255;  // D.B.:changed for CBC
+      h_adc.Fill(adc);
+	//std::cout << " chan & adc filled " << std::endl;
 
 /*     //D.B.
       // Do the miss calibration for calibration studies only.
@@ -1158,10 +1307,17 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
 
       // Load digis
       digis.emplace_back(ip.first, ip.second, adc);
-
+      h_digisSize.Fill(digis.size());
+	//std::cout << " digisSize filled " << std::endl;
+//std::cout << " Calling (*it).second, which creates a signal_map_type " << std::endl;
+      //h_iStarSecondHitInfo.Fill((*i).second.hitInfo());
+      //h_iStarSecondTrackIds.Fill((*i).second.trackIds().size());
+//std::cout << " Calling (*it).second, which creates a signal_map_type " << std::endl;
+//	std::cout << " SecondTrackIds filled " << std::endl;
       if (makeDigiSimLinks_ && (*i).second.hitInfo()!=0) {
         //digilink
         if((*i).second.trackIds().size()>0){
+	  h_signalInElecTrackIdsConstr.Fill(signalInElectrons);
           simlink_map simi;
 	  unsigned int il=0;
 	  for( std::vector<unsigned int>::const_iterator itid = (*i).second.trackIds().begin();
@@ -1179,7 +1335,10 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
 	    for (unsigned int iii=0;iii<(*simiiter).second.size();iii++){
 	      sum_samechannel+=(*simiiter).second[iii];
 	    }
+	    h_sumSameChannel.Fill(sum_samechannel);
 	    float fraction=sum_samechannel/(*i).second;
+	    h_fraction.Fill(fraction);
+	//std::cout << " sumSameChannel & fraction filled " << std::endl;
 	    if(fraction>1.) fraction=1.;
 	    simlinks.emplace_back((*i).first, (*simiiter).first, (*i).second.eventId(), fraction);
 	  }
