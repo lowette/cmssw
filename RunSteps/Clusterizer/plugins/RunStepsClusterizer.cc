@@ -1,5 +1,7 @@
 #include "RunSteps/Clusterizer/interface/RunStepsClusterizer.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterizer.h"
+#include "RunSteps/Clusterizer/interface/WeightedMeans2D.h"
+#include "RunSteps/Clusterizer/interface/AdjacentHits.h"
 
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
@@ -25,19 +27,30 @@ namespace cms {
 
     RunStepsClusterizer::RunStepsClusterizer(edm::ParameterSet const& conf) :
         conf_(conf),
-        clusterizer_(new PixelClusterizer(conf)),
-        src_(conf.getParameter<edm::InputTag>("src")) {
+        src_(conf.getParameter<edm::InputTag>("src")),
+        algorithm_(conf.getParameter<std::string>("algorithm")) {
         const std::string alias("siPixelClusters");
         produces< edm::DetSetVector<SiPixelCluster> >().setBranchAlias(alias);
 
         std::cout << "------------------------------------------------------------" << std::endl
-                  << "-- Running RunSteps Clusterizer v0.2" << std::endl
+                  << "-- Running RunSteps Clusterizer v0.3" << std::endl
                   << "------------------------------------------------------------" << std::endl;
+
+        if (algorithm_.compare("WeightedMeans2D") == 0) {
+            std::cout << "Using the WeightedMeans2D algorithm" << std::endl;
+            clusterizer_ = new WeightedMeans2D(conf);
+        }
+        else if (algorithm_.compare("AdjacentHits") == 0) {
+            std::cout << "Using the AdjacentHits algorithm" << std::endl;
+            clusterizer_ = new AdjacentHits(conf);
+        }
+        else {
+            std::cout << "Using the default algorithm" << std::endl;
+            clusterizer_ = new AdjacentHits(conf);
+        }
     }
 
-    RunStepsClusterizer::~RunStepsClusterizer() {
-        delete clusterizer_;
-    }
+    RunStepsClusterizer::~RunStepsClusterizer() { }
 
     void RunStepsClusterizer::beginJob() {
         edm::LogInfo("SiPixelClusterizer") << "[SiPixelClusterizer::beginJob]";

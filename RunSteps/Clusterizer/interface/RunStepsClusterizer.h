@@ -18,6 +18,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
+#include <string>
+
 namespace cms {
 
 	class RunStepsClusterizer : public edm::EDProducer {
@@ -32,7 +34,8 @@ namespace cms {
   	private:
     		edm::ParameterSet conf_;
     		PixelClusterizer* clusterizer_;
-    		edm::InputTag src_;
+        edm::InputTag src_;
+    		std::string algorithm_;
   	};
 }
 

@@ -95,32 +95,32 @@ private:
     TH2F* trackerLayoutXYEC_;
 
     struct DigiHistos {
-        THStack* NumberOfDigisType;
-        THStack* NumberOfDigisSource;
+        // THStack* NumberOfDigisType;
+        // THStack* NumberOfDigisSource;
         TH1F* NumberOfDigisPrimary; // Secondary
         TH1F* NumberOfDigisSecondary; // Primary
-        TH1F* NumberOfDigisPixel; // Pixel
-        TH1F* NumberOfDigisStrip; // Strip
+        // TH1F* NumberOfDigisPixel; // Pixel
+        // TH1F* NumberOfDigisStrip; // Strip
 
         TH1F* DigiCharge;
-        TH1F* DigiChargePrimary;
-        TH1F* DigiChargeSecondary;
+        // TH1F* DigiChargePrimary;
+        // TH1F* DigiChargeSecondary;
 
         TH1F* DigiChargeMatched;
 
         TH1F* NumberOfClusters;
-        TH1F* NumberOfClustersPrimary; // Primary
-        TH1F* NumberOfClustersSecondary; // Secondary
-        TH1F* NumberOfClustersPixel; // Pixel
-        TH1F* NumberOfClustersStrip; // Strip
+        // TH1F* NumberOfClustersPrimary; // Primary
+        // TH1F* NumberOfClustersSecondary; // Secondary
+        // TH1F* NumberOfClustersPixel; // Pixel
+        // TH1F* NumberOfClustersStrip; // Strip
 
         TH1F* ClusterCharge;
-        TH1F* ClusterChargePrimary;
-        TH1F* ClusterChargeSecondary;
+        // TH1F* ClusterChargePrimary;
+        // TH1F* ClusterChargeSecondary;
 
         TH1F* ClusterWidth;
-        TH1F* ClusterWidthPrimary;
-        TH1F* ClusterWidthSecondary;
+        // TH1F* ClusterWidthPrimary;
+        // TH1F* ClusterWidthSecondary;
 
         TH1F* TotalNumberOfDigis;
         TH1F* TotalNumberOfClusters;
@@ -303,8 +303,8 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
         // Tracker geometry
         const GeomDetUnit* geomDetUnit = tkGeom->idToDetUnit(detId);
-        const PixelGeomDetUnit* pixdet = dynamic_cast<const PixelGeomDetUnit*>(geomDetUnit);
-        const PixelTopology & topol = pixdet->specificTopology();
+        // const PixelGeomDetUnit* pixdet = dynamic_cast<const PixelGeomDetUnit*>(geomDetUnit);
+        // const PixelTopology & topol = pixdet->specificTopology();
 
         // Get the histogram for this layer
         map<unsigned int, DigiHistos>::iterator iPos = layerHistoMap.find(layer);
@@ -375,12 +375,11 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
             iPos->second.DigiCharge->Fill(adc);
 
             if (primaryTrk == 1) {
-                iPos->second.DigiChargePrimary->Fill(adc);
+                // iPos->second.DigiChargePrimary->Fill(adc);
                 nDigiP++;
             }
-            else {
-            // else if (primaryTrk == 0) {
-                iPos->second.DigiChargeSecondary->Fill(adc);
+            else if (primaryTrk == 0) {
+                // iPos->second.DigiChargeSecondary->Fill(adc);
                 nDigiS++;
             }
 
@@ -428,9 +427,9 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         iPos->second.totNDigis += nDigiP + nDigiS;
 
         // Pixel module
-        if (topol.ncolumns() == 32) iPos->second.NumberOfDigisPixel->Fill(nDigiA);
+        // if (topol.ncolumns() == 32) iPos->second.NumberOfDigisPixel->Fill(nDigiA);
         // Strip module
-        else if (topol.ncolumns() == 2) iPos->second.NumberOfDigisStrip->Fill(nDigiA);
+        // else if (topol.ncolumns() == 2) iPos->second.NumberOfDigisStrip->Fill(nDigiA);
 
         int nClusterP = 0;
         int nClusterS = 0;
@@ -463,15 +462,15 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
             iPos->second.ClusterWidthVsSimTrkEta->Fill(trk_eta, cl_width);
 
             if (cl_type == 1) {
-                iPos->second.ClusterChargePrimary->Fill(cl_charge);
-                iPos->second.ClusterWidthPrimary->Fill(cl_width);
+                // iPos->second.ClusterChargePrimary->Fill(cl_charge);
+                // iPos->second.ClusterWidthPrimary->Fill(cl_width);
                 iPos->second.ClusterWidthVsSimTrkPtPrimary->Fill(trk_pt, cl_width);
                 iPos->second.ClusterWidthVsSimTrkEtaPrimary->Fill(trk_eta, cl_width);
                 nClusterP++;
             }
             else if (cl_type == 0) {
-                iPos->second.ClusterChargeSecondary->Fill(cl_charge);
-                iPos->second.ClusterWidthSecondary->Fill(cl_width);
+                // iPos->second.ClusterChargeSecondary->Fill(cl_charge);
+                // iPos->second.ClusterWidthSecondary->Fill(cl_width);
                 iPos->second.ClusterWidthVsSimTrkPtSecondary->Fill(trk_pt, cl_width);
                 iPos->second.ClusterWidthVsSimTrkEtaSecondary->Fill(trk_eta, cl_width);
                 nClusterS++;
@@ -481,16 +480,16 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         }
 
         // Fill some plots
-        iPos->second.NumberOfClustersPrimary->Fill(nClusterP);
-        iPos->second.NumberOfClustersSecondary->Fill(nClusterS);
+        // iPos->second.NumberOfClustersPrimary->Fill(nClusterP);
+        // iPos->second.NumberOfClustersSecondary->Fill(nClusterS);
         // iPos->second.NumberOfClusters->Fill(nClusterP + nClusterS);
         iPos->second.NumberOfClusters->Fill(nClusterA);
         iPos->second.totNClusters += nClusterP + nClusterS;
 
         // Pixel module
-        if (topol.ncolumns() == 32) iPos->second.NumberOfClustersPixel->Fill(nClusterA);
+        // if (topol.ncolumns() == 32) iPos->second.NumberOfClustersPixel->Fill(nClusterA);
         // Strip module
-        else if (topol.ncolumns() == 2) iPos->second.NumberOfClustersStrip->Fill(nClusterA);
+        // else if (topol.ncolumns() == 2) iPos->second.NumberOfClustersStrip->Fill(nClusterA);
     }
 
     // Fill Layer Level Histograms
@@ -558,76 +557,76 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     histoName.str("");
     histoName << "NumberOfDigisSecondary" << tag.c_str() << id;
     local_histos.NumberOfDigisSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
-    histoName.str("");
-    histoName << "NumberOfDigis_Pixel" << tag.c_str() << id;
-    local_histos.NumberOfDigisPixel = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
-    histoName.str("");
-    histoName << "NumberOfDigis_Strip" << tag.c_str() << id;
-    local_histos.NumberOfDigisStrip = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
+    // histoName.str("");
+    // histoName << "NumberOfDigis_Pixel" << tag.c_str() << id;
+    // local_histos.NumberOfDigisPixel = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
+    // histoName.str("");
+    // histoName << "NumberOfDigis_Strip" << tag.c_str() << id;
+    // local_histos.NumberOfDigisStrip = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
 
     local_histos.NumberOfDigisPrimary->SetFillColor(kBlue);
     local_histos.NumberOfDigisSecondary->SetFillColor(kRed);
 
-    local_histos.NumberOfDigisPixel->SetFillColor(kBlue);
-    local_histos.NumberOfDigisStrip->SetFillColor(kRed);
+    // local_histos.NumberOfDigisPixel->SetFillColor(kBlue);
+    // local_histos.NumberOfDigisStrip->SetFillColor(kRed);
 
-    histoName.str("");
-    histoName << "NumberOfDigisType" << tag.c_str() << id;
-    local_histos.NumberOfDigisType = td.make<THStack>(histoName.str().c_str(), histoName.str().c_str());
-    local_histos.NumberOfDigisType->Add(local_histos.NumberOfDigisPrimary);
-    local_histos.NumberOfDigisType->Add(local_histos.NumberOfDigisSecondary);
+    // histoName.str("");
+    // histoName << "NumberOfDigisType" << tag.c_str() << id;
+    // local_histos.NumberOfDigisType = td.make<THStack>(histoName.str().c_str(), histoName.str().c_str());
+    // local_histos.NumberOfDigisType->Add(local_histos.NumberOfDigisPrimary);
+    // local_histos.NumberOfDigisType->Add(local_histos.NumberOfDigisSecondary);
 
-    histoName.str("");
-    histoName << "NumberOfDigisSource" << tag.c_str() << id;
-    local_histos.NumberOfDigisSource = td.make<THStack>(histoName.str().c_str(), histoName.str().c_str());
-    local_histos.NumberOfDigisSource->Add(local_histos.NumberOfDigisPixel);
-    local_histos.NumberOfDigisSource->Add(local_histos.NumberOfDigisStrip);
+    // histoName.str("");
+    // histoName << "NumberOfDigisSource" << tag.c_str() << id;
+    // local_histos.NumberOfDigisSource = td.make<THStack>(histoName.str().c_str(), histoName.str().c_str());
+    // local_histos.NumberOfDigisSource->Add(local_histos.NumberOfDigisPixel);
+    // local_histos.NumberOfDigisSource->Add(local_histos.NumberOfDigisStrip);
 
     histoName.str("");
     histoName << "DigiCharge" << tag.c_str() << id;
     local_histos.DigiCharge = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 261, -0.5, 260.5);
-    histoName.str("");
-    histoName << "DigiChargePrimary" << tag.c_str() << id;
-    local_histos.DigiChargePrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 261, -0.5, 260.5);
-    histoName.str("");
-    histoName << "DigiChargeSecondary" << tag.c_str() << id;
-    local_histos.DigiChargeSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 261, -0.5, 260.5);
+    // histoName.str("");
+    // histoName << "DigiChargePrimary" << tag.c_str() << id;
+    // local_histos.DigiChargePrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 261, -0.5, 260.5);
+    // histoName.str("");
+    // histoName << "DigiChargeSecondary" << tag.c_str() << id;
+    // local_histos.DigiChargeSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 261, -0.5, 260.5);
 
     histoName.str("");
     histoName << "NumberOfClusters" << tag.c_str() << id;
     local_histos.NumberOfClusters = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
-    histoName.str("");
-    histoName << "NumberOfClustersPrimary" << tag.c_str() << id;
-    local_histos.NumberOfClustersPrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
-    histoName.str("");
-    histoName << "NumberOfClustersSecondary" << tag.c_str() << id;
-    local_histos.NumberOfClustersSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
-    histoName.str("");
-    histoName << "NumberOfClusters_Pixel" << tag.c_str() << id;
-    local_histos.NumberOfClustersPixel = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
-    histoName.str("");
-    histoName << "NumberOfClusters_Strip" << tag.c_str() << id;
-    local_histos.NumberOfClustersStrip = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
+    // histoName.str("");
+    // histoName << "NumberOfClustersPrimary" << tag.c_str() << id;
+    // local_histos.NumberOfClustersPrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
+    // histoName.str("");
+    // histoName << "NumberOfClustersSecondary" << tag.c_str() << id;
+    // local_histos.NumberOfClustersSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
+    // histoName.str("");
+    // histoName << "NumberOfClusters_Pixel" << tag.c_str() << id;
+    // local_histos.NumberOfClustersPixel = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
+    // histoName.str("");
+    // histoName << "NumberOfClusters_Strip" << tag.c_str() << id;
+    // local_histos.NumberOfClustersStrip = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 51, -0.5, 50.5);
 
     histoName.str("");
     histoName << "ClusterCharge" << tag.c_str() << id;
     local_histos.ClusterCharge = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1041, -0.5, 1040.5);
-    histoName.str("");
-    histoName << "ClusterChargePrimary" << tag.c_str() << id;
-    local_histos.ClusterChargePrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1041, -0.5,1040.5);
-    histoName.str("");
-    histoName << "ClusterChargeSecondary" << tag.c_str() << id;
-    local_histos.ClusterChargeSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1041, -0.5, 1040.5);
+    // histoName.str("");
+    // histoName << "ClusterChargePrimary" << tag.c_str() << id;
+    // local_histos.ClusterChargePrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1041, -0.5,1040.5);
+    // histoName.str("");
+    // histoName << "ClusterChargeSecondary" << tag.c_str() << id;
+    // local_histos.ClusterChargeSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1041, -0.5, 1040.5);
 
     histoName.str("");
     histoName << "ClusterWidth" << tag.c_str() << id;
     local_histos.ClusterWidth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 16, -0.5, 15.5);
-    histoName.str("");
-    histoName << "ClusterWidthPrimary" << tag.c_str() << id;
-    local_histos.ClusterWidthPrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 16, -0.5, 15.5);
-    histoName.str("");
-    histoName << "ClusterWidthSecondary" << tag.c_str() << id;
-    local_histos.ClusterWidthSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 16, -0.5, 15.5);
+    // histoName.str("");
+    // histoName << "ClusterWidthPrimary" << tag.c_str() << id;
+    // local_histos.ClusterWidthPrimary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 16, -0.5, 15.5);
+    // histoName.str("");
+    // histoName << "ClusterWidthSecondary" << tag.c_str() << id;
+    // local_histos.ClusterWidthSecondary = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 16, -0.5, 15.5);
 
     histoName.str("");
     histoName << "TotalNumberOfDigis" << tag.c_str() << id;

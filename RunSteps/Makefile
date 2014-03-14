@@ -12,6 +12,9 @@ generation:
 digitizer:
 	cmsRun Digitizer/python/Digitizer.py _input $(input) _output $(output)
 
+old_digitizer:
+	cmsRun Digitizer/python/OldDigitizer.py _input $(input) _output $(output)
+
 clusterizer:
 	cmsRun Clusterizer/python/Clusterizer.py _input $(input) _output $(output)
 
@@ -39,6 +42,7 @@ help:
 	@echo "| make all n=<int>                                       |"
 	@echo "| make generation n=<int> output=<path>                  |"
 	@echo "| make digitizer input=<path> output=<path>              |"
+	@echo "| make old_digitizer input=<path> output=<path>          |"
 	@echo "| make clusterizer input=<path> output=<path>            |"
 	@echo "| make validation_digitizer input=<path> output=<path>   |"
 	@echo "| make validation_l1trigger input=<path> output=<path>   |"
