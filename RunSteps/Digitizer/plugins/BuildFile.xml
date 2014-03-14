@@ -1,0 +1,4 @@
+<use name="RunSteps/Digitizer"/>
+<library file="*.cc" name="RunStepsDigitizerPlugins">
+    <flags EDM_PLUGIN="1"/>
+</library>
