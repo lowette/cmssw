@@ -4,3 +4,10 @@
 
 DEFINE_DIGI_ACCUMULATOR(EcalDigiProducer);
 
+#include "SimCalorimetry/EcalSimProducers/interface/EcalPhaseIIDigiProducer.h"
+DEFINE_DIGI_ACCUMULATOR(EcalPhaseIIDigiProducer);
+
+#include "SimCalorimetry/EcalSimProducers/interface/EcalTimeDigiProducer.h"
+DEFINE_DIGI_ACCUMULATOR(EcalTimeDigiProducer);
+
+

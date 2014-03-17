@@ -19,26 +19,9 @@ class PixelGeomDetUnit;
 class PixelClusterizer {
 
 public:
-    typedef edm::DetSet<PixelDigi>::const_iterator DigiIterator;
+    virtual void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit* pixDet, std::vector<SiPixelCluster> & output) = 0;
+    virtual bool setup(const PixelGeomDetUnit* pixDet) = 0;
 
-    PixelClusterizer(edm::ParameterSet const& conf);
-    ~PixelClusterizer();
-
-
-    bool setup(const PixelGeomDetUnit * pixDet);
-    void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit * pixDet, std::vector<SiPixelCluster> & output);
-
-private:
-    edm::ParameterSet conf_;
-    std::vector<SiPixelCluster> theClusters;
-    SiPixelArrayBuffer theBuffer;
-    int  nrows_;
-    int  ncols_;
-    uint32_t detid_;
-
-    void copy_to_buffer(DigiIterator begin, DigiIterator end);
-    void clear_buffer(DigiIterator begin, DigiIterator end);
-    SiPixelCluster make_cluster(const SiPixelCluster::PixelPos& pix);
 };
 
 #endif

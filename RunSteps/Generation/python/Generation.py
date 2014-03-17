@@ -48,7 +48,7 @@ process.maxEvents = cms.untracked.PSet(
 )
 
 # Input file (none as it will be created)
-process.source = cms.Source("EmptySource")
+process.source = cms.Source('EmptySource')
 
 # Options
 process.options = cms.untracked.PSet()
@@ -64,7 +64,7 @@ process.configurationMetadata = cms.untracked.PSet(
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 
 # Output
-process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
+process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
 	splitLevel = cms.untracked.int32(0),
 	eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
 	outputCommands = process.FEVTDEBUGEventContent.outputCommands,
@@ -79,9 +79,9 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
 )
 
 # Generator options
-process.genstepfilter.triggerConditions=cms.vstring("generation_step")
+process.genstepfilter.triggerConditions=cms.vstring('generation_step')
 
-process.generator = cms.EDProducer("FlatRandomPtGunProducer",
+process.generator = cms.EDProducer('FlatRandomPtGunProducer',
     PGunParameters = cms.PSet(
         MaxPt = cms.double(200.),
         MinPt = cms.double(1.),

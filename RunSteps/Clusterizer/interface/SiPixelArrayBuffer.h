@@ -18,8 +18,8 @@ public:
 	int columns() const { return ncols; }
 
 	bool inside(int row, int col) const;
-	void set_adc(int row, int col, int adc);
-	void set_adc(const SiPixelCluster::PixelPos&, int adc);
+	void set(int row, int col, int adc);
+	void set(const SiPixelCluster::PixelPos&, int adc);
 	int size() const { return pixel_vec.size(); }
 
 	int index(int row, int col) const { return col * nrows + row; }

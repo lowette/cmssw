@@ -1,7 +1,6 @@
 # Imports
 import os, sys
 import FWCore.ParameterSet.Config as cms
-from CondTools.SiPixel.SiPixelGainCalibrationService_cfi import *
 from Configuration.AlCa.GlobalTag import GlobalTag
 from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D
 
@@ -34,6 +33,7 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+process.load('RunSteps.Clusterizer.Configuration')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
@@ -70,12 +70,6 @@ process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
         filterName = cms.untracked.string(''),
         dataTier = cms.untracked.string('GEM-SIM-DIGI-CLU')
     )
-)
-
-# Clusterizer options
-process.siPixelClusters = cms.EDProducer('RunStepsClusterizer',
-    SiPixelGainCalibrationServiceParameters,
-    src = cms.InputTag('simSiPixelDigis')
 )
 
 # Steps

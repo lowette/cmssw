@@ -1,5 +1,7 @@
 #include "RunSteps/Clusterizer/interface/RunStepsClusterizer.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterizer.h"
+#include "RunSteps/Clusterizer/interface/WeightedMeans2D.h"
+#include "RunSteps/Clusterizer/interface/AdjacentHits.h"
 
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
@@ -25,30 +27,41 @@ namespace cms {
 
     RunStepsClusterizer::RunStepsClusterizer(edm::ParameterSet const& conf) :
         conf_(conf),
-        clusterizer_(new PixelClusterizer(conf)),
-        src_(conf.getParameter<edm::InputTag>( "src" )) {
-        const std::string alias ("siPixelClusters");
+        src_(conf.getParameter<edm::InputTag>("src")),
+        algorithm_(conf.getParameter<std::string>("algorithm")) {
+        const std::string alias("siPixelClusters");
         produces< edm::DetSetVector<SiPixelCluster> >().setBranchAlias(alias);
 
         std::cout << "------------------------------------------------------------" << std::endl
-                  << "-- Running RunSteps Clusterizer v0.0" << std::endl
+                  << "-- Running RunSteps Clusterizer v0.3" << std::endl
                   << "------------------------------------------------------------" << std::endl;
+
+        if (algorithm_.compare("WeightedMeans2D") == 0) {
+            std::cout << "Using the WeightedMeans2D algorithm" << std::endl;
+            clusterizer_ = new WeightedMeans2D(conf);
+        }
+        else if (algorithm_.compare("AdjacentHits") == 0) {
+            std::cout << "Using the AdjacentHits algorithm" << std::endl;
+            clusterizer_ = new AdjacentHits(conf);
+        }
+        else {
+            std::cout << "Using the default algorithm" << std::endl;
+            clusterizer_ = new AdjacentHits(conf);
+        }
     }
 
-    RunStepsClusterizer::~RunStepsClusterizer() {
-        delete clusterizer_;
-    }
+    RunStepsClusterizer::~RunStepsClusterizer() { }
 
     void RunStepsClusterizer::beginJob() {
         edm::LogInfo("SiPixelClusterizer") << "[SiPixelClusterizer::beginJob]";
     }
 
-    void RunStepsClusterizer::produce(edm::Event& e, const edm::EventSetup& es) {
+    void RunStepsClusterizer::produce(edm::Event& e, const edm::EventSetup& eventSetup) {
         edm::Handle< edm::DetSetVector<PixelDigi> >  input;
         e.getByLabel(src_, input);
 
         edm::ESHandle<TrackerGeometry> geom;
-        es.get<TrackerDigiGeometryRecord>().get(geom);
+        eventSetup.get<TrackerDigiGeometryRecord>().get(geom);
 
         // Global container for the clusters of each detector
         std::vector<edm::DetSet<SiPixelCluster> > clustersByDet;
