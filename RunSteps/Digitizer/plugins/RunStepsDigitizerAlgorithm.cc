@@ -115,17 +115,19 @@ using namespace sipixelobjects;
 //make_digis histograms
 TH1F h_signalInElectrons("signalInElec","signalInElec",1000,-100,50000);
 TH1F h_signalInElectronsNotZero("signalInElecNotZero","signalInElecNotZero",100,-100,50000);
+TH1F h_signalInElecAfterThreshold("signalInElecAfterThreshold","signalInElec after pixelThreshold is applied",1000,-100,50000);
 TH1F h_thePixelThresholdInE("pixelThreshold","pixelThreshold",1000,-20,5000);
 TH1F h_chan("channel","channel",200,-10,500);
-TH1F h_IPx("InteractionPointX_NotFilled","InteractionPointX - Not Filled",200,-150,150);
-TH1F h_IPy("InteractionPointY_NotFilled","InteractionPointY - Not Filled",200,-150,150);
 TH1F h_adc("ADC","ADC",200,0,400);
 TH1F h_iStarSecondHitInfo("HitInfo_NotFilled","HitInfo - Not Filled",200,-200,500);
-TH1F h_iStarSecondTrackIds("TrackIds _NotFilled","TrackIds - Not Filled",200,-100,500);
-TH1F h_digisSize("DigisSize","DigisSize",200,0,80);
-TH1F h_signalInElecTrackIdsConstr("signalInElecTrackIdsConstr","signalInElectrons when size of trackIds > 0",1000,-100,50000);
-TH1F h_sumSameChannel("sumSameChannel","sumSameChannel",200,0,300);
-TH1F h_fraction("fraction","fraction = sum_sameChannel/signalInElectrons",200,-10,20);
+TH1F h_iStarSecondTrackIds("TrackIds","size of TrackIds ",200,-1,10);
+TH1F h_digisSize("DigisSize","DigisSize",40,0,40);
+TH1F h_signalInElecTrackIdsConstr("signalInElecTrackIdsConstr","signalInElectrons when size of trackIds > 0",500,-100,50000);
+TH1F h_sumIndivAmpl("sumIndivAmpl","sumIndivAmpl for same trackIds",200,0,200000);
+TH1F h_fractionIndivAmplOverAmpl("fractionIndivAmplOverAmpl","fraction = sumIndivAmpl/TotalAmplitude",200,-1,5);
+TH1F h_RelativeContrIndivAmpl("RelativeContrIndivAmpl","Relative contribution of the last trackId to the sum of the individual amplitudes",200,-1,5); 
+TH1F h_SumIndivAmplFirstHalf("SumIndivAmplFirstHalf","SumIndivAmpl for first half of the trackIds",200,0,200000);
+TH1F h_SumIndivAmplSecondHalf("SumIndivAmplSecondHalf","SumIndivAmpl for second half of the trackIds",200,0,200000);
 
 //induce_signal histograms
 TH1F h_CloudRight("cloudRight","CloudRight",200,-20,20);
@@ -318,6 +320,10 @@ std::cout << " Value of theThresholdInE_FPix in constructor function : " << theT
 std::cout << " Value of theThresholdInE_BPix in constructor function : " << theThresholdInE_BPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
 std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << theThresholdInE_BPix_L1 << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
 
+std::cout << " Value of theThresholdSmearing_FPix in constructor function : " << theThresholdSmearing_FPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+std::cout << " Value of theThresholdSmearing_BPix in constructor function : " << theThresholdSmearing_BPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+std::cout << " Value of theThresholdSmearing_BPix_L1 in constructor function : " << theThresholdSmearing_BPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+
   LogInfo ("PixelDigitizer ") <<"RunStepsDigitizerAlgorithm constructed"
 			      <<"Configuration parameters:"
 			      << "Threshold/Gain = "
@@ -423,6 +429,14 @@ std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << t
 	//     }
 
 	  } // end if readparameters
+
+//std::cout << " Value of theThresholdInE_FPix in initCal function : " << theThresholdInE_FPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdInE_BPix in initCal function : " << theThresholdInE_BPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdInE_Pbix_L1 in initCal function : " << theThresholdInE_BPix_L1 << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+
+//std::cout << " Value of theThresholdSmearing_FPix in initCal function : " << theThresholdSmearing_FPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdSmearing_BPix in initCal function : " << theThresholdSmearing_BPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdSmearing_BPix_L1 in initCal function : " << theThresholdSmearing_BPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
 	  return calmap;
 	} // end initCal()
 
@@ -438,17 +452,19 @@ std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << t
 	  makeDigisDir->cd();
 	  h_signalInElectrons.Write();
 	  h_signalInElectronsNotZero.Write();
+          h_signalInElecAfterThreshold.Write();
 	  h_thePixelThresholdInE.Write();
 	  h_chan.Write();
-	  h_IPx.Write();
-	  h_IPy.Write();
 	  h_adc.Write();
 	  h_iStarSecondHitInfo.Write();
 	  h_iStarSecondTrackIds.Write();
 	  h_digisSize.Write();
 	  h_signalInElecTrackIdsConstr.Write();
-	  h_sumSameChannel.Write();
-	  h_fraction.Write();
+	  h_sumIndivAmpl.Write();
+	  h_fractionIndivAmplOverAmpl.Write();
+	  h_RelativeContrIndivAmpl.Write();
+	  h_SumIndivAmplFirstHalf.Write();
+	  h_SumIndivAmplSecondHalf.Write();
 
 	  induceSignalDir->cd();
 	  h_CloudRight.Write();
@@ -552,6 +568,8 @@ std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << t
 	      thePixelChipEfficiency[i] = 1.;  // chips = 100%
 	    }
 	  }
+
+
 	}
 
 	//=========================================================================
@@ -600,6 +618,14 @@ std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << t
 						 std::vector<PixelDigi>& digis,
 						 std::vector<PixelDigiSimLink>& simlinks, const TrackerTopology *tTopo) {
 
+//std::cout << " Value of theThresholdInE_FPix in digitize function : " << theThresholdInE_FPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdInE_BPix in digitize function : " << theThresholdInE_BPix << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdInE_Pbix_L1 in digitize function : " << theThresholdInE_BPix_L1 << " (should be equal to 4759.8 as defined in Configuration file) " << std::endl;
+
+//std::cout << " Value of theThresholdSmearing_FPix in digitize function : " << theThresholdSmearing_FPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdSmearing_BPix in digitize function : " << theThresholdSmearing_BPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+//std::cout << " Value of theThresholdSmearing_BPix_L1 in digitize function : " << theThresholdSmearing_BPix << " (should be equal to 204.0 as defined in Configuration file) " << std::endl;
+
 	   // Pixel Efficiency moved from the constructor to this method because
 	   // the information of the det are not available in the constructor
 	   // Effciency parameters. 0 - no inefficiency, 1-low lumi, 10-high lumi
@@ -619,30 +645,41 @@ std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << t
 
 	  float thePixelThresholdInE = 0.;
 
-	  if(theNoiseInElectrons>0.){
+	  if(theNoiseInElectrons>=0.){
 	    if(Sub_detid == PixelSubdetector::PixelBarrel){ // Barrel modules
 	      int lay = tTopo->pxbLayer(detID);
 	      if(addThresholdSmearing) {
 		if(lay==1) {
 		  thePixelThresholdInE = smearedThreshold_BPix_L1_->fire(); // gaussian smearing
-		} else {
+		  //std::cout << " In case of Barrel Layer 1 with addThresholdSmearing = true. PixelThreshold = " << thePixelThresholdInE << " | " << smearedThreshold_BPix_L1_->fire() << std::endl;
+		} 
+		else {
 		  thePixelThresholdInE = smearedThreshold_BPix_->fire(); // gaussian smearing
+                  //std::cout << " In case of Barrel with addThresholdSmearing = true. PixelThreshold = " << thePixelThresholdInE << " | " << smearedThreshold_BPix_->fire() << std::endl;
 		}
-	      } else {
+	      } 
+	      else {
 		if(lay==1) {
 		  thePixelThresholdInE = theThresholdInE_BPix_L1;
-	} else {
-	  thePixelThresholdInE = theThresholdInE_BPix; // no smearing
-	}
-      }
-    } else { // Forward disks modules
-      if(addThresholdSmearing) {
-	thePixelThresholdInE = smearedThreshold_FPix_->fire(); // gaussian smearing
-      } else {
-	thePixelThresholdInE = theThresholdInE_FPix; // no smearing
-      }
-    }
-  }
+                  //std::cout << " In case of Barrel Layer 1 without addThresholdSmearing = true. PixelThreshold = " << thePixelThresholdInE << " | " << theThresholdInE_BPix_L1 << std::endl;
+		} 
+		else {
+		  thePixelThresholdInE = theThresholdInE_BPix; // no smearing
+                  //std::cout << " In case of Barrel without addThresholdSmearing = true. PixelThreshold = " << thePixelThresholdInE << " | " << theThresholdInE_BPix << std::endl;
+		}
+      	     }	
+    	   } 
+	   else { // Forward disks modules
+      		if(addThresholdSmearing) {
+			thePixelThresholdInE = smearedThreshold_FPix_->fire(); // gaussian smearing
+                  //std::cout << " In case of Forward disks with addThresholdSmearing = true. PixelThreshold = " << thePixelThresholdInE << " | " << smearedThreshold_FPix_->fire() << std::endl;
+      		} 
+		else {
+			thePixelThresholdInE = theThresholdInE_FPix; // no smearing
+                  //std::cout << " In case of Forward disks without addThresholdSmearing = true. PixelThreshold = " << thePixelThresholdInE << " | " << theThresholdInE_FPix << std::endl;
+      		}
+    	  }	
+       }  
 
 
 #ifdef TP_DEBUG
@@ -670,6 +707,7 @@ std::cout << " Value of theThresholdInE_Pbix_L1 in constructor function : " << t
         module_killing_conf(detID);
       }
     }
+//std::cout << " Value of thePixelThresholdInE in end of digitize function : " << thePixelThresholdInE << std::endl;
 
     make_digis(thePixelThresholdInE, detID, digis, simlinks, tTopo);
 
@@ -956,7 +994,6 @@ void RunStepsDigitizerAlgorithm::induce_signal(const PSimHit& hit,
 			                      const PixelGeomDetUnit* pixdet,
                                               const std::vector<SignalPoint>& collection_points) {
 
-	//std::cout<< " In induce_signal part " << std::endl;
   // X  - Rows, Left-Right, 160, (1.6cm)   for barrel
   // Y  - Columns, Down-Up, 416, (6.4cm)
 
@@ -1224,8 +1261,6 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
                                            std::vector<PixelDigiSimLink>& simlinks,
 					   const TrackerTopology *tTopo) const  {
 
-	//std::cout << " In make_digis part " << std::endl;
-
 #ifdef TP_DEBUG
   LogDebug ("Pixel Digitizer") << " make digis "<<" "
 			       << " pixel threshold FPix" << theThresholdInE_FPix << " "
@@ -1235,45 +1270,33 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
 #endif
 
   // Loop over hit pixels
-
   signalMaps::const_iterator it = _signal.find(detID);
   if (it == _signal.end()) {
     return;
   }
-//std::cout << " Calling iterator of signalMaps (it). _signal is defined as a SignalMap and should access Amplitude information! " << std::endl;
 
   const signal_map_type& theSignal = (*it).second;
-//std::cout << " Calling (*it).second, which creates a signal_map_type " << std::endl;
-
-	int LoopCounter = 0;
   for (signal_map_const_iterator i = theSignal.begin(); i != theSignal.end(); ++i) {
 
-	//std::cout << " Looking at element : " << LoopCounter << " in the loop over the elements of theSignal " << std::endl;
-	LoopCounter++;
-    float signalInElectrons = (*i).second ;   // signal in electrons
-//std::cout << " Value of signalInElectrons : " << signalInElectrons << std::endl;
+    float signalInElectrons = (*i).second.ampl(); //Contains the amplitude (defined in .h file)
     h_signalInElectrons.Fill(signalInElectrons);
-    if(signalInElectrons != 0) h_signalInElectronsNotZero.Fill(signalInElectrons);
     h_thePixelThresholdInE.Fill(thePixelThresholdInE);
-	//std::cout << " signalInElectrons & pixelThreshold filled " << std::endl;
+    if(signalInElectrons != 0) 
+	h_signalInElectronsNotZero.Fill(signalInElectrons);
 
     // Do the miss calibration for calibration studies only.
     //if(doMissCalibrate) signalInElectrons = missCalibrate(signalInElectrons)
 
     // Do only for pixels above threshold
-
     if( signalInElectrons >= thePixelThresholdInE) { // check threshold
+	h_signalInElecAfterThreshold.Fill(signalInElectrons);
 
       int chan =  (*i).first;  // channel number
       std::pair<int,int> ip = PixelDigi::channelToPixel(chan);
       h_chan.Fill(chan);
-      //h_IPx.Fill( ip.first() );
-      //h_IPy.Fill(ip.second());
-//    int adc=0;  // ADC count as integer
 
       int adc=255;  // D.B.:changed for CBC
       h_adc.Fill(adc);
-	//std::cout << " chan & adc filled " << std::endl;
 
 /*     //D.B.
       // Do the miss calibration for calibration studies only.
@@ -1308,44 +1331,59 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
       // Load digis
       digis.emplace_back(ip.first, ip.second, adc);
       h_digisSize.Fill(digis.size());
-	//std::cout << " digisSize filled " << std::endl;
-//std::cout << " Calling (*it).second, which creates a signal_map_type " << std::endl;
-      //h_iStarSecondHitInfo.Fill((*i).second.hitInfo());
-      //h_iStarSecondTrackIds.Fill((*i).second.trackIds().size());
-//std::cout << " Calling (*it).second, which creates a signal_map_type " << std::endl;
-//	std::cout << " SecondTrackIds filled " << std::endl;
+
       if (makeDigiSimLinks_ && (*i).second.hitInfo()!=0) {
+	h_iStarSecondTrackIds.Fill((*i).second.trackIds().size());
+
         //digilink
         if((*i).second.trackIds().size()>0){
 	  h_signalInElecTrackIdsConstr.Fill(signalInElectrons);
           simlink_map simi;
 	  unsigned int il=0;
-	  for( std::vector<unsigned int>::const_iterator itid = (*i).second.trackIds().begin();
-	       itid != (*i).second.trackIds().end(); ++itid) {
+	  float sumIndivAmpl = 0;
+	  for( std::vector<unsigned int>::const_iterator itid = (*i).second.trackIds().begin();itid != (*i).second.trackIds().end(); ++itid) { //Loop over the different trackIds
 	    simi[*itid].push_back((*i).second.individualampl()[il]);
-	    il++;
-	  }
 
-	  //sum the contribution of the same trackid
-	  for( simlink_map::iterator simiiter=simi.begin();
-	       simiiter!=simi.end();
-	       simiiter++){
+            sumIndivAmpl +=(*i).second.individualampl()[il]; //Results in the same information as obtained from sum_samechannel! (il operator needed, but they all have the same information!)
 
-	    float sum_samechannel=0;
-	    for (unsigned int iii=0;iii<(*simiiter).second.size();iii++){
-	      sum_samechannel+=(*simiiter).second[iii];
+	    if(il == (*i).second.trackIds().size()-1){ //Look at some additional information for the sum of the individual amplitudes!
+		h_RelativeContrIndivAmpl.Fill( (*i).second.individualampl()[il]/sumIndivAmpl);
+		
+		if(il != 0){
+			float SumIndivAmplFirstHalf = 0;
+			float SumIndivAmplSecondHalf = 0;
+			for(unsigned int ii = 0; ii <= il; ii++){
+				if(ii < (il+1)/2)
+					SumIndivAmplFirstHalf += (*i).second.individualampl()[ii];
+				else
+					SumIndivAmplSecondHalf += (*i).second.individualampl()[ii];
+			}
+			h_SumIndivAmplFirstHalf.Fill(SumIndivAmplFirstHalf);  //Individual amplitude values are always repeated twice ...(maybe somewhere a double counter ...)
+			h_SumIndivAmplSecondHalf.Fill(SumIndivAmplSecondHalf);
+			if(SumIndivAmplFirstHalf != SumIndivAmplSecondHalf){
+				std::cout << " -------------------------------------- " << std::endl;
+				for(unsigned int ii = 0; ii<=il; ii++){
+					std::cout << " Individual amplitude value : " << (*i).second.individualampl()[ii] << " for counter " << ii << std::endl;
+				}
+			}
+		}
 	    }
-	    h_sumSameChannel.Fill(sum_samechannel);
-	    float fraction=sum_samechannel/(*i).second;
-	    h_fraction.Fill(fraction);
-	//std::cout << " sumSameChannel & fraction filled " << std::endl;
-	    if(fraction>1.) fraction=1.;
-	    simlinks.emplace_back((*i).first, (*simiiter).first, (*i).second.eventId(), fraction);
+	    il++; //Understand why you need this iterator!
 	  }
-        }
-      }
-    }
-  }
+	h_sumIndivAmpl.Fill(sumIndivAmpl);
+	float fractionIndivAmplOverAmpl = sumIndivAmpl/(*i).second.ampl();
+	h_fractionIndivAmplOverAmpl.Fill(fractionIndivAmplOverAmpl);
+	if(fractionIndivAmplOverAmpl > 1.){
+		fractionIndivAmplOverAmpl = 1.; //How can this fraction become larger than 1?
+	}
+
+	//Store simlinks information (contains channel, SimHit trackId, eventId & fraction of total charge coming from that trackId information )
+	simlinks.emplace_back( (*i).first, (*i).second.trackIds()[0] , (*i).second.eventId(), fractionIndivAmplOverAmpl );
+
+        }//size of trackIds is larger than 0
+      }//make digiSimLinks is true and hitInfo is not zero
+    }//signalInElectrons value is larger than threshold value
+  }//End of loop over theSignal
 }
 
 /***********************************************************************/
