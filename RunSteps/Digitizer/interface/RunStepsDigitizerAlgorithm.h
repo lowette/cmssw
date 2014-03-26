@@ -113,7 +113,7 @@ class RunStepsDigitizerAlgorithm  {
     // can be used as a float by convers.
     operator float() const { return _amp;}
     float ampl() const {return _amp;}
-    std::vector<float> individualampl() const {return _frac;}
+    std::vector<float> individualampl() const {return _frac;} //Change name of _frac to _indivAmpl!!
     const std::vector<unsigned int>& trackIds() const {
       return _hitInfo->trackIds_;
     }
