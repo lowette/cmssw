@@ -34,8 +34,9 @@ namespace cms {
   	private:
     		edm::ParameterSet conf_;
     		PixelClusterizer* clusterizer_;
-        edm::InputTag src_;
+            edm::InputTag src_;
     		std::string algorithm_;
+            bool clusterSimLink_;
   	};
 }
 

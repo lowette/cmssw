@@ -5,9 +5,11 @@
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
 #include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
+#include "SimDataFormats/TrackerDigiSimLink/interface/PixelDigiSimLink.h"
 
 #include "RunSteps/Clusterizer/interface/PixelClusterizer.h"
 #include "RunSteps/Clusterizer/interface/SiPixelArrayBuffer.h"
+#include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
 #include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationServiceBase.h"
 
@@ -19,6 +21,8 @@ class PixelClusterizer;
 
 class PixelGeomDetUnit;
 
+class PixelClusterSimLink;
+
 class WeightedMeans2D : public PixelClusterizer {
 
 public:
@@ -26,12 +30,11 @@ public:
 
     WeightedMeans2D(edm::ParameterSet const& conf);
 
-    bool setup(const PixelGeomDetUnit* pixDet);
-    void clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit* pixDet, std::vector<SiPixelCluster> & output);
+    void setup(const PixelGeomDetUnit* pixDet);
+    void clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, std::vector<SiPixelCluster> & clusters, std::vector<PixelClusterSimLink> & links);
 
 private:
     edm::ParameterSet conf_;
-    std::vector<SiPixelCluster> theClusters;
     SiPixelArrayBuffer hitArray;
     SiPixelArrayBuffer weightArray;
     SiPixelArrayBuffer maskedArray;
@@ -39,10 +42,9 @@ private:
     int ncols_;
     uint32_t detid_;
 
-    SiPixelCluster make_cluster(int row, int col);
     void copy_to_buffer(DigiIterator begin, DigiIterator end);
     void clear_buffer(DigiIterator begin, DigiIterator end);
-    unsigned int getLayerNumber(unsigned int & detid);
+    unsigned int getSimTrackId(const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, int channel);
 
     //
 

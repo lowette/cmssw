@@ -1,6 +1,7 @@
 #include "RunSteps/Clusterizer/interface/WeightedMeans2D.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterizer.h"
 #include "RunSteps/Clusterizer/interface/SiPixelArrayBuffer.h"
+#include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
 #include "Geometry/CommonTopologies/interface/PixelTopology.h"
@@ -9,6 +10,8 @@
 #include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
 #include "DataFormats/SiPixelDetId/interface/PXFDetId.h"
 #include "DataFormats/SiPixelDetId/interface/PixelBarrelName.h"
+#include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
+#include "DataFormats/SiPixelDigi/interface/PixelDigiCollection.h"
 
 #include "CondFormats/SiPixelObjects/interface/SiPixelGainCalibrationOffline.h"
 
@@ -23,14 +26,16 @@ WeightedMeans2D::WeightedMeans2D(edm::ParameterSet const& conf) :
     nrows_(0),
     ncols_(0),
     detid_(0) {
+
     // Create a 2D matrix for this detector
     hitArray.setSize(nrows_, ncols_);
+
     // Create a 2D matrix for the weight of the pixels
     weightArray.setSize(nrows_, ncols_);
 }
 
 // Change the size of the 2D matrix for this detector unit
-bool WeightedMeans2D::setup(const PixelGeomDetUnit* pixDet) {
+void WeightedMeans2D::setup(const PixelGeomDetUnit* pixDet) {
     const PixelTopology & topol = pixDet->specificTopology();
     nrows_ = topol.nrows();
     ncols_ = topol.ncolumns();
@@ -39,18 +44,16 @@ bool WeightedMeans2D::setup(const PixelGeomDetUnit* pixDet) {
         weightArray.setSize(nrows_, ncols_);
         maskedArray.setSize(nrows_, ncols_);
     }
-    return true;
 }
 
 // Go over the Digis and create clusters
-void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, const PixelGeomDetUnit* pixDet, std::vector<SiPixelCluster> & output) {
-	if (!setup(pixDet)) return;
+void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, std::vector<SiPixelCluster> & clusters, std::vector<PixelClusterSimLink> & links) {
 
-	detid_ = input.detId();
-    // unsigned int layer = getLayerNumber(detid_);
+    // Get the det ID
+	detid_ = pixelDigis.detId();
 
 	// Fill the 2D matrix with the ADC values
-  	copy_to_buffer(input.begin(), input.end());
+  	copy_to_buffer(pixelDigis.begin(), pixelDigis.end());
 
     // Compute the weight
     for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
@@ -80,62 +83,81 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & input, co
     }
 
     // Loop over the Digis
-    // cout << "--------------------" << endl;
     for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
+
         for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
+
             // If the Digi is active
             if (maskedArray(row, col)) {
+
                 // Try to form a cluster
-                SiPixelCluster cluster = make_cluster(row, col);
-                // Add the cluster to the list
-                output.push_back(cluster);
-                // cout << "- Pixel(" << layer << ", " << row << ", " << col << ")\t" << weightArray(row, col) << "\t" << maskedArray(row, col) << endl;
+
+                // Create an entry for the pixelClusterLink
+                PixelClusterSimLink link;
+
+                // Add the simtrack of the Digi to the link
+                link.addSimTrack(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+
+                // Get the weight of the pixel we are trying to form a cluster with
+                int weight = maskedArray(row, col);
+
+                // Set the value of this pixel to 0 as it is used to form a Digi
+                maskedArray.set(row, col, 0);
+
+                // Create a temporary cluster (this allows to them easily form a "real" cluster with CMSSW data format)
+                AccretionCluster acluster;
+
+                // Create a pixel entry for the cluster
+                SiPixelCluster::PixelPos firstpix(row, col);
+
+                // Add the first pixel to the cluster
+                acluster.add(firstpix, 255);
+
+                // Go over all the pixels in the cluster
+                while (!acluster.empty()) {
+
+                    // Get the current pixel we are looking at
+                    auto curInd = acluster.top();
+                    acluster.pop();
+
+                    // Look left and right
+                    for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
+
+                        // Look bottom and top
+                        for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
+
+                            // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
+                            if (maskedArray(r, c) == weight) {
+
+                                // Add it to the cluster
+                                SiPixelCluster::PixelPos newpix(r, c);
+                                if (!acluster.add(newpix, 255)) break;
+
+                                // And change its value
+                                maskedArray.set(newpix, 0);
+
+                                // Add the simtrack of the Digi to the link
+                                link.addSimTrack(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+                            }
+                        }
+                    }
+                }
+
+                // Form a "real" CMSSW cluster
+                SiPixelCluster cluster(acluster.isize, acluster.adc, acluster.x, acluster.y, acluster.xmin, acluster.ymin);
+
+                // Set the cluster of the link
+                link.setCluster(cluster);
+
+                // Add the cluster and the link to the list
+                clusters.push_back(cluster);
+                links.push_back(link);
             }
         }
     }
 
     // Reset the matrix
-	clear_buffer(input.begin(), input.end());
-}
-
-SiPixelCluster WeightedMeans2D::make_cluster(int row, int col) {
-    // Get the weight of the pixel we are trying to form a cluster with
-    int weight = maskedArray(row, col);
-
-    // Set the value of this pixel to 0 as it is used to form a Digi
-    maskedArray.set(row, col, 0);
-
-    // Create a temporary cluster (this allows to them easily form a "real" cluster with CMSSW data format)
-    AccretionCluster acluster;
-    // Create a pixel entry for the cluster
-    SiPixelCluster::PixelPos firstpix(row, col);
-    // Add the first pixel to the cluster
-    acluster.add(firstpix, 255);
-
-    // Go over all the pixels in the cluster
-    while (!acluster.empty()) {
-        // Get the current pixel we are looking at
-        auto curInd = acluster.top();
-        acluster.pop();
-
-        // Look left and right
-        for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
-            // Look bottom and top
-            for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
-                // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
-                if (maskedArray(r, c) == weight) {
-                    // Add it to the cluster
-                    SiPixelCluster::PixelPos newpix(r, c);
-                    if (!acluster.add(newpix, 255)) break;
-                    // And change its value
-                    maskedArray.set(newpix, 0);
-                }
-            }
-        }
-    }
-
-    // Form a "real" CMSSW cluster
-    return  SiPixelCluster(acluster.isize, acluster.adc, acluster.x, acluster.y, acluster.xmin, acluster.ymin);
+	clear_buffer(pixelDigis.begin(), pixelDigis.end());
 }
 
 void WeightedMeans2D::copy_to_buffer(DigiIterator begin, DigiIterator end) {
@@ -152,19 +174,19 @@ void WeightedMeans2D::clear_buffer(DigiIterator begin, DigiIterator end) {
     }
 }
 
-unsigned int WeightedMeans2D::getLayerNumber(unsigned int & detid) {
-    unsigned int layer = 999;
-    DetId theDetId(detid);
-    if (theDetId.det() == DetId::Tracker) {
-        if (theDetId.subdetId() == PixelSubdetector::PixelBarrel) {
-            PXBDetId pb_detId = PXBDetId(detid);
-            layer = pb_detId.layer();
+unsigned int WeightedMeans2D::getSimTrackId(const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, int channel) {
+    edm::DetSetVector<PixelDigiSimLink>::const_iterator isearch = pixelSimLinks->find(detid_);
+
+    unsigned int simTrkId(0);
+    if (isearch == pixelSimLinks->end()) return simTrkId;
+
+    edm::DetSet<PixelDigiSimLink> link_detset = (*pixelSimLinks)[detid_];
+    int iSimLink = 0;
+    for (edm::DetSet<PixelDigiSimLink>::const_iterator it = link_detset.data.begin(); it != link_detset.data.end(); it++,iSimLink++) {
+        if (channel == (int) it->channel()) {
+            simTrkId = it->SimTrackId();
+            break;
         }
-        else if (theDetId.subdetId() == PixelSubdetector::PixelEndcap) {
-            PXFDetId pf_detId = PXFDetId(detid);
-            layer = 100 * pf_detId.side() + pf_detId.disk();
-        }
-        else std::cout << ">>> Invalid subdetId() = " << theDetId.subdetId() << std::endl;
     }
-    return layer;
+    return simTrkId;
 }

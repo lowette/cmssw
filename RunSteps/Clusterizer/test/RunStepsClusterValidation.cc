@@ -1,5 +1,7 @@
 #include <memory>
 
+#include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
+
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -65,6 +67,8 @@ private:
         TH1F* NumberOfClusterPixel;
         TH1F* NumberOfClusterStrip;
 
+        TH1F* NumberOfClustersLink;
+
         THStack* ClustersSizeSource;
         TH1F* clusterSizePixel;
         TH1F* clusterSizeStrip;
@@ -100,7 +104,7 @@ RunStepsClusterValidation::RunStepsClusterValidation(const ParameterSet& iConfig
     src_ = iConfig.getParameter<InputTag>("src");
 
     std::cout << "------------------------------------------------------------" << std::endl
-              << "-- Running RunSteps ClusterValidation v0.1" << std::endl
+              << "-- Running RunSteps ClusterValidation v0.2" << std::endl
               << "------------------------------------------------------------" << std::endl;
 }
 
@@ -115,6 +119,10 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     // Get the clusters
     Handle< DetSetVector<SiPixelCluster> > pixelClusters;
     iEvent.getByLabel(src_, pixelClusters);
+
+    // Get the links
+    Handle< DetSetVector<PixelClusterSimLink> > clusterLinks;
+    iEvent.getByLabel(src_, clusterLinks);
 
     // Get the geometry
     ESHandle<TrackerGeometry> geomHandle;
@@ -211,6 +219,36 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         // Strip module
         else if (topol.ncolumns() == 2) iPos->second.NumberOfClusterStrip->Fill(nClusters);
     }
+
+    // Go over the links
+    DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
+    for (DSViterLinks = clusterLinks->begin(); DSViterLinks != clusterLinks->end(); DSViterLinks++) {
+
+        // Get the detector unit's id
+        unsigned int rawid = DSViterLinks->detId();
+        unsigned int layer = getLayerNumber(rawid);
+
+        // Create histograms for the layer if they do not yet exist
+        std::map<unsigned int, ClusterHistos>::iterator iPos = layerHistoMap.find(layer);
+        if (iPos == layerHistoMap.end()) {
+            createLayerHistograms(layer);
+            iPos = layerHistoMap.find(layer);
+        }
+
+        unsigned int nLinks = 0;
+
+        // Go over the links in the detector unit
+        DetSet<PixelClusterSimLink>::const_iterator link;
+        for (link = DSViterLinks->data.begin(); link != DSViterLinks->data.end(); ++link) {
+            /* Use the link */
+            nLinks++;
+            PixelClusterSimLink* li = (PixelClusterSimLink*) & (*link);
+            cout << li->getSimTracks().size() << endl;
+        }
+
+        iPos->second.NumberOfClustersLink->Fill(nLinks);
+
+    }
 }
 
 void RunStepsClusterValidation::endJob() { }
@@ -261,6 +299,13 @@ void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
     local_histos.NumberOfClustersSource->Add(local_histos.NumberOfClusterPixel);
     local_histos.NumberOfClustersSource->Add(local_histos.NumberOfClusterStrip);
 
+
+    histoName.str("");
+    histoName << "Number_of_Clusters_Link" << tag.c_str() <<  id;
+    local_histos.NumberOfClustersLink = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+
+
+    histoName.str("");
     histoName << "ClusterSize" << tag.c_str() <<  id;
     local_histos.clusterSize = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 50, 0., 50.);
     histoName.str("");
