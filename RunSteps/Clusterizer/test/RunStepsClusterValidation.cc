@@ -1,5 +1,8 @@
 #include <memory>
 
+#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
+#include "SimDataFormats/Track/interface/SimTrackContainer.h"
+#include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -42,6 +45,8 @@
 #include <TH1F.h>
 #include <THStack.h>
 #include <TProfile.h>
+
+int verbose=2;
 
 using namespace std;
 using namespace edm;
@@ -115,6 +120,19 @@ void RunStepsClusterValidation::beginJob() {
 }
 
 void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& iSetup) {
+
+    // Simulated information
+    // SimHit
+    Handle<PSimHitContainer> simHits;
+    iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits);
+
+    // SimTrack
+    Handle<SimTrackContainer> simTracks;
+    iEvent.getByLabel("g4SimHits",simTracks);
+
+    // SimVertex
+    Handle<SimVertexContainer> simVertices;
+    iEvent.getByLabel("g4SimHits", simVertices);
 
     // Get the clusters
     Handle< DetSetVector<SiPixelCluster> > pixelClusters;
@@ -238,12 +256,41 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         unsigned int nLinks = 0;
 
         // Go over the links in the detector unit
+	std::vector< unsigned int > simTrackID;
         DetSet<PixelClusterSimLink>::const_iterator link;
+	PixelClusterSimLink li;
+	uint trkID=-1;
+	uint sizeLink=0;
+	bool combinatoric=false;
+
+	if(verbose>1) cout << "### SimLinks ###" << endl;
+
         for (link = DSViterLinks->data.begin(); link != DSViterLinks->data.end(); ++link) {
-            /* Use the link */
+            // Use the link
+	    combinatoric=false;
             nLinks++;
-            PixelClusterSimLink* li = (PixelClusterSimLink*) & (*link);
-            cout << li->getSimTracks().size() << endl;
+	    li = *link;
+	    simTrackID    = li.getSimTracks();
+	    sizeLink      = simTrackID.size();
+	    if(verbose>1) cout << sizeLink << " SimTracks | " ;
+
+	    for(uint i=0 ; i<sizeLink ; i++) {	      
+	      if(verbose>1) cout << simTrackID[i] << " | " ;
+	      if(i==0) trkID=simTrackID[i];
+	      else if(simTrackID[i]!=trkID) combinatoric=true; 
+	    }
+	    if(combinatoric && verbose>1) cout << " COMBINATORIC !!! ";
+	    cout << endl;
+
+	    // Find SimHit corresponding to SimTrack matched to cluster
+	    // I should build a map <SimTrack ID , vector<SimHit> (all layers) >
+	    /*
+	    if(!combinatoric) {
+	      for(
+
+		  }
+	    */
+
         }
 
         iPos->second.NumberOfClustersLink->Fill(nLinks);
