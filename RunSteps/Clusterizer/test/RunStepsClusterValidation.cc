@@ -149,7 +149,22 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     iSetup.get<TrackerDigiGeometryRecord>().get(geomHandle);
     const TrackerGeometry* tkGeom = &(*geomHandle);
 
+    ////////////////////////////////
+    // MAP SIM HITS TO SIM TRACKS //
+    ////////////////////////////////
+    vector<PSimHit> matched_hits;
+    map<unsigned int, vector<PSimHit> > map_hits; // <sim track id, <vector simhits> >
+
+    for (PSimHitContainer::const_iterator iHit = simHits->begin(); iHit != simHits->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( (*iHit) );
+    }
+
+    //////////////////////////////////
+    // LOOP OVER CLUSTER COLLECTION //
+    //////////////////////////////////
+
     // Go over the detector units
+
     DetSetVector<SiPixelCluster>::const_iterator DSViter;
     for (DSViter = pixelClusters->begin(); DSViter != pixelClusters->end(); DSViter++) {
         // Clusters
@@ -240,11 +255,15 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         else if (topol.ncolumns() == 2) iPos->second.NumberOfClusterStrip->Fill(nClusters);
     }
 
-    // Loop over the links
+    /////////////////////////////
+    // LOOP OVER CLUSTER LINKS //
+    /////////////////////////////
+
     DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
-    DetSet<PixelClusterSimLink>::const_iterator link;
+    DetSet<PixelClusterSimLink>::const_iterator iterLinks;
     std::vector< unsigned int > simTrackID;
-    PixelClusterSimLink li;
+    PixelClusterSimLink link;
+    SiPixelCluster cluster;
 
     unsigned int trkID=-1;
     unsigned int sizeLink=0;
@@ -256,7 +275,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     bool combinatoric=false;
 
     Local3DPoint pos_hit;
-    double x_hit=0,y_hit=0,z_hit=0;
+    double x_hit=0,y_hit=0,z_hit=0,x_cl=0,y_cl=0,z_cl=0;
 
     for (DSViterLinks = clusterLinks->begin(); DSViterLinks != clusterLinks->end(); DSViterLinks++) {
 
@@ -277,14 +296,19 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 
         // Go over the links in the detector unit
 	if(verbose>1) cout << "### SimLinks ###" << endl;
-        for (link = DSViterLinks->data.begin(); link != DSViterLinks->data.end(); ++link) {
+        for (iterLinks = DSViterLinks->data.begin(); iterLinks != DSViterLinks->data.end(); ++iterLinks) {
 
-            // Use the link
+            // Link informations
 	    combinatoric=false;
             nLinks++;
-	    li = *link;
-	    simTrackID    = li.getSimTracks();
-	    sizeLink      = simTrackID.size();
+	    link = *iterLinks;
+	    simTrackID = link.getSimTracks();
+	    sizeLink   = simTrackID.size();
+
+	    // Cluster informations
+	    cluster = link.getCluster();
+	    x_cl    = cluster.x();
+	    y_cl    = cluster.y();
 
 	    if(verbose>1) cout << sizeLink << " SimTracks | " ;
 
@@ -298,36 +322,36 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	    cout << endl;
 
 	    // Find SimHit corresponding to SimTrack matched to cluster
-	    // I should build a map <SimTrack ID , vector<SimHit> (all layers) >
-
 	    if(!combinatoric) {
 
-	      for (PSimHitContainer::const_iterator iHit = simHits->begin(); iHit != simHits->end(); ++iHit) {
+	      matched_hits = map_hits[trkID];
 
-		if (trkID == iHit->trackId() ) { 
-		  simh_detid = iHit->detUnitId();
-		  if(simh_detid!=rawid) continue;
+	      if(verbose>1) cout << "#### Track ID = " << trkID << endl;
 
-		  simh_layer = getLayerNumber( simh_detid );
-		  pos_hit    = iHit->localPosition();
-		  x_hit      = pos_hit.x();
-		  y_hit      = pos_hit.y();
-		  z_hit      = pos_hit.z();
+	      for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
 
-		  if(verbose>1) cout << "## TrkId=" << trkID 
-				     << " ("        << iHit->trackId() << ")"
-				     << " s_id="    << simh_detid
-				     << " s_lay="   << simh_layer 
-				     << " c_id="    << rawid
-				     << " c_lay="   << layer
-				     << " (" << x_hit  << " , " << y_hit << " , " << z_hit << ")"
-				     << endl;
-		}
+		simh_detid = matched_hits[iH].detUnitId();
+		if(simh_detid!=rawid) continue;
+		
+		simh_layer = getLayerNumber( simh_detid );
+		pos_hit    = matched_hits[iH].localPosition();
+		x_hit      = pos_hit.x();
+		y_hit      = pos_hit.y();
+		z_hit      = pos_hit.z();
+		
+		if(verbose>1) cout << "##### SimHit #" << iH
+				   << " s_id="    << simh_detid
+				   << " s_lay="   << simh_layer 
+				   << " c_lay="   << layer
+				   << " s(" << x_hit << " , " << y_hit << " , " << z_hit << ")"
+				   << " c(" << x_cl  << " , " << y_cl  << " , " << z_cl  << ")"
+				   << endl;
+		
 	      }
 	    }
-
+	    
         }
-
+	
         iPos->second.NumberOfClustersLink->Fill(nLinks);
 
     }
