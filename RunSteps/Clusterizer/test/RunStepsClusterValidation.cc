@@ -275,7 +275,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     bool combinatoric=false;
 
     Local3DPoint pos_hit;
-    double x_hit=0,y_hit=0,z_hit=0,x_cl=0,y_cl=0,z_cl=0;
+    double x_hit=0,y_hit=0,z_hit=0,x_cl=0,y_cl=0;
 
     for (DSViterLinks = clusterLinks->begin(); DSViterLinks != clusterLinks->end(); DSViterLinks++) {
 
@@ -286,6 +286,14 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         // Get the detector unit's id
         rawid = DSViterLinks->detId();
         layer = getLayerNumber(rawid);
+        DetId detId(rawid);
+
+        // Get the geometry of the tracker
+        const GeomDetUnit* geomDetUnit = tkGeom->idToDetUnit(detId);
+        //const PixelGeomDetUnit* theGeomDet = dynamic_cast<const PixelGeomDetUnit*>(geomDetUnit);
+        //const PixelTopology & topol = theGeomDet->specificTopology();
+
+        if (!geomDetUnit) break;
 
         // Create histograms for the layer if they do not yet exist
         std::map<unsigned int, ClusterHistos>::iterator iPos = layerHistoMap.find(layer);
@@ -309,6 +317,9 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	    cluster = link.getCluster();
 	    x_cl    = cluster.x();
 	    y_cl    = cluster.y();
+            MeasurementPoint mp(x_cl, y_cl);
+            LocalPoint lPos  = geomDetUnit->topology().localPosition(mp);
+            //GlobalPoint gPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
 
 	    if(verbose>1) cout << sizeLink << " SimTracks | " ;
 
@@ -343,8 +354,9 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 				   << " s_id="    << simh_detid
 				   << " s_lay="   << simh_layer 
 				   << " c_lay="   << layer
-				   << " s(" << x_hit << " , " << y_hit << " , " << z_hit << ")"
-				   << " c(" << x_cl  << " , " << y_cl  << " , " << z_cl  << ")"
+				   << " s("   << x_hit    << " , " << y_hit    << " , " << z_hit    << ")"
+				   << " c_l(" << lPos.x() << " , " << lPos.y() << " , " << "n/a"    << ")"
+		  //<< " c_g(" << gPos.x() << " , " << gPos.y() << " , " << gPos.z() << ")"
 				   << endl;
 		
 	      }
