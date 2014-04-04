@@ -1,5 +1,8 @@
 #include <memory>
 
+#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
+#include "SimDataFormats/Track/interface/SimTrackContainer.h"
+#include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -43,6 +46,8 @@
 #include <THStack.h>
 #include <TProfile.h>
 
+int verbose=2;
+
 using namespace std;
 using namespace edm;
 
@@ -55,6 +60,8 @@ public:
     virtual void beginJob();
     virtual void analyze(const Event&, const EventSetup&);
     virtual void endJob();
+    int isPrimary(const SimTrack& simTrk, Handle<PSimHitContainer>& simHits);
+    int isPrimary(const SimTrack& simTrk, const PSimHit& simHit);
 
 private:
     TH2F* trackerLayout_;
@@ -115,6 +122,19 @@ void RunStepsClusterValidation::beginJob() {
 }
 
 void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& iSetup) {
+
+    // Simulated information
+    // SimHit
+    Handle<PSimHitContainer> simHits;
+    iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits);
+
+    // SimTrack
+    Handle<SimTrackContainer> simTracks;
+    iEvent.getByLabel("g4SimHits",simTracks);
+
+    // SimVertex
+    Handle<SimVertexContainer> simVertices;
+    iEvent.getByLabel("g4SimHits", simVertices);
 
     // Get the clusters
     Handle< DetSetVector<SiPixelCluster> > pixelClusters;
@@ -220,13 +240,33 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         else if (topol.ncolumns() == 2) iPos->second.NumberOfClusterStrip->Fill(nClusters);
     }
 
-    // Go over the links
+    // Loop over the links
     DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
+    DetSet<PixelClusterSimLink>::const_iterator link;
+    std::vector< unsigned int > simTrackID;
+    PixelClusterSimLink li;
+
+    unsigned int trkID=-1;
+    unsigned int sizeLink=0;
+    unsigned int rawid=0;
+    unsigned int layer=0;
+    unsigned int simh_detid=0;
+    unsigned int simh_layer=0;
+    unsigned int nLinks = 0;
+    bool combinatoric=false;
+
+    Local3DPoint pos_hit;
+    double x_hit=0,y_hit=0,z_hit=0;
+
     for (DSViterLinks = clusterLinks->begin(); DSViterLinks != clusterLinks->end(); DSViterLinks++) {
 
+        trkID=-1;
+	sizeLink=0;
+	combinatoric=false;
+
         // Get the detector unit's id
-        unsigned int rawid = DSViterLinks->detId();
-        unsigned int layer = getLayerNumber(rawid);
+        rawid = DSViterLinks->detId();
+        layer = getLayerNumber(rawid);
 
         // Create histograms for the layer if they do not yet exist
         std::map<unsigned int, ClusterHistos>::iterator iPos = layerHistoMap.find(layer);
@@ -235,20 +275,63 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
             iPos = layerHistoMap.find(layer);
         }
 
-        unsigned int nLinks = 0;
-
         // Go over the links in the detector unit
-        DetSet<PixelClusterSimLink>::const_iterator link;
+	if(verbose>1) cout << "### SimLinks ###" << endl;
         for (link = DSViterLinks->data.begin(); link != DSViterLinks->data.end(); ++link) {
-            /* Use the link */
+
+            // Use the link
+	    combinatoric=false;
             nLinks++;
-            PixelClusterSimLink* li = (PixelClusterSimLink*) & (*link);
-            cout << li->getSimTracks().size() << endl;
+	    li = *link;
+	    simTrackID    = li.getSimTracks();
+	    sizeLink      = simTrackID.size();
+
+	    if(verbose>1) cout << sizeLink << " SimTracks | " ;
+
+	    for(unsigned int i=0 ; i<sizeLink ; i++) {	      
+	      if(verbose>1) cout << simTrackID[i] << " | " ;
+	      if(i==0) trkID=simTrackID[i];
+	      else if(simTrackID[i]!=trkID) combinatoric=true; 
+	    }
+
+	    if(combinatoric && verbose>1) cout << " COMBINATORIC !!! ";
+	    cout << endl;
+
+	    // Find SimHit corresponding to SimTrack matched to cluster
+	    // I should build a map <SimTrack ID , vector<SimHit> (all layers) >
+
+	    if(!combinatoric) {
+
+	      for (PSimHitContainer::const_iterator iHit = simHits->begin(); iHit != simHits->end(); ++iHit) {
+
+		if (trkID == iHit->trackId() ) { 
+		  simh_detid = iHit->detUnitId();
+		  if(simh_detid!=rawid) continue;
+
+		  simh_layer = getLayerNumber( simh_detid );
+		  pos_hit    = iHit->localPosition();
+		  x_hit      = pos_hit.x();
+		  y_hit      = pos_hit.y();
+		  z_hit      = pos_hit.z();
+
+		  if(verbose>1) cout << "## TrkId=" << trkID 
+				     << " ("        << iHit->trackId() << ")"
+				     << " s_id="    << simh_detid
+				     << " s_lay="   << simh_layer 
+				     << " c_id="    << rawid
+				     << " c_lay="   << layer
+				     << " (" << x_hit  << " , " << y_hit << " , " << z_hit << ")"
+				     << endl;
+		}
+	      }
+	    }
+
         }
 
         iPos->second.NumberOfClustersLink->Fill(nLinks);
 
     }
+
 }
 
 void RunStepsClusterValidation::endJob() { }
@@ -411,6 +494,35 @@ unsigned int RunStepsClusterValidation::getLayerNumber(unsigned int & detid) {
         else std::cout << ">>> Invalid subdetId() = " << theDetId.subdetId() << std::endl;
     }
     return layer;
+}
+
+int RunStepsClusterValidation::isPrimary(const SimTrack& simTrk, Handle<PSimHitContainer>& simHits) {
+    int result = -1;
+    unsigned int trkId = simTrk.trackId();
+    if (trkId > 0) {
+        int vtxIndx = simTrk.vertIndex();
+        for (PSimHitContainer::const_iterator iHit = simHits->begin(); iHit != simHits->end(); ++iHit) {
+            if (trkId == iHit->trackId()) {
+                int ptype = iHit->processType();
+                if ((vtxIndx == 0) && (ptype == 2 || ptype == 7 || ptype == 9 || ptype == 11 || ptype == 15)) result = 1;
+                else result = 0;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+int RunStepsClusterValidation::isPrimary(const SimTrack& simTrk, const PSimHit& simHit) {
+    int result = -1;
+    unsigned int trkId = simTrk.trackId();
+    if (trkId > 0) {
+        int vtxIndx = simTrk.vertIndex();
+        int ptype = simHit.processType();
+        if ((vtxIndx == 0) && (ptype == 2 || ptype == 7 || ptype == 9 || ptype == 11 || ptype == 15)) result = 1;
+        else result = 0;
+    }
+    return result;
 }
 
 DEFINE_FWK_MODULE(RunStepsClusterValidation);
