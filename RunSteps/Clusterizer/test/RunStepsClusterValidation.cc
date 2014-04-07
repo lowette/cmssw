@@ -78,6 +78,8 @@ private:
         TH1F* NumberOfClustersLink;
 
         TH1F* NumberOfMatchedHits[4];
+        TH1F* h_dx_Truth;
+        TH1F* h_dy_Truth;
 
         THStack* ClustersSizeSource;
         TH1F* clusterSizePixel;
@@ -294,10 +296,12 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     // matching quantities
     //
     // all hits ; type-2 hits ; primary hits ; secondary hits
-    int nMatchedHits[nMatch]={0,0,0,0}; 
+    int    nMatchedHits[nMatch]={0,0,0,0}; 
     //
     Local3DPoint pos_hit;
-    double x_hit=0,y_hit=0,z_hit=0,x_cl=0,y_cl=0;
+    double x_hit=0,y_hit=0,z_hit=0,x_cl=0,y_cl=0,dx=0,dy=0;
+    bool found_hits=false;
+    bool fill_dtruth=false;
 
     if(verbose>1) cout << endl << "-- Enter loop over links" << endl;
 
@@ -384,7 +388,9 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 		cout << endl;
 	      }
 
-	      bool found_hits=false;
+	      found_hits=false;
+	      fill_dtruth=false;
+
 	      for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
 		
 		simh_detid = matched_hits[iH].detUnitId();
@@ -399,7 +405,14 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 		z_hit      = pos_hit.z();
 
 		nMatchedHits[0]++ ;
-		if(simh_type==2) nMatchedHits[1]++ ;
+		if(simh_type==2) {
+		  nMatchedHits[1]++ ;
+		  dx = x_hit - lPos.x();
+		  dy = y_hit - lPos.y();
+		  if(fill_dtruth==true) fill_dtruth=false; // eliminates cases with several type-2 hits
+		  fill_dtruth=true; // toggle filling of the histo only when a type-2 hit is found
+		}
+
 		if(simh_type == 2 || simh_type == 7 || simh_type == 9 || simh_type == 11 || simh_type == 15)
 		  nMatchedHits[2]++ ;
 		else 
@@ -418,9 +431,15 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	      if(!found_hits && verbose>1) cout << "----- FOUND NO MATCHED HITS" << endl;
 	    }
 
+	    // Number of matched hits (per type)
 	    for(int iM=0 ; iM<nMatch ; iM++)
 	      iPos->second.NumberOfMatchedHits[iM]-> Fill(nMatchedHits[iM]);
 
+	    // Position resolution
+	    if(fill_dtruth) {
+	      iPos->second.h_dx_Truth->Fill(dx);
+	      iPos->second.h_dy_Truth->Fill(dy);
+	    }
         }
 
         iPos->second.NumberOfClustersLink         -> Fill(nLinks);
@@ -488,6 +507,14 @@ void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
       histoName << "NumberOfMatchedHits" << name_match[iM] << tag.c_str() <<  id;
       local_histos.NumberOfMatchedHits[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
     }
+
+    histoName.str("");
+    histoName << "DeltaX_simhit_cluster" << tag.c_str() <<  id;
+    local_histos.h_dx_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
+
+    histoName.str("");
+    histoName << "DeltaY_simhit_cluster" << tag.c_str() <<  id;
+    local_histos.h_dy_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
 
     // Cluster topology
 
