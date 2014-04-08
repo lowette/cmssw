@@ -56,6 +56,9 @@
 #include <THStack.h>
 #include <TProfile.h>
 
+int verbose=2;
+const int nMatch=4;
+
 using namespace std;
 using namespace edm;
 
@@ -101,6 +104,10 @@ private:
         TH1F* NumberOfDigisSecondary; // Primary
         // TH1F* NumberOfDigisPixel; // Pixel
         // TH1F* NumberOfDigisStrip; // Strip
+
+        TH1F* NumberOfMatchedHits[4];
+        TH1F* h_dx_Truth;
+        TH1F* h_dy_Truth;
 
         TH1F* DigiCharge;
         // TH1F* DigiChargePrimary;
@@ -241,13 +248,21 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
     const TrackerGeometry*  tkGeom = &(*geomHandle);
 
     // Get PSimHits
-    Handle<PSimHitContainer> simHits;
-    iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits);
+    if(verbose>1) cout << "- Getting SimHits" << endl << "-- TrackerHitsPixelBarrelLowTof" << endl;
+    Handle<PSimHitContainer> simHits_B;
+    iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits_B);
 
+    if(verbose>1) cout << "-- TrackerHitsPixelEndcapLowTof" << endl;
+    Handle<PSimHitContainer> simHits_E;
+    iEvent.getByLabel("g4SimHits","TrackerHitsPixelEndcapLowTof" ,simHits_E);
+
+    // SimTracks
+    if(verbose>1) cout << "- Getting SimTracks" << endl;
     Handle<SimTrackContainer> simTracks;
     iEvent.getByLabel("g4SimHits",simTracks);
 
-    // SimVertex
+    // SimVertices
+    if(verbose>1) cout << "- Getting SimVertices" << endl;
     Handle<SimVertexContainer> simVertices;
     iEvent.getByLabel("g4SimHits", simVertices);
 
@@ -255,11 +270,53 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
     vector<int> processTypes;
 
+    ////////////////////////////////
+    // MAP SIM HITS TO SIM TRACKS //
+    ////////////////////////////////
+
+    // all hits ; type-2 hits ; primary hits ; secondary hits
+    int    nMatchedHits[nMatch]={0,0,0,0}; 
+    //
+    Local3DPoint pos_hit;
+    double x_hit=0,y_hit=0,z_hit=0,/*x_cl=0,y_cl=0,*/dx=0,dy=0;
+    bool found_hits=false;
+    bool fill_dtruth=false;
+    //
+    // cluster and hit informations
+    //unsigned int trkID=-1;
+    //unsigned int sizeLink=0;
+    //unsigned int rawid=0;
+    //unsigned int layer=0;
+    unsigned int simh_detid=0;
+    unsigned int simh_layer=0;
+    int          simh_type=0;
+    //unsigned int nLinks = 0;
+    //bool combinatoric=false;
+
+    vector<PSimHit> matched_hits;
+    map<unsigned int, vector<PSimHit> > map_hits; // <sim track id, <vector simhits> >
+
+    // Fill the map
+    int nHits=0;
+    for (PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( (*iHit) );
+      nHits++ ;
+    }
+    for (PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( (*iHit) );
+      nHits++ ;
+    }
+
+    if(verbose>1) cout << endl << "-- Number of SimHits in the event : " << nHits << endl;
+
     // Loop over Sim Tracks and Fill relevant histograms
     int nTracks = 0;
 
     for (SimTrackContainer::const_iterator simTrkItr = simTracks->begin(); simTrkItr != simTracks->end(); ++simTrkItr) {
-        int type = isPrimary((*simTrkItr), simHits);
+
+        int type = isPrimary((*simTrkItr), simHits_B);
+        if(type==-1) type = isPrimary((*simTrkItr), simHits_E);
+
         processTypes.push_back(type);
 
         // remove neutrinos
@@ -341,10 +398,12 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
             // Get the Digi position
             MeasurementPoint mp(row + 0.5, col + 0.5 );
+	    LocalPoint lPos;
+	    GlobalPoint pdPos;
 
             if (geomDetUnit) {
-                LocalPoint lPos = geomDetUnit->topology().localPosition(mp);
-                GlobalPoint pdPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
+                lPos  = geomDetUnit->topology().localPosition(mp);
+                pdPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
 
                 // Fill some histograms
                 iPos->second.LocalPosition->Fill(lPos.x(), lPos.y());
@@ -384,6 +443,87 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
             }
 
             nDigiA++;
+
+	    // Get matched hits
+	    if(verbose>2) cout << "--- Getting matched hits" << endl;
+	    matched_hits = map_hits[simTkId];
+
+	    if(verbose>1) {
+	      cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
+	      if(matched_hits.size()!=0) cout << " ids(" ;
+	      
+	      // printout list of SimHits matched to the SimTrack
+	      for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
+		cout << matched_hits[iH].detUnitId() ;
+		if(iH<matched_hits.size()-1) cout << "," ;
+		else cout << ")" ;
+	      }
+	      cout << endl;
+	    }
+	    
+	    // cluster matching quantities
+	    for(int iM=0 ; iM<nMatch ; iM++)
+	      nMatchedHits[iM] = 0;
+
+	    // Loop over matched SimHits
+	    if(verbose>2) cout << "--- start looping over matched hits" << endl;
+	    for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
+	      
+	      if(verbose>2) cout << "---- iteration #" << iH << endl;
+	      
+	      // Consider only SimHits with same DetID as current cluster
+	      simh_detid = matched_hits[iH].detUnitId();
+	      if(simh_detid!=rawid) continue;
+	      else found_hits=true;
+	      
+	      // Map current cluster to current SimHit
+	      //mapHitCluster[matched_hits[iH]].push_back(cluster);
+	      
+	      simh_layer = getLayerNumber( simh_detid );
+	      simh_type  = matched_hits[iH].processType();
+	      pos_hit    = matched_hits[iH].localPosition();
+	      x_hit      = pos_hit.x();
+	      y_hit      = pos_hit.y();
+	      z_hit      = pos_hit.z();
+	      
+	      nMatchedHits[0]++ ;
+	      if(simh_type==2) {
+		nMatchedHits[1]++ ;
+		dx = x_hit - lPos.x();
+		dy = y_hit - lPos.y();
+		if(fill_dtruth==true) fill_dtruth=false; // eliminates cases with several type-2 hits
+		fill_dtruth=true; // toggle filling of the histo only when a type-2 hit is found
+	      }
+	      
+	      if(simh_type == 2 || simh_type == 7 || simh_type == 9 || simh_type == 11 || simh_type == 15)
+		nMatchedHits[2]++ ;
+	      else 
+		nMatchedHits[3]++ ;
+	      
+	      if(verbose>1) cout << "----- SimHit #" << iH
+				 << " type="    << simh_type
+		//<< " s_id="    << simh_detid
+				 << " s_lay="   << simh_layer 
+				 << " c_lay="   << layer
+				 << " s("   << x_hit    << " , " << y_hit    << " , " << z_hit    << ")"
+		//<< " c_g(" << gPos.x() << " , " << gPos.y() << " , " << gPos.z() << ")"
+				 << endl;
+	      
+	    } // end loop over matched SimHits
+
+	    // Number of matched hits (per type)
+	    if(verbose>2) cout << "--- Filling NumberOfMatchedHits histograms" << endl;
+	    for(int iM=0 ; iM<nMatch ; iM++)
+	      iPos->second.NumberOfMatchedHits[iM]-> Fill(nMatchedHits[iM]);
+	    
+	    // Position resolution
+	    if(fill_dtruth) {
+	      if(verbose>2) cout << "--- Filling dx,dy histograms" << endl;
+	      iPos->second.h_dx_Truth->Fill(dx);
+	      iPos->second.h_dy_Truth->Fill(dy);
+	    }
+	    
+	    if(!found_hits && verbose>1) cout << "----- FOUND NO MATCHED HITS" << endl;
 
             // Form a cluster of continuous Digis in one row
             if (col_last == -1) {
@@ -734,6 +874,23 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     histoName.str("");
     histoName << "LocalPosition" << tag.c_str() << id;
     local_histos.LocalPosition = td.make<TH2F>(histoName.str().c_str(),histoName.str().c_str(),10000, -5, 5 , 10000, -5 ,5);
+
+
+    // Truth Matching 
+    string name_match[nMatch] = {"AllType", "Type2", "Primary", "Secondary"};
+    for(int iM=0 ; iM<nMatch ; iM++) {
+      histoName.str("");
+      histoName << "NumberOfMatchedHits" << name_match[iM] << tag.c_str() <<  id;
+      local_histos.NumberOfMatchedHits[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+    }
+
+    histoName.str("");
+    histoName << "DeltaX_simhit_cluster" << tag.c_str() <<  id;
+    local_histos.h_dx_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
+
+    histoName.str("");
+    histoName << "DeltaY_simhit_cluster" << tag.c_str() <<  id;
+    local_histos.h_dy_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
 
     layerHistoMap.insert( make_pair(ival, local_histos));
 
