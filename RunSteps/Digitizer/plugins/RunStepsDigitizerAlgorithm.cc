@@ -120,7 +120,8 @@ TH1F h_thePixelThresholdInE("pixelThreshold","pixelThreshold",1000,-20,5000);
 TH1F h_chan("channel","channel",200,-10,500);
 TH1F h_adc("ADC","ADC",200,0,400);
 TH1F h_iStarSecondHitInfo("HitInfo_NotFilled","HitInfo - Not Filled",200,-200,500);
-TH1F h_iStarSecondTrackIds("TrackIds","size of TrackIds ",200,-1,10);
+TH1F h_TrackIdSize("TrackIds","size of TrackIds ",200,-1,10);
+TH1F h_TrackIds("TrackIdValue","Value of TrackId of the hit ",200,-1,100);
 TH1F h_digisSize("DigisSize","DigisSize",40,0,40);
 TH1F h_signalInElecTrackIdsConstr("signalInElecTrackIdsConstr","signalInElectrons when size of trackIds > 0",500,-100,50000);
 TH1F h_sumIndivAmpl("sumIndivAmpl","sumIndivAmpl for same trackIds",200,0,200000);
@@ -457,7 +458,8 @@ std::cout << " Value of theThresholdSmearing_BPix_L1 in constructor function : "
 	  h_chan.Write();
 	  h_adc.Write();
 	  h_iStarSecondHitInfo.Write();
-	  h_iStarSecondTrackIds.Write();
+	  h_TrackIds.Write();
+          h_TrackIdSize.Write();
 	  h_digisSize.Write();
 	  h_signalInElecTrackIdsConstr.Write();
 	  h_sumIndivAmpl.Write();
@@ -1333,7 +1335,7 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
       h_digisSize.Fill(digis.size());
 
       if (makeDigiSimLinks_ && (*i).second.hitInfo()!=0) {
-	h_iStarSecondTrackIds.Fill((*i).second.trackIds().size());
+	h_TrackIdSize.Fill((*i).second.trackIds().size());
 
         //digilink
         if((*i).second.trackIds().size()>0){
@@ -1344,7 +1346,8 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
 	  for( std::vector<unsigned int>::const_iterator itid = (*i).second.trackIds().begin();itid != (*i).second.trackIds().end(); ++itid) { //Loop over the different trackIds
 	    simi[*itid].push_back((*i).second.individualampl()[il]);
 
-            sumIndivAmpl +=(*i).second.individualampl()[il]; //Results in the same information as obtained from sum_samechannel! (il operator needed, but they all have the same information!)
+	    h_TrackIds.Fill((*i).second.trackIds()[il]); //TrackIds are returned as a vector of floats!
+            sumIndivAmpl +=(*i).second.individualampl()[il]; //Results in the same information as obtained from sum_samechannel! 
 
 	    if(il == (*i).second.trackIds().size()-1){ //Look at some additional information for the sum of the individual amplitudes!
 		h_RelativeContrIndivAmpl.Fill( (*i).second.individualampl()[il]/sumIndivAmpl);
@@ -1362,6 +1365,7 @@ void RunStepsDigitizerAlgorithm::make_digis(float thePixelThresholdInE,
 			h_SumIndivAmplSecondHalf.Fill(SumIndivAmplSecondHalf);
 			if(SumIndivAmplFirstHalf != SumIndivAmplSecondHalf){
 				std::cout << " -------------------------------------- " << std::endl;
+				std::cout << " Number of TrackIds : " << il << std::endl;
 				for(unsigned int ii = 0; ii<=il; ii++){
 					std::cout << " Individual amplitude value : " << (*i).second.individualampl()[ii] << " for counter " << ii << std::endl;
 				}
