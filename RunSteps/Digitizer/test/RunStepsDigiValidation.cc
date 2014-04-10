@@ -307,12 +307,16 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
       nHits++ ;
     }
 
-    if(verbose>1) cout << endl << "-- Number of SimHits in the event : " << nHits << endl;
+    if(verbose>1) cout << endl << "- Number of SimHits in the event : " << nHits << endl;
 
     // Loop over Sim Tracks and Fill relevant histograms
     int nTracks = 0;
 
+    if(verbose>1) cout << "- SimTracks : " ;
+
     for (SimTrackContainer::const_iterator simTrkItr = simTracks->begin(); simTrkItr != simTracks->end(); ++simTrkItr) {
+
+      if(verbose>1) cout << simTrkItr->trackId() << " | " ;
 
         int type = isPrimary((*simTrkItr), simHits_B);
         if(type==-1) type = isPrimary((*simTrkItr), simHits_E);
@@ -349,10 +353,15 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         }
     }
 
+    if(verbose>1) cout << endl;
+
     nSimTracks_->Fill(nTracks++);
 
     // Loop Over Digis and Fill Histograms
+    if(verbose>1) cout << "- Start looping over DetSetVector<PixelDigi>" << endl;
+
     for (DetSetVector<PixelDigi>::const_iterator DSViter = pixelDigis->begin(); DSViter != pixelDigis->end(); ++DSViter) {
+
         // Detector id
         unsigned int rawid = DSViter->id;
         DetId detId(rawid);
@@ -387,6 +396,9 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         cluster.trkEta = -999.0;
         cluster.strip_charges.clear();
 
+        // Loop over the links in the detector unit
+	if(verbose>1) cout << endl << endl << "-- DetId=" << rawid << endl;
+
         // Loop over the Digis
         for (DetSet<PixelDigi>::const_iterator di = DSViter->data.begin(); di != DSViter->data.end(); ++di) {
             int adc = di->adc();    // charge, modifued to unsiged short
@@ -395,6 +407,13 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
             unsigned int channel = PixelChannelIdentifier::pixelToChannel(row, col);
             unsigned int simTkId = getSimTrackId(pixelSimLinks, detId, channel);
+
+	    if(verbose>1) cout << endl << "--- Digi :"
+			       << " col="     << col      
+			       << " row="     << row 
+			       << " ch="      << channel 
+			       << " simTkId=" << simTkId
+			       << endl;
 
             // Get the Digi position
             MeasurementPoint mp(row + 0.5, col + 0.5 );
@@ -441,11 +460,15 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
                 // iPos->second.DigiChargeSecondary->Fill(adc);
                 nDigiS++;
             }
+	    else cout << "--- primaryTrk=" << primaryTrk 
+		      << " | simTkId="     << simTkId
+		      << " | iSimTrk="     << iSimTrk
+		      << endl;
 
             nDigiA++;
 
 	    // Get matched hits
-	    if(verbose>2) cout << "--- Getting matched hits" << endl;
+	    if(verbose>1) cout << "--- Getting hits matched to SimTrack (id " << simTkId << ")" << endl;
 	    matched_hits = map_hits[simTkId];
 
 	    if(verbose>1) {
