@@ -519,6 +519,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	// Clusters matched to the SimHit
 	matched_clusters = ((iMapHits->second)[iH]).second;
 	nMatchedClusters = matched_clusters.size();
+
 	if( nMatchedClusters==0 ) {
 	  if(verbose>1) cout << "---- No Cluster Matched" << endl;
 	}
