@@ -57,7 +57,7 @@
 #include <TProfile.h>
 
 int verbose=2;
-const int nMatch=4;
+const int nTypes=18;
 
 using namespace std;
 using namespace edm;
@@ -108,11 +108,12 @@ private:
         // TH1F* NumberOfDigisPixel; // Pixel
         // TH1F* NumberOfDigisStrip; // Strip
 
-        TH1F* NumberOfMatchedHits[4];
+      // Truth Matching
+        TH1F* NumberOfMatchedHits[nTypes];
+        TH1F* NumberOfMatchedDigis[nTypes];
+        TH1F* hEfficiency[nTypes];
         TH1F* h_dx_Truth;
         TH1F* h_dy_Truth;
-
-        TH1F* hEfficiency[17];
 
         TH1F* DigiCharge;
         // TH1F* DigiChargePrimary;
@@ -280,7 +281,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
     ////////////////////////////////
 
     // all hits ; type-2 hits ; primary hits ; secondary hits
-    int    nMatchedHits[nMatch]={0,0,0,0}; 
+    int    nMatchedHits[nTypes]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     //
     Local3DPoint pos_hit;
     double x_hit=0,y_hit=0,z_hit=0,/*x_cl=0,y_cl=0,*/dx=0,dy=0;
@@ -491,7 +492,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 	    }
 	    
 	    // digi matching quantities
-	    for(int iM=0 ; iM<nMatch ; iM++)
+	    for(int iM=0 ; iM<nTypes ; iM++)
 	      nMatchedHits[iM] = 0;
 
 	    // Loop over matched SimHits
@@ -514,20 +515,18 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 	      x_hit      = pos_hit.x();
 	      y_hit      = pos_hit.y();
 	      z_hit      = pos_hit.z();
+
+	      if(simh_type>=0 && simh_type<17) nMatchedHits[simh_type]++ ;
+	      nMatchedHits[17]++ ;
 	      
-	      nMatchedHits[0]++ ;
 	      if(simh_type==2) {
-		nMatchedHits[1]++ ;
 		dx = x_hit - lPos.x();
 		dy = y_hit - lPos.y();
 		if(fill_dtruth==true) fill_dtruth=false; // eliminates cases with several type-2 hits
 		fill_dtruth=true; // toggle filling of the histo only when a type-2 hit is found
 	      }
 	      
-	      if(simh_type == 2 || simh_type == 7 || simh_type == 9 || simh_type == 11 || simh_type == 15)
-		nMatchedHits[2]++ ;
-	      else 
-		nMatchedHits[3]++ ;
+	      //if(simh_type == 2 || simh_type == 7 || simh_type == 9 || simh_type == 11 || simh_type == 15)
 	      
 	      if(verbose>1) cout << "----- SimHit #" << iH
 				 << " type="    << simh_type
@@ -542,7 +541,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
 	    // Number of matched hits (per type)
 	    if(verbose>2) cout << "--- Filling NumberOfMatchedHits histograms" << endl;
-	    for(int iM=0 ; iM<nMatch ; iM++)
+	    for(int iM=0 ; iM<nTypes ; iM++)
 	      iPos->second.NumberOfMatchedHits[iM]-> Fill(nMatchedHits[iM]);
 	    
 	    // Position resolution
@@ -742,11 +741,17 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 	matched_digis = ((iMapHits->second)[iH]).second;
 	nMatchedDigis = matched_digis.size();
 
+	// Fill corresponding histogram
+	iPos = layerHistoMap.find(theHit_layer);
+	(iPos->second.NumberOfMatchedDigis[17])->Fill( nMatchedDigis );
+	if(theHit_type<17)
+	  (iPos->second.NumberOfMatchedDigis[theHit_type])->Fill( nMatchedDigis );
+
 	if( nMatchedDigis==0 ) {
-	  if(verbose>1) cout << "---- No Cluster Matched" << endl;
+	  if(verbose>1) cout << "---- No Digi Matched" << endl;
 	}
 	else {
-	  if(verbose>1) cout << "---- Yes Cluster Matched = " << nMatchedDigis << endl;
+	  if(verbose>1) cout << "---- Yes Digi Matched = " << nMatchedDigis << endl;
 	}
 	
 	if( map_effi.find(theHit_layer)==map_effi.end() )
@@ -755,7 +760,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 	    if(verbose>2) cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << endl;
 	  }
 	(map_effi[theHit_layer][theHit_type][0])++ ; // total number of hits of this type in this layer
-	if(nMatchedDigis>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 cluster(s)
+	if(nMatchedDigis>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 digi(s)
       }
 
     }
@@ -769,7 +774,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
       for(int iT=0 ; iT<17 ; iT++) {
 	nTotalHits = iMapEffi->second[iT][0];
-	nMatchHits = iMapEffi->second[iT][1];
+	nMatchHits = iMapEffi->second[iT][1]; // number of hits in a given layer that have at least 1 digi matched
 	efficiency = nTotalHits!=0 ? float(nMatchHits)/float(nTotalHits) : -1 ;
 	if(efficiency>=0) (iPos->second.hEfficiency[iT])->Fill( efficiency );
 	if(verbose>1) cout << "--- type #"   << iT 
@@ -1003,11 +1008,25 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
 
 
     // Truth Matching 
-    string name_match[nMatch] = {"AllType", "Type2", "Primary", "Secondary"};
-    for(int iM=0 ; iM<nMatch ; iM++) {
+
+    string name_types[nTypes] = {"Undefined","Unknown","Primary","Hadronic",
+				 "Decay","Compton","Annihilation","EIoni",
+				 "HIoni","MuIoni","Photon","MuPairProd",
+				 "Conversions","EBrem","SynchrotronRadiation",
+				 "MuBrem","MuNucl","AllTypes"};
+
+    for(int iM=0 ; iM<nTypes ; iM++) {
       histoName.str("");
-      histoName << "NumberOfMatchedHits" << name_match[iM] << tag.c_str() <<  id;
+      histoName << "NumberOfMatchedHits_" << name_types[iM] << tag.c_str() <<  id;
       local_histos.NumberOfMatchedHits[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+
+      histoName.str("");
+      histoName << "NumberOfMatchedDigis_" << name_types[iM] << tag.c_str() <<  id;
+      local_histos.NumberOfMatchedDigis[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+
+      histoName.str("");
+      histoName << "Efficiency_" << name_types[iM] << tag.c_str() <<  id;
+      local_histos.hEfficiency[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 110, 0., 1.1);
     }
 
     histoName.str("");
@@ -1018,18 +1037,6 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     histoName << "DeltaY_simhit_cluster" << tag.c_str() <<  id;
     local_histos.h_dy_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
 
-
-    string name_types[17] = {"Undefined","Unknown","Primary","Hadronic",
-			     "Decay","Compton","Annihilation","EIoni",
-			     "HIoni","MuIoni","Photon","MuPairProd",
-			     "Conversions","EBrem","SynchrotronRadiation",
-			     "MuBrem","MuNucl"};
-
-    for(int iM=0 ; iM<17 ; iM++) {
-      histoName.str("");
-      histoName << "Efficiency" << name_types[iM] << tag.c_str() <<  id;
-      local_histos.hEfficiency[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 110, 0., 1.1);
-    }
 
     layerHistoMap.insert( make_pair(ival, local_histos));
 
