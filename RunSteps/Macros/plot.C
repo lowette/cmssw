@@ -11,8 +11,20 @@ using namespace std;
 
 vector<TString> getHistoNames(TString);
 
-int plot(TString path="Output/", TString file="DigiValidation.root", TString pathOut="Plots/", TString suffix="Digis")
+int plot(TString level="Digis", TString path="../Output/", TString pathOut="../Plots/")
 {
+
+  TString file  = "" ;
+  TString suffix= "" ;
+
+  if(level.Contains("Digi")) {
+    suffix = "Digis" ;
+    file   = "DigiValidation.root" ;
+  }
+  else if(level.Contains("Clus")) {
+    suffix = "Clusters" ;
+    file   = "ClusterValidation.root" ;
+  }
 
   TString nameF = path+"/"+file;
 
@@ -93,7 +105,7 @@ vector<TString> getHistoNames(TString suffix)
   TString nameHistos[nH]={"NumberOfMatchedHits", "NumberOfMatched"+suffix, "Efficiency", 
 			  "DeltaX_simhit_cluster", "DeltaY_simhit_cluster"};
 
-  const u_int nSuffix1=4;
+  //const u_int nSuffix1=4;
   const u_int nSuffix2=18;
   //TString suffix1[nSuffix1] = {"AllType", "Primary", "Secondary", "Type2"};
   TString suffix2[nSuffix2] = {"Undefined","Unknown","Primary","Hadronic",
