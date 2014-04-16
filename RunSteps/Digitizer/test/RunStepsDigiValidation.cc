@@ -741,8 +741,16 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 	matched_digis = ((iMapHits->second)[iH]).second;
 	nMatchedDigis = matched_digis.size();
 
-	// Fill corresponding histogram
+	// Find layer in map of histograms
+	if(verbose>2) cout << "--- Find layer=" << theHit_layer << " in map of histograms" << endl;
 	iPos = layerHistoMap.find(theHit_layer);
+        if (iPos == layerHistoMap.end()) {
+	  if(verbose>2) cout << "---- add layer in the map" << endl;
+	  createLayerHistograms(theHit_layer);
+	  iPos = layerHistoMap.find(theHit_layer);
+        }
+
+	// Fill Histograms
 	(iPos->second.NumberOfMatchedDigis[17])->Fill( nMatchedDigis );
 	if(theHit_type<17)
 	  (iPos->second.NumberOfMatchedDigis[theHit_type])->Fill( nMatchedDigis );
