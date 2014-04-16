@@ -506,19 +506,37 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
       for(int iH=0 ; iH<nTrackHits ; iH++) {
 
 	// Current SimHit
-	if(verbose>1) cout << "--- SimHit #" << iH << endl;
+	if(verbose>1) cout << "--- SimHit #" << iH ;
 	PSimHit theHit( ((iMapHits->second)[iH]).first );
 	theHit_id    = theHit.detUnitId();
 	theHit_layer = getLayerNumber(theHit_id);
 	theHit_type  = theHit.processType();
-	//if(verbose>1) cout << theHit_id << theHit_layer << theHit_type << endl;
+	if(verbose>1) cout << " DetId=" << theHit_id
+			   << " Layer=" << theHit_layer 
+			   << " Type="  << theHit_type
+			   << endl;
+
+	// Check that the layer number makes sense
+	if(theHit_layer==0) {
+	  if(verbose>1) cout << "---- !! layer=0 !!" << endl;
+	  continue;
+	}
 
 	// Clusters matched to the SimHit
+	if(verbose>2) cout << "--- Getting corresponding clusters" << endl;
 	matched_clusters = ((iMapHits->second)[iH]).second;
 	nMatchedClusters = matched_clusters.size();
 
-	// Fill corresponding histogram
+	// Find layer in map of histograms
+	if(verbose>2) cout << "--- Find layer=" << theHit_layer << " in map of histograms" << endl;
 	iPos = layerHistoMap.find(theHit_layer);
+        if (iPos == layerHistoMap.end()) {
+	  if(verbose>2) cout << "---- add layer in the map" << endl;
+	  createLayerHistograms(theHit_layer);
+	  iPos = layerHistoMap.find(theHit_layer);
+        }
+	
+	// Fill Histograms
 	(iPos->second.NumberOfMatchedClusters[17])->Fill( nMatchedClusters );
 	if(theHit_type<17)
 	  (iPos->second.NumberOfMatchedClusters[theHit_type])->Fill( nMatchedClusters );
@@ -529,7 +547,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	else {
 	  if(verbose>1) cout << "---- Yes Cluster Matched = " << nMatchedClusters << endl;
 	}
-	
+
 	if( map_effi.find(theHit_layer)==map_effi.end() )
 	  for(int iT=0 ; iT<17 ; iT++) {
 	    map_effi[theHit_layer].push_back(init_counter);
@@ -537,6 +555,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	  }
 	(map_effi[theHit_layer][theHit_type][0])++ ; // total number of hits of this type in this layer
 	if(nMatchedClusters>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 cluster(s)
+
       }
 
     }
@@ -565,7 +584,8 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     if( countHit != nHits )
       if(verbose>1) cout << "---- Missing hits in the efficiency computation : " 
 			 << countHit << " != " << nHits << endl;
-    
+
+    if(verbose>999) cout << nTotalHits << nMatchHits << efficiency << endl;
 }
 
 void RunStepsClusterValidation::endJob() { }
@@ -635,7 +655,7 @@ void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
 
       histoName.str("");
       histoName << "NumberOfMatchedClusters_" << name_types[iM] << tag.c_str() <<  id;
-      local_histos.NumberOfMatchedHits[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+      local_histos.NumberOfMatchedClusters[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
 
       histoName.str("");
       histoName << "Efficiency_" << name_types[iM] << tag.c_str() <<  id;
