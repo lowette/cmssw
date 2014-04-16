@@ -763,12 +763,15 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 	}
 	
 	if( map_effi.find(theHit_layer)==map_effi.end() )
-	  for(int iT=0 ; iT<17 ; iT++) {
+	  for(int iT=0 ; iT<nTypes ; iT++) {
 	    map_effi[theHit_layer].push_back(init_counter);
 	    if(verbose>2) cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << endl;
 	  }
 	(map_effi[theHit_layer][theHit_type][0])++ ; // total number of hits of this type in this layer
 	if(nMatchedDigis>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 digi(s)
+
+	(map_effi[theHit_layer][17][0])++ ; // total number of hits of this type in this layer
+	if(nMatchedDigis>0) (map_effi[theHit_layer][17][1])++ ; // number of hits matched to >=1 digi(s)
       }
 
     }
@@ -780,7 +783,7 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
       iPos = layerHistoMap.find(iMapEffi->first);
       if(verbose>1) cout << "-- layer=" << iMapEffi->first << endl;
 
-      for(int iT=0 ; iT<17 ; iT++) {
+      for(int iT=0 ; iT<nTypes ; iT++) {
 	nTotalHits = iMapEffi->second[iT][0];
 	nMatchHits = iMapEffi->second[iT][1]; // number of hits in a given layer that have at least 1 digi matched
 	efficiency = nTotalHits!=0 ? float(nMatchHits)/float(nTotalHits) : -1 ;
@@ -1038,11 +1041,11 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     }
 
     histoName.str("");
-    histoName << "DeltaX_simhit_cluster" << tag.c_str() <<  id;
+    histoName << "DeltaX_simhit_digi" << tag.c_str() <<  id;
     local_histos.h_dx_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
 
     histoName.str("");
-    histoName << "DeltaY_simhit_cluster" << tag.c_str() <<  id;
+    histoName << "DeltaY_simhit_digi" << tag.c_str() <<  id;
     local_histos.h_dy_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
 
 

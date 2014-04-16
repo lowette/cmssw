@@ -549,13 +549,15 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	}
 
 	if( map_effi.find(theHit_layer)==map_effi.end() )
-	  for(int iT=0 ; iT<17 ; iT++) {
+	  for(int iT=0 ; iT<nTypes ; iT++) {
 	    map_effi[theHit_layer].push_back(init_counter);
 	    if(verbose>2) cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << endl;
 	  }
 	(map_effi[theHit_layer][theHit_type][0])++ ; // total number of hits of this type in this layer
 	if(nMatchedClusters>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 cluster(s)
 
+	(map_effi[theHit_layer][17][0])++ ; // total number of hits of this type in this layer
+	if(nMatchedClusters>0) (map_effi[theHit_layer][17][1])++ ; // number of hits matched to >=1 cluster(s)
       }
 
     }
@@ -567,7 +569,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
       iPos = layerHistoMap.find(iMapEffi->first);
       if(verbose>1) cout << "-- layer=" << iMapEffi->first << endl;
 
-      for(int iT=0 ; iT<17 ; iT++) {
+      for(int iT=0 ; iT<nTypes ; iT++) {
 	nTotalHits = iMapEffi->second[iT][0];
 	nMatchHits = iMapEffi->second[iT][1];
 	efficiency = nTotalHits!=0 ? float(nMatchHits)/float(nTotalHits) : -1 ;
