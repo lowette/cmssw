@@ -36,6 +36,14 @@ process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
+#RecoLocalTrackerRECO = cms.PSet(
+  #  outputCommands = cms.untracked.vstring(
+    #'keep DetIdedmEDCollection_siStripDigis_*_*',
+#    'keep DetIdedmEDCollection_siPixelDigis_*_*',
+  #  'keep *_siPixelClusters_*_*', 
+#    'keep *_siStripClusters_*_*',
+#    'keep *_clusterSummaryProducer_*_*')
+#)
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(10)
@@ -63,7 +71,28 @@ process.MessageLogger = cms.Service('MessageLogger',
     	)
 )
 
-# Producer for recHits
+# Producers for recHits
+process.siPixelClusters = cms.EDProducer("SiPixelClusterProducer",
+    src = cms.InputTag("siPixelDigis"),
+    ChannelThreshold = cms.int32(1000),
+    maxNumberOfClusters = cms.int32(-1),
+    SplitClusters = cms.bool(False),
+    MissCalibrate = cms.untracked.bool(True),
+    VCaltoElectronGain = cms.int32(65),
+    VCaltoElectronOffset = cms.int32(-414),
+    payloadType = cms.string('Offline'),
+    SeedThreshold = cms.int32(1000),
+    ClusterThreshold = cms.double(4000.0)
+)
+
+process.siPixelDigis = cms.EDProducer("SiPixelRawToDigi",
+    Timing = cms.untracked.bool(False),
+    IncludeErrors = cms.bool(False),
+    UseCablingTree = cms.untracked.bool(True),
+    InputLabel = cms.InputTag("source"),
+    CheckPixelOrder = cms.bool(False)
+)
+
 process.siPixelRecHits= cms.EDProducer("SiPixelRecHitConverter",
     VerboseLevel = cms.untracked.int32(0),
     src = cms.InputTag("siPixelClusters"),
