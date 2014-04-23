@@ -36,14 +36,6 @@ process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
-#RecoLocalTrackerRECO = cms.PSet(
-  #  outputCommands = cms.untracked.vstring(
-    #'keep DetIdedmEDCollection_siStripDigis_*_*',
-#    'keep DetIdedmEDCollection_siPixelDigis_*_*',
-  #  'keep *_siPixelClusters_*_*', 
-#    'keep *_siStripClusters_*_*',
-#    'keep *_clusterSummaryProducer_*_*')
-#)
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(10)
@@ -114,7 +106,19 @@ process.out = cms.OutputModule("PoolOutputModule",
       "keep *_siPixelRecHits_*_*")      
 )
 
+#RecoLocalTrackerRECO = cms.PSet(
+  #  outputCommands = cms.untracked.vstring(
+    #'keep DetIdedmEDCollection_siStripDigis_*_*',
+#    'keep DetIdedmEDCollection_siPixelDigis_*_*',
+  #  'keep *_siPixelClusters_*_*', 
+#    'keep *_siStripClusters_*_*',
+#    'keep *_clusterSummaryProducer_*_*')
+#)
+
 # Processes to run
-#process.p = cms.Path(process.siPixelRecHits)
+process.pixeltrackerlocalreco = cms.Sequence(process.siPixelClusters*process.siPixelRecHits)
+process.trackerlocalreco = cms.Sequence(process.pixeltrackerlocalreco)
+
+process.p = cms.Path(process.trackerlocalreco)
 process.e = cms.EndPath(process.out)
 #process.p = cms.Path(process.analysis)
