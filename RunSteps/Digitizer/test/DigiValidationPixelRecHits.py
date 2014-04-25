@@ -582,3 +582,9 @@ process.trackerlocalreco = cms.Sequence(process.pixeltrackerlocalreco)
 process.p = cms.Path(process.trackerlocalreco)
 process.e = cms.EndPath(process.out)
 #process.p = cms.Path(process.analysis)
+
+ # Automatic addition of the customisation function from SLHCUpgradeSimulations.Configuration.combinedCustoms
+from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D 
+
+#call to customisation function cust_phase2_BE5D imported from SLHCUpgradeSimulations.Configuration.combinedCustoms
+process = cust_phase2_BE5D(process)
