@@ -58,30 +58,22 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   // Efficiencies, Responses, Resolutions
   if(verbose>1) cout << "- values" << endl;
 
-  const u_int nVal=5; // effi,respX,resolX,respY,resolY (nErr=nominal/error)
+  const u_int nVar=5; // effi,respX,resolX,respY,resolY (nErr=nominal/error)
   const u_int nErr=2; // nominal/error
 
-  vector<double*> values[nVal][nErr];
-  double values_TB[ nVal][nErr][nLayers[0]]; 
-  double values_TE1[nVal][nErr][nLayers[1]];
-  double values_TE2[nVal][nErr][nLayers[2]];
+  TString g_name[  nVar]={"Efficiency", "ResponseX", "ResolutionX", "ResponseY", "ResolutionY"};
+  TString g_titleY[nVar]={"Efficiency", "Response in x [cm]", "Resolution in x [cm]",
+			  "Response in y [cm]", "Resolution in y [cm]"};
+
+  vector<double> values[nVar][nErr][nPart];
   
-  for(u_int iV=0 ; iV<nVal ; iV++) {
-    for(u_int iE=0 ; iE<nErr ; iE++) {
-      
-      values[iV][iE].push_back(values_TB[ iV][iE]);
-      values[iV][iE].push_back(values_TE1[iV][iE]);
-      values[iV][iE].push_back(values_TE2[iV][iE]);
-
-      continue;
-
+  for(u_int iV=0 ; iV<nVar ; iV++)
+    for(u_int iE=0 ; iE<nErr ; iE++)
       for(u_int iP=0 ; iP<nPart ; iP++)
 	for(u_int iL=0 ; iL<nLayers[iP] ; iL++)
-	  values[iV][iE][iP][iL]=0;
-    }
-  }  
+	  values[iV][iE][iP].push_back(0);
 
-  TGraphErrors g_effi[nVal][nPart];
+  TGraphErrors g_effi[nVar][nPart];
 
   // Names of Layers/Discs
   if(verbose>1) cout << "- names of layers/discs" << endl;
@@ -138,15 +130,15 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   if(verbose>1) cout << "- loop over input histograms" << endl;
 
   double tempMax=0;
-  double g_max[nVal][nPart];
+  double g_max[nVar][nPart];
 
-  for(u_int iPart=0 ; iPart<nPart ; iPart++) {
+  for(u_int iP=0 ; iP<nPart ; iP++) {
 
-    for(u_int iVal=0 ; iVal<nVal ; iVal++) g_max[iVal][iPart]=0;
+    for(u_int iV=0 ; iV<nVar ; iV++) g_max[iV][iP]=0;
 
-    for(u_int iL=0 ; iL<nameLayer[iPart][0].size() ; iL++) {
+    for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
 
-      nameDir   = "analysis/"+namePart[iPart]+"/"+nameLayer[iPart][0][iL] ;
+      nameDir   = "analysis/"+namePart[iP]+"/"+nameLayer[iP][0][iL] ;
       if(verbose>2) cout << "-- nameDir=" << nameDir << endl;
 
       myDir = f->GetDirectory(nameDir);
@@ -155,11 +147,11 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 	continue;
       }
 
-      if(verbose>2) cout << "-- loop over histograms" << endl;
+      if(verbose>2) cout << "-- loop over histograms (myNames.size()=" << myNames.size() << ")" << endl;
 
       for(u_int iH=0 ; iH<myNames.size() ; iH++) {
 
-	nameHisto = myNames[iH]+"_"+nameLayer[iPart][1][iL];
+	nameHisto = myNames[iH]+"_"+nameLayer[iP][1][iL];
 	if(verbose>2) cout << "--- histo : " << nameHisto << endl;
 	
 	myDir->GetObject(nameHisto , hTemp );
@@ -172,33 +164,27 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 	// get values
 	if(verbose>2) cout << "--- nEntries=" << hTemp->GetEntries() << endl
 			   << "--- getting values" << endl;
-
+	
 	// effi,respX,resolX,respY,resolY
 	if( nameHisto.Contains("Efficiency") && nameHisto.Contains("Primary") ) {
-	  values[0][0][iPart][iL] = hTemp->GetMean();
-	  values[0][1][iPart][iL] = hTemp->GetMeanError();
+	  values[0][0][iP][iL] = hTemp->GetMean();
+	  values[0][1][iP][iL] = hTemp->GetMeanError();
 	}
 	  
 	if(nameHisto.Contains("DeltaX")) {
 	  if(verbose>2) cout << "--- enter DeltaX" << endl;
 
-	  values[1][0][iPart][iL] = hTemp->GetMean();
-	  values[1][1][iPart][iL] = hTemp->GetMeanError();
-	  values[2][0][iPart][iL] = hTemp->GetRMS();
-	  values[2][1][iPart][iL] = hTemp->GetRMSError();
+	  values[1][0][iP][iL] = hTemp->GetMean();
+	  values[1][1][iP][iL] = hTemp->GetMeanError();
+	  values[2][0][iP][iL] = hTemp->GetRMS();
+	  values[2][1][iP][iL] = hTemp->GetRMSError();
 	}
 	  
 	if(nameHisto.Contains("DeltaY")) {
-	  values[3][0][iPart][iL] = hTemp->GetMean();
-	  values[3][1][iPart][iL] = hTemp->GetMeanError();
-	  values[4][0][iPart][iL] = hTemp->GetRMS();
-	  values[4][1][iPart][iL] = hTemp->GetRMSError();
-	}
-
-	// Determine maxima per variable and part of the Tracker
-	for(u_int iVal=0 ; iVal<nVal ; iVal++) {
-	  tempMax = values[iVal][0][iPart][iL];
-	  if( tempMax > g_max[iVal][iPart] ) g_max[iVal][iPart] = tempMax;
+	  values[3][0][iP][iL] = hTemp->GetMean();
+	  values[3][1][iP][iL] = hTemp->GetMeanError();
+	  values[4][0][iP][iL] = hTemp->GetRMS();
+	  values[4][1][iP][iL] = hTemp->GetRMSError();
 	}
 
 	if(verbose>2) cout << "--- got values" << endl;	
@@ -207,7 +193,7 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 	TCanvas c("c","c",5,30,800,600);
 	if(doDraw) {
 	  hTemp->Draw();
-	  c.Print(pathOut+"/"+suffix+"/"+myNames[iH]+"_"+namePart[iPart]+"_"+nameLayer[iPart][1][iL]+".pdf");
+	  c.Print(pathOut+"/"+suffix+"/"+myNames[iH]+"_"+namePart[iP]+"_"+nameLayer[iP][1][iL]+".pdf");
 	}
 
       }
@@ -218,23 +204,50 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   // Build first the graphs and find maxima
   if(verbose>1) cout << "- build first the graphs and find maxima" << endl;
 
-  double g_maximum[nVal];
+  // Determine maxima per variable and part of the Tracker
+  for(u_int iP=0 ; iP<nPart ; iP++) {
+    for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
+	for(u_int iV=0 ; iV<nVar ; iV++) {
+	  
+	  tempMax = values[iV][0][iP][iL];
 
-  for(u_int iVal=0 ; iVal<nVal ; iVal++) {
+	  if(verbose>2)
+	    cout << "--- "    << g_name[iV] 
+		 << " "       << namePart[iP] 
+		 << " layer " << iL 
+		 << " : val=" << tempMax << endl;
+	  
+	  if( tempMax > g_max[iV][iP] ) g_max[iV][iP] = tempMax;
+	}
+    }
+  }
 
-    g_maximum[iVal]=0;
+  double g_maximum[nVar];
+
+  for(u_int iV=0 ; iV<nVar ; iV++) {
+
+    g_maximum[iV]=0;
 
     for(u_int iP=0 ; iP<nPart ; iP++) {
 
+      // make arrays on the fly to fill TGraphErrors constructor arguments
+      double g_x[nLayers[iP]], g_y[nLayers[iP]], g_err_x[nLayers[iP]], g_err_y[nLayers[iP]];
+      for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
+	g_x[iL]     = idxLayers[0][iP][iL];
+	g_err_x[iL] = idxLayers[1][iP][iL];
+	g_y[iL]     = values[iV][0][iP][iL];
+	g_err_y[iL] = values[iV][1][iP][iL];
+      }
+
       // effi, respX,resolX,err_respX,err_resolX, respY,resolY,err_respY,err_resolY;
-      g_effi[iVal][iP] = TGraphErrors(    nLayers[iP]-iStartLay[iP] , 
-				       (iStartLay[iP]+idxLayers[0][iP]), 
-				       (iStartLay[iP]+values[iVal][0][iP]) , 
-				       (iStartLay[iP]+idxLayers[1][iP]), 
-				       (iStartLay[iP]+values[iVal][1][iP]) 
+      g_effi[iV][iP] = TGraphErrors(    nLayers[iP]-iStartLay[iP] , 
+					(iStartLay[iP]+g_x),
+					(iStartLay[iP]+g_y),
+					(iStartLay[iP]+g_err_x),
+					(iStartLay[iP]+g_err_y)
 				       );
 
-      if( g_max[iVal][iP]>g_maximum[iVal] ) g_maximum[iVal] = g_max[iVal][iP];
+      if( g_max[iV][iP]>g_maximum[iV] ) g_maximum[iV] = g_max[iV][iP];
 
     }
   }
@@ -243,32 +256,33 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   // Draw graphs : effi(TB,TE1,TE2), response(TB,TE1,TE2), resolution(TB,TE1,TE2)
   if(verbose>1) cout << "- draw graphs" << endl;
 
-  TString g_name[  nVal]={"Efficiency", "ResponseX", "ResolutionX", "ResponseY", "ResolutionY"};
-  TString g_titleY[nVal]={"Efficiency", "Response in x [cm]", "Resolution in x [cm]",
-			  "Response in y [cm]", "Resolution in y [cm]"};
-
-  for(u_int iVal=0 ; iVal<nVal ; iVal++) {
+  for(u_int iV=0 ; iV<nVar ; iV++) {
 
     for(u_int iP=0 ; iP<nPart ; iP++) {
 
       TCanvas c_graph("cg","cg",10,10,800,600);
       
-      if(verbose>2) cout << "--- maximum set at : " << g_maximum[iVal] << endl;
+      if(verbose>2) cout << "--- " << g_name[iV] 
+			 << " "    << namePart[iP] 
+			 << " maxima : global=" << g_maximum[iV] 
+			 << " local=" << g_max[iV][iP]
+			 << endl;
 
-      if(iVal>0) g_effi[iVal][iP].SetMaximum( 1.05*g_maximum[iVal] );
+      //if(iV>0) g_effi[iV][iP].SetMaximum( 1.05*g_maximum[iV] );
+      if(iV>0) g_effi[iV][iP].SetMaximum( 1.05*g_max[iV][iP] );
 
-      //g_effi[iVal][iP].SetMarkerStyle( kOpenSquare );      
-      //g_effi[iVal][iP].SetMarkerSize( 2 );      
-      //g_effi[iVal][iP].SetMarkerColor( kAzure-9 );      
-      g_effi[iVal][iP].SetTitle( suffix+" "+g_name[iVal]+" "+namePart[iP] );
-      g_effi[iVal][iP].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
-      g_effi[iVal][iP].GetYaxis()->SetTitle( g_titleY[iVal] );
+      //g_effi[iV][iP].SetMarkerStyle( kOpenSquare );      
+      //g_effi[iV][iP].SetMarkerSize( 2 );      
+      //g_effi[iV][iP].SetMarkerColor( kAzure-9 );      
+      g_effi[iV][iP].SetTitle( suffix+" "+g_name[iV]+" "+namePart[iP] );
+      g_effi[iV][iP].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
+      g_effi[iV][iP].GetYaxis()->SetTitle( g_titleY[iV] );
 
-      if(verbose>2) cout << "--- graph mean = " << g_effi[iVal][iP].GetMean() << endl;
+      if(verbose>2) cout << "--- graph mean = " << g_effi[iV][iP].GetMean() << endl;
 
-      g_effi[iVal][iP].Draw("AP");
+      g_effi[iV][iP].Draw("AP");
 
-      c_graph.Print(pathOut+"/"+suffix+"/SummaryPlots/"+g_name[iVal]+"_"+suffix+"_"+namePart[iP]+".pdf");
+      c_graph.Print(pathOut+"/"+suffix+"/SummaryPlots/"+g_name[iV]+"_"+suffix+"_"+namePart[iP]+".pdf");
     }
   }
 
