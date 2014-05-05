@@ -17,13 +17,13 @@ process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(20)
+    input = cms.untracked.int32(2000)
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
     secondaryFileNames = cms.untracked.vstring(),
-    fileNames = cms.untracked.vstring('file:DIGI.root')
+    fileNames = cms.untracked.vstring('file:../../Output/DigiPhase2_AdjacentHits_DIGI.root')
 )
 
 process.options = cms.untracked.PSet(

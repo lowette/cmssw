@@ -29,6 +29,7 @@
 
 //RecHit Stuff
 #include "DataFormats/TrackerRecHit2D/interface/BaseTrackerRecHit.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
 
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
@@ -61,152 +62,35 @@
 using namespace std;
 using namespace edm;
 
-class RunStepsDigiValidation : public EDAnalyzer {
+class RunStepsDigiValidation_RecHits : public EDAnalyzer {
 
 public:
-    explicit RunStepsDigiValidation(const ParameterSet&);
-    ~RunStepsDigiValidation();
+    explicit RunStepsDigiValidation_RecHits(const ParameterSet&);
+    ~RunStepsDigiValidation_RecHits();
     virtual void beginJob();
     virtual void analyze(const Event&, const EventSetup&);
     virtual void endJob();
 
 private:
-    TH1F* nSimTracks_;
-
-    TH1F* simTrackPt_;
-    TH1F* simTrackPtBar_;
-    TH1F* simTrackPtEC_;
-    TH1F* simTrackEta_;
-    TH1F* simTrackPhi_;
-
-    TH1F* simTrackPtP_;
-    TH1F* simTrackPtPBar_;
-    TH1F* simTrackPtPEC_;
-    TH1F* simTrackEtaP_;
-    TH1F* simTrackPhiP_;
-
-    TH1F* simTrackPtS_;
-    TH1F* simTrackPtSBar_;
-    TH1F* simTrackPtSEC_;
-    TH1F* simTrackEtaS_;
-    TH1F* simTrackPhiS_;
-
-    TH2F* trackerLayout_;
-    TH2F* trackerLayoutXY_;
-    TH2F* trackerLayoutXYBar_;
-    TH2F* trackerLayoutXYEC_;
-
-    struct DigiHistos {
-        TH1F* NumberOfDigis;
-        TH1F* NumberOfDigisPrimary; // Secondary
-        TH1F* NumberOfDigisSecondary; // Primary
-        TH1F* NumberOfDigisPixel; // Pixel
-        TH1F* NumberOfDigisStrip; // Strip
-
-        TH1F* DigiCharge;
-        TH1F* DigiChargePrimary;
-        TH1F* DigiChargeSecondary;
-
-        TH1F* DigiChargeMatched;
-
-        TH1F* NumberOfClusters;
-        TH1F* NumberOfClustersPrimary; // Primary
-        TH1F* NumberOfClustersSecondary; // Secondary
-        TH1F* NumberOfClustersPixel; // Pixel
-        TH1F* NumberOfClustersStrip; // Strip
-
-        TH1F* ClusterCharge;
-        TH1F* ClusterChargePrimary;
-        TH1F* ClusterChargeSecondary;
-
-        TH1F* ClusterWidth;
-        TH1F* ClusterWidthPrimary;
-        TH1F* ClusterWidthSecondary;
-
-        TH1F* TotalNumberOfDigis;
-        TH1F* TotalNumberOfClusters;
-
-        TH1F* ClusterShape;
-        TH1F* ClusterShapePrimary;
-        TH1F* ClusterShapeSecondart;
-
-        TH1F* NumberOfSimHits;
-        TH1F* NumberOfMatchedSimHits;
-        TH1F* NumberOfMatchedSimHitsPrimary;
-        TH1F* NumberOfMatchedSimHitsSecondary;
-
-        TH1F* DigiEfficiency;
-        TH1F* DigiEfficiencyPrimary;
-        TH1F* DigiEfficiencySecondary;
-
-        TH2F* YposVsXpos;
-        TH2F* RVsZpos;
-        TH2F* LocalPosition;
-
-        TProfile* ClusterWidthVsSimTrkPt;
-        TProfile* ClusterWidthVsSimTrkPtPrimary;
-        TProfile* ClusterWidthVsSimTrkPtSecondary;
-
-        TProfile* ClusterWidthVsSimTrkEta;
-        TProfile* ClusterWidthVsSimTrkEtaPrimary;
-        TProfile* ClusterWidthVsSimTrkEtaSecondary;
-
-        TH1F* matchedSimTrackPt_;
-        TH1F* matchedSimTrackEta_;
-        TH1F* matchedSimTrackPhi_;
-
-        TH1F* matchedSimTrackPtPrimary_;
-        TH1F* matchedSimTrackEtaPrimary_;
-        TH1F* matchedSimTrackPhiPrimary_;
-
-        TH1F* matchedSimTrackPtSecondary_;
-        TH1F* matchedSimTrackEtaSecondary_;
-        TH1F* matchedSimTrackPhiSecondary_;
-
-        int totNDigis;
-        int totNClusters;
-
-        int totSimHits;
-        int totSimHitsPrimary;
-        int totSimHitsSecondary;
-
-        int totMatchedSimHits;
-        int totMatchedSimHitsPrimary;
-        int totMatchedSimHitsSecondary;
-
-        set<int> simTkIndx;
-    };
-
-    struct MyCluster {
-        float charge;
-        int width;
-        bool trkType;
-        float trkPt;
-        float trkEta;
-        vector<float> strip_charges;
-    };
-
-    map<unsigned int, DigiHistos> layerHistoMap;
-
     InputTag src_;
     InputTag simG4_;
 
 public:
-    void createLayerHistograms(unsigned int iLayer);
-    void createHistograms(unsigned int nLayer);
-    unsigned int getSimTrackId(Handle<DetSetVector<PixelDigiSimLink> >&, DetId& detId, unsigned int& channel);
-    int matchedSimTrack(Handle<SimTrackContainer>& SimTk, unsigned int simTrkId);
+    //void createLayerHistograms(unsigned int iLayer);
+    //void createHistograms(unsigned int nLayer);
+    //unsigned int getSimTrackId(Handle<DetSetVector<PixelDigiSimLink> >&, DetId& detId, unsigned int& channel);
+    //int matchedSimTrack(Handle<SimTrackContainer>& SimTk, unsigned int simTrkId);
     void initializeVariables();
-    unsigned int getMaxPosition(vector<float>& charge_vec);
-    unsigned int getLayerNumber(const TrackerGeometry* tkgeom, unsigned int& detid);
-    unsigned int getLayerNumber(unsigned int& detid);
-    int isPrimary(const SimTrack& simTrk, Handle<PSimHitContainer>& simHits);
-    int isPrimary(const SimTrack& simTrk, const PSimHit& simHit);
-    void fillMatchedSimTrackHistos(DigiHistos& digiHistos, const SimTrack& simTk, int ptype, unsigned int layer);
+    //unsigned int getMaxPosition(vector<float>& charge_vec);
+    //unsigned int getLayerNumber(const TrackerGeometry* tkgeom, unsigned int& detid);
+    //unsigned int getLayerNumber(unsigned int& detid);
+    //int isPrimary(const SimTrack& simTrk, Handle<PSimHitContainer>& simHits);
+    //int isPrimary(const SimTrack& simTrk, const PSimHit& simHit);
+    //void fillMatchedSimTrackHistos(DigiHistos& digiHistos, const SimTrack& simTk, int ptype, unsigned int layer);
 
 };
 
-RunStepsDigiValidation::RunStepsDigiValidation(const ParameterSet& iConfig) {
+RunStepsDigiValidation_RecHits::RunStepsDigiValidation_RecHits(const ParameterSet& iConfig) {
     src_ =  iConfig.getParameter<InputTag>("src");
     simG4_ = iConfig.getParameter<InputTag>("simG4");
 
@@ -214,13 +98,13 @@ RunStepsDigiValidation::RunStepsDigiValidation(const ParameterSet& iConfig) {
          << "-- Running RunSteps DigiValidation v0.1" << endl
          << "------------------------------------------------------------" << endl;
 }
-RunStepsDigiValidation::~RunStepsDigiValidation() { }
+RunStepsDigiValidation_RecHits::~RunStepsDigiValidation_RecHits() { }
 
-void RunStepsDigiValidation::beginJob() {
-    createHistograms(19);
+void RunStepsDigiValidation_RecHits::beginJob() {
+    //createHistograms(19);
 }
 
-void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSetup) {
+void RunStepsDigiValidation_RecHits::analyze(const Event& iEvent, const EventSetup& iSetup) {
     //int run       = iEvent.id().run();
     //int event     = iEvent.id().event();
     //int lumiBlock = iEvent.luminosityBlock();
@@ -252,14 +136,26 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
     Handle<SimVertexContainer> simVertices;
     iEvent.getByLabel("g4SimHits", simVertices);
 
+    // Get RecHits:
+    Handle<SiPixelRecHitCollection> siPixelRecHit;
+    iEvent.getByLabel("siPixelRecHits", siPixelRecHit);
+
     initializeVariables();
 
     vector<int> processTypes;
 
-    // Loop over Sim Tracks and Fill relevant histograms
-    int nTracks = 0;
+	//Loop over rechits:
+	for(SiPixelRecHitCollection::const_iterator recHitItr = siPixelRecHit->begin(); recHitItr != siPixelRecHit->end(); ++ recHitItr){
+	    const SiPixelRecHit* pixelHit = &(*recHit);
 
-    for (SimTrackContainer::const_iterator simTrkItr = simTracks->begin(); simTrkItr != simTracks->end(); ++simTrkItr) {
+	    int RecHitPos = pixelHit.pos();
+	    std::cout << " Position of RecHit : " << RecHitPos << std::endl;
+	}		
+
+    // Loop over Sim Tracks and Fill relevant histograms
+//    int nTracks = 0;
+
+  /*  for (SimTrackContainer::const_iterator simTrkItr = simTracks->begin(); simTrkItr != simTracks->end(); ++simTrkItr) {
         int type = isPrimary((*simTrkItr), simHits);
         processTypes.push_back(type);
 
@@ -294,9 +190,9 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
     }
 
     nSimTracks_->Fill(nTracks++);
-
+*/
     // Loop Over Digis and Fill Histograms
-    for (DetSetVector<PixelDigi>::const_iterator DSViter = pixelDigis->begin(); DSViter != pixelDigis->end(); ++DSViter) {
+  /*  for (DetSetVector<PixelDigi>::const_iterator DSViter = pixelDigis->begin(); DSViter != pixelDigis->end(); ++DSViter) {
         // Detector id
         unsigned int rawid = DSViter->id;
         DetId detId(rawid);
@@ -491,10 +387,10 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         if (topol.ncolumns() == 32) iPos->second.NumberOfClustersPixel->Fill(nClusterA);
         // Strip module
         else if (topol.ncolumns() == 2) iPos->second.NumberOfClustersStrip->Fill(nClusterA);
-    }
+    }*/
 
     // Fill Layer Level Histograms
-    for (map<unsigned int, DigiHistos>::iterator iPos  = layerHistoMap.begin(); iPos != layerHistoMap.end(); ++iPos) {
+  /*  for (map<unsigned int, DigiHistos>::iterator iPos  = layerHistoMap.begin(); iPos != layerHistoMap.end(); ++iPos) {
         DigiHistos local_histos = iPos->second;
         local_histos.TotalNumberOfClusters->Fill(local_histos.totNClusters);
         local_histos.TotalNumberOfDigis->Fill(local_histos.totNDigis);
@@ -519,12 +415,12 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
             int pid = processTypes[index];
             fillMatchedSimTrackHistos(local_histos, (*simTracks.product())[index], pid, iPos->first);
         }
-    }
+    }*/
 }
 
-void RunStepsDigiValidation::endJob() { }
+void RunStepsDigiValidation_RecHits::endJob() { }
 
-void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
+/*void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     ostringstream fname1, fname2;
 
     Service<TFileService> fs;
@@ -735,8 +631,9 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     layerHistoMap[ival].totMatchedSimHitsSecondary = 0;
 
     layerHistoMap[ival].simTkIndx.clear();
-}
 
+}/*
+/*
 void RunStepsDigiValidation::createHistograms(unsigned int nLayer) {
     Service<TFileService> fs;
     fs->file().cd("/");
@@ -912,6 +809,6 @@ void RunStepsDigiValidation::fillMatchedSimTrackHistos(DigiHistos& digiHistos, c
     }
     digiHistos.matchedSimTrackEta_->Fill(eta);
     digiHistos.matchedSimTrackPhi_->Fill(phi);
-}
+}*/
 
-DEFINE_FWK_MODULE(RunStepsDigiValidation);
+DEFINE_FWK_MODULE(RunStepsDigiValidation_RecHits);
