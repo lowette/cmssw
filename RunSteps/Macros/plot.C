@@ -16,7 +16,7 @@ using namespace std;
 
 int verbose=3;
 
-vector<TString> getHistoNames(TString);
+vector<TString> getHistoNames(TString,TString);
 
 int plot(TString level="Digis", TString path="../Output/", TString pathOut="../Plots/", bool doDraw=true)
 {
@@ -32,18 +32,29 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 
   TString file  = "" ;
   TString suffix= "" ;
+  TString reco  = "" ;
+
   if(level.Contains("Digi")) {
     suffix = "Digis" ;
+    reco   = "digi" ;
     file   = "DigiValidation.root" ;
   }
   else if(level.Contains("Clus")) {
     suffix = "Clusters" ;
+    reco   = "cluster" ;
     file   = "ClusterValidation.root" ;
   }
   TString nameF = path+"/"+file;
   TFile* f = new TFile(nameF, "READ");
   if(f->IsZombie()) {
-    cout << "ERROR !!! FILE " << nameF << " IS ZOMBIE !!!" << endl;
+    cout << "ERROR !!! INPUT FILE " << nameF << " IS ZOMBIE !!!" << endl;
+    return 2;
+  }
+
+  TString nameF_o = pathOut+"/"+suffix+"/SummaryPlots/"+suffix+"Summary.root";
+  TFile* fout = new TFile(nameF_o, "RECREATE");
+  if(fout->IsZombie()) {
+    cout << "ERROR !!! OUTPUT FILE " << nameF_o << " IS ZOMBIE !!!" << endl;
     return 2;
   }
 
@@ -116,7 +127,7 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   ////////////////////
 
   // Names of histograms
-  vector<TString> myNames = getHistoNames(suffix);
+  vector<TString> myNames = getHistoNames(suffix, reco);
 
   // Prepare reading from file
   TDirectory* myDir;
@@ -256,6 +267,8 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   // Draw graphs : effi(TB,TE1,TE2), response(TB,TE1,TE2), resolution(TB,TE1,TE2)
   if(verbose>1) cout << "- draw graphs" << endl;
 
+  fout->cd();
+
   for(u_int iV=0 ; iV<nVar ; iV++) {
 
     for(u_int iP=0 ; iP<nPart ; iP++) {
@@ -281,22 +294,28 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
       if(verbose>2) cout << "--- graph mean = " << g_effi[iV][iP].GetMean() << endl;
 
       g_effi[iV][iP].Draw("AP");
+      g_effi[iV][iP].Write( "g_"+suffix+"_"+g_name[iV]+"_"+namePart[iP] );
 
       c_graph.Print(pathOut+"/"+suffix+"/SummaryPlots/"+g_name[iV]+"_"+suffix+"_"+namePart[iP]+".pdf");
     }
   }
 
+  fout->Write();
+
+  f->Close();
+  fout->Close();
+
   cout << "THE END" << endl;
   return 0;
 }
 
-vector<TString> getHistoNames(TString suffix)
+vector<TString> getHistoNames(TString suffix, TString reco)
 {
   vector<TString> myNames;
 
   const u_int nH=5;
   TString nameHistos[nH]={"NumberOfMatchedHits", "NumberOfMatched"+suffix, "Efficiency", 
-			  "DeltaX_simhit_cluster", "DeltaY_simhit_cluster"};
+			  "DeltaX_simhit_"+reco, "DeltaY_simhit_"+reco};
 
   //const u_int nSuffix1=4;
   const u_int nSuffix2=18;
