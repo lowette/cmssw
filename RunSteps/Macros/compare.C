@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 
 #include "TFile.h"
 #include "TDirectory.h"
@@ -9,12 +10,16 @@
 #include "TGraphErrors.h"
 #include "TStyle.h"
 #include "TROOT.h"
+#include "TLegend.h"
 
 #include "tdrstyle.h"
 
 using namespace std;
 
 int verbose=3;
+
+double getMinimum(TGraph, double, double);
+double getMaximum(TGraph, double, double);
 
 int compare()
 {
@@ -34,7 +39,9 @@ int compare()
 
   TString type[ nT]={"Digis","Clusters"};
   TString algoD[nD]={"DigiRun1","DigiPhase2"};
+  TString algoD_r[nD]={"Run1","Phase2"};
   TString algoC[nC]={"AdjacentHits","WeightedMean"};
+  TString algoC_r[nC]={"AH","WM"};
 
   TString g_name[  nV]={"Efficiency", "ResponseX", "ResolutionX", "ResponseY", "ResolutionY"};
   TString g_titleY[nV]={"Efficiency", "Response in x [cm]", "Resolution in x [cm]",
@@ -42,18 +49,24 @@ int compare()
 
   TString namePart[nP]={"Barrel", "EndCap_Side_1", "EndCap_Side_2"};
   TString nameTypeLayer[nP][nCase] = { {"Layer","layer"} , {"Disc","disc"} , {"Disc","disc"} };
+  double g_xmin[nP]={5,4,4};
+  double g_xmax[nP]={10,8,8};
 
-  int mycolor[nD][nC]={ {kBlue,kViolet+2} , {kViolet-1,kRed} };
+  int mycolor[nD][nC]={ {kBlue,kViolet} , {kPink,kRed} };
+  int mystyle[nD][nC]={ {kOpenSquare,kFullCircle} , {kOpenTriangleUp,kFullDiamond} };
 
   TString path="../Plots/";
   TString filename="";
 
   // Graph maxima
-  double tempMax=0;
-  double g_max[nV][nP];
+  double tempMax=0, tempMin=0;
+  double g_max[nV][nP][nT], g_min[nV][nP][nT];
   for(int iV=0 ; iV<nV ; iV++)
     for(int iP=0 ; iP<nP ; iP++)
-      g_max[iV][iP]=0;
+      for(int iT=0 ; iT<nT ; iT++) {
+	g_max[iV][iP][iT]=0;
+	g_min[iV][iP][iT]=9999999999;
+      }
 
   for(int iT=0 ; iT<nT ; iT++) {
     for(int iD=0 ; iD<nD ; iD++) {
@@ -71,10 +84,24 @@ int compare()
 	// Get all kinds of graphs from file (iT,iD,iC)
 	for(int iV=0 ; iV<nV ; iV++) {
 	  for(int iP=0 ; iP<nP ; iP++) {
+
 	    file[ iT][iD][iC]->GetObject( "g_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP] , gTemp );
 	    graph[iV][iP][iT][iD][iC] = (*gTemp);
-	    tempMax = graph[iV][iP][iT][iD][iC].GetMaximum();
-	    if(tempMax > g_max[iV][iP]) g_max[iV][iP] = tempMax;
+
+	    tempMax = getMaximum( graph[iV][iP][iT][iD][iC] , g_xmin[iP] , g_xmax[iP]);
+	    tempMin = getMinimum( graph[iV][iP][iT][iD][iC] , g_xmin[iP] , g_xmax[iP] );
+
+	    if(tempMax > g_max[iV][iP][iT]) g_max[iV][iP][iT] = tempMax;
+	    if(tempMin < g_min[iV][iP][iT]) g_min[iV][iP][iT] = tempMin;
+
+	    if(verbose>1)// && tempMax==0) 
+	      cout << algoD[iD]+"_"+algoC[iC]
+		   << " : GRAPH = "  << "g_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP] 
+		   << " ; MAX = " << tempMax << endl;
+
+	    if(verbose>1)// && tempMin==0) 
+	      cout << " ; MIN = " << tempMin << endl;
+
 	  }
 	}
 	// got the graphs from file (iT,iD,iC)
@@ -91,27 +118,55 @@ int compare()
 
 	TCanvas c_graph("cg","cg",10,10,800,600);
 
+	TLegend leg(0.80 , 0.75 , 0.975 , 0.95);
+	leg.SetMargin(0.15);
+	leg.SetLineColor(1);
+	leg.SetTextColor(1);
+	leg.SetTextFont(42);
+	leg.SetTextSize(0.03);
+	leg.SetShadowColor(kWhite);
+	leg.SetFillColor(kWhite);
+
 	// Loop over all digitizers and clusterizers to compare on the same plot
 	for(int iD=0 ; iD<nD ; iD++) {
 	  for(int iC=0 ; iC<nC ; iC++) {
 
-	    if(iV>0) graph[iV][iP][iT][iD][iC].SetMaximum( 1.05*g_max[iV][iP] );
+	    if(iV>0) {
+	      graph[iV][iP][iT][iD][iC].SetMaximum( 1.05*g_max[iV][iP][iT] );
+	      graph[iV][iP][iT][iD][iC].SetMinimum( g_min[iV][iP][iT] );
+	    }
+
+	    if(verbose>1) cout << "PLOT : "   << type[iT]+" "+g_name[iV]+" "+namePart[iP] 
+			       << " ; MAX : " << 1.05*g_max[iV][iP][iT]          
+			       << endl;
 	    
+	    // Labels
 	    graph[iV][iP][iT][iD][iC].SetTitle( type[iT]+" "+g_name[iV]+" "+namePart[iP] );
 	    graph[iV][iP][iT][iD][iC].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
 	    graph[iV][iP][iT][iD][iC].GetYaxis()->SetTitle( g_titleY[iV] );
 
-	    graph[iV][iP][iT][iD][iC].SetMarkerStyle(kPlus);
-	    graph[iV][iP][iT][iD][iC].SetMarkerSize(1.2);
+	    // Style
+	    int linestyle;
+	    if(iC==0) linestyle=7;
+	    else      linestyle=6;
+	    graph[iV][iP][iT][iD][iC].SetLineStyle(linestyle);
+	    graph[iV][iP][iT][iD][iC].SetLineColor(mycolor[iD][iC]);
 	    graph[iV][iP][iT][iD][iC].SetMarkerColor(mycolor[iD][iC]);
+	    graph[iV][iP][iT][iD][iC].SetMarkerStyle(mystyle[iD][iC]);
+	    graph[iV][iP][iT][iD][iC].SetMarkerSize(1.2);
 
-	    if(iD==0 && iC==0) graph[iV][iP][iT][iD][iC].Draw("AP");
-	    else               graph[iV][iP][iT][iD][iC].Draw("PSAME");
+	    // Plot
+	    if(iD==0 && iC==0) graph[iV][iP][iT][iD][iC].Draw("APL");
+	    else               graph[iV][iP][iT][iD][iC].Draw("PLSAME");
+
+	    // Legend
+	    leg.AddEntry( &(graph[iV][iP][iT][iD][iC]) , algoD_r[iD]+" "+algoC_r[iC] , "P");
 
 	  }
 	}
-	
+
 	// Plot the summary plot for type iT, variable iV, tracker part iP
+	leg.Draw();
 	c_graph.Print(path+"/ComparisonPlots/graph_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP]+".pdf");
 	
       }
@@ -127,4 +182,40 @@ int compare()
   */
 
   return 0;
+}
+
+double getMinimum(TGraph g, double xMin, double xMax)
+{
+
+  double minimum=DBL_MAX;
+
+  int N = g.GetN();
+  double* X = g.GetX();
+  double* Y = g.GetY();
+
+  for(int i=0 ; i<N ; i++) {
+    if(X[i]<xMin || X[i]>xMax) continue;
+    
+    if(Y[i] < minimum) minimum = Y[i];
+  }
+
+  return minimum;
+}
+
+double getMaximum(TGraph g, double xMin, double xMax)
+{
+
+  double maximum=-DBL_MAX;
+  
+  int N = g.GetN();
+  double* X = g.GetX();
+  double* Y = g.GetY();
+
+  for(int i=0 ; i<N ; i++) {
+    if(X[i]<xMin || X[i]>xMax) continue;
+    
+    if(Y[i] > maximum) maximum = Y[i];
+  }
+
+  return maximum;
 }
