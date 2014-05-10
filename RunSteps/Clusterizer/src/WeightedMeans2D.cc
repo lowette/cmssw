@@ -47,7 +47,7 @@ void WeightedMeans2D::setup(const PixelGeomDetUnit* pixDet) {
 }
 
 // Go over the Digis and create clusters
-void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, std::vector<SiPixelCluster> & clusters, std::vector<PixelClusterSimLink> & links) {
+void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters, std::vector<PixelClusterSimLink> & links) {
 
     // Get the det ID
 	detid_ = pixelDigis.detId();

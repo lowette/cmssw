@@ -39,7 +39,7 @@ void AdjacentHits::setup(const PixelGeomDetUnit* pixDet) {
 }
 
 // Go over the Digis and create clusters
-void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, std::vector<SiPixelCluster> & clusters, std::vector<PixelClusterSimLink> & links) {
+void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters, std::vector<PixelClusterSimLink> & links) {
 
     // Get the det Id
     detid_ = pixelDigis.detId();

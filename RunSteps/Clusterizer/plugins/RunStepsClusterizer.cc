@@ -37,12 +37,12 @@ namespace cms {
         const std::string alias("siPixelClusters");
 
         // Objects that will be produced
-        produces< edm::DetSetVector<SiPixelCluster> >().setBranchAlias(alias);
+        produces< SiPixelClusterCollectionNew >().setBranchAlias(alias);
         produces< edm::DetSetVector<PixelClusterSimLink> >().setBranchAlias(alias);
 
         // Debug
         std::cout << "------------------------------------------------------------" << std::endl
-                  << "-- Running RunSteps Clusterizer v0.4" << std::endl
+                  << "-- Running RunSteps Clusterizer v0.5" << std::endl
                   << "------------------------------------------------------------" << std::endl;
 
         // Set the algorithm to use
@@ -80,7 +80,7 @@ namespace cms {
         eventSetup.get<TrackerDigiGeometryRecord>().get(geom);
 
         // Global container for the clusters of each detector and the clusterLinks
-        std::vector<edm::DetSet<SiPixelCluster> > clustersByDet;
+        std::auto_ptr<SiPixelClusterCollectionNew> outputClusters( new SiPixelClusterCollectionNew() );
         std::vector<edm::DetSet<PixelClusterSimLink> > linksByDet;
 
         // Go over all the detectors
@@ -91,7 +91,8 @@ namespace cms {
             if (!pixDet) assert(0);
 
             // Container for the clusters and clusterLinks that will be produced for this detector
-            edm::DetSet<SiPixelCluster> clusters(DSViter->detId());
+            edmNew::DetSetVector<SiPixelCluster>::FastFiller clusters(*outputClusters, detIdObject);
+
             edm::DetSet<PixelClusterSimLink> links(DSViter->detId());
 
             // Setup the clusterizer algorithm for this detector (see PixelClusterizer for more details)
@@ -99,15 +100,13 @@ namespace cms {
 
             // Pass the list of Digis to the main algorithm
             // This function will store the clusters in the previously created container
-            clusterizer_->clusterizeDetUnit(*DSViter, pixelSimLinks, clusters.data, links.data);
+            clusterizer_->clusterizeDetUnit(*DSViter, pixelSimLinks, clusters, links.data);
+
+            if (clusters.empty()) clusters.abort();
 
             // Add the clusters for this detector to the global container
-            clustersByDet.push_back(clusters);
             linksByDet.push_back(links);
         }
-
-        // Put the output data to the correct format
-        std::auto_ptr< edm::DetSetVector<SiPixelCluster> > outputClusters(new edm::DetSetVector<SiPixelCluster>(clustersByDet));
 
         // Add the data to the output
         e.put(outputClusters);

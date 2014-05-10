@@ -21,7 +21,7 @@ class PixelGeomDetUnit;
 class PixelClusterizer {
 
 public:
-    virtual void clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, std::vector<SiPixelCluster> & clusters, std::vector<PixelClusterSimLink> & links) = 0;
+    virtual void clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters, std::vector<PixelClusterSimLink> & links) = 0;
     virtual void setup(const PixelGeomDetUnit* pixDet) = 0;
 
 };

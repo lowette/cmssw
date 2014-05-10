@@ -52,7 +52,7 @@ process.options = cms.untracked.PSet()
 
 # Metadata (info)
 process.configurationMetadata = cms.untracked.PSet(
-    version = cms.untracked.string('$Revision: 0.4 $'),
+    version = cms.untracked.string('$Revision: 0.5 $'),
     annotation = cms.untracked.string('RunSteps Clusterizer'),
     name = cms.untracked.string('Applications')
 )

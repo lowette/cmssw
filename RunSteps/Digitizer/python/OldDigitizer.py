@@ -6,7 +6,7 @@ from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5
 
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'
-output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
+output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/OLD_DIGI.root'
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
