@@ -56,10 +56,16 @@
 #include <THStack.h>
 #include <TProfile.h>
 
+int verbose=2;
+const int nTypes=18;
+
 using namespace std;
 using namespace edm;
 
 class RunStepsDigiValidation : public EDAnalyzer {
+
+  typedef vector< pair< PSimHit , vector<PixelDigi> > > V_HIT_DIGI;
+  typedef map< int , V_HIT_DIGI > M_TRK_HIT_DIGI;
 
 public:
     explicit RunStepsDigiValidation(const ParameterSet&);
@@ -101,6 +107,13 @@ private:
         TH1F* NumberOfDigisSecondary; // Primary
         // TH1F* NumberOfDigisPixel; // Pixel
         // TH1F* NumberOfDigisStrip; // Strip
+
+      // Truth Matching
+        TH1F* NumberOfMatchedHits[nTypes];
+        TH1F* NumberOfMatchedDigis[nTypes];
+        TH1F* hEfficiency[nTypes];
+        TH1F* h_dx_Truth;
+        TH1F* h_dy_Truth;
 
         TH1F* DigiCharge;
         // TH1F* DigiChargePrimary;
@@ -241,13 +254,21 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
     const TrackerGeometry*  tkGeom = &(*geomHandle);
 
     // Get PSimHits
-    Handle<PSimHitContainer> simHits;
-    iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits);
+    if(verbose>1) cout << "- Getting SimHits" << endl << "-- TrackerHitsPixelBarrelLowTof" << endl;
+    Handle<PSimHitContainer> simHits_B;
+    iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits_B);
 
+    if(verbose>1) cout << "-- TrackerHitsPixelEndcapLowTof" << endl;
+    Handle<PSimHitContainer> simHits_E;
+    iEvent.getByLabel("g4SimHits","TrackerHitsPixelEndcapLowTof" ,simHits_E);
+
+    // SimTracks
+    if(verbose>1) cout << "- Getting SimTracks" << endl;
     Handle<SimTrackContainer> simTracks;
     iEvent.getByLabel("g4SimHits",simTracks);
 
-    // SimVertex
+    // SimVertices
+    if(verbose>1) cout << "- Getting SimVertices" << endl;
     Handle<SimVertexContainer> simVertices;
     iEvent.getByLabel("g4SimHits", simVertices);
 
@@ -255,11 +276,58 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
 
     vector<int> processTypes;
 
+    ////////////////////////////////
+    // MAP SIM HITS TO SIM TRACKS //
+    ////////////////////////////////
+
+    // all hits ; type-2 hits ; primary hits ; secondary hits
+    int    nMatchedHits[nTypes]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    //
+    Local3DPoint pos_hit;
+    double x_hit=0,y_hit=0,z_hit=0,/*x_cl=0,y_cl=0,*/dx=0,dy=0;
+    bool found_hits=false;
+    bool fill_dtruth=false;
+    //
+    // cluster and hit informations
+    //unsigned int trkID=-1;
+    //unsigned int sizeLink=0;
+    //unsigned int rawid=0;
+    //unsigned int layer=0;
+    unsigned int simh_detid=0;
+    unsigned int simh_layer=0;
+    int          simh_type=0;
+    //unsigned int nLinks = 0;
+    //bool combinatoric=false;
+
+    vector<PixelDigi> matched_digis;
+    V_HIT_DIGI matched_hits;
+    M_TRK_HIT_DIGI map_hits;
+
+    // Fill the map
+    int nHits=0;
+    for (PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_digis) );
+      nHits++ ;
+    }
+    for (PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_digis) );
+      nHits++ ;
+    }
+
+    if(verbose>1) cout << endl << "- Number of SimHits in the event : " << nHits << endl;
+
     // Loop over Sim Tracks and Fill relevant histograms
     int nTracks = 0;
 
+    if(verbose>1) cout << "- SimTracks : " ;
+
     for (SimTrackContainer::const_iterator simTrkItr = simTracks->begin(); simTrkItr != simTracks->end(); ++simTrkItr) {
-        int type = isPrimary((*simTrkItr), simHits);
+
+      if(verbose>1) cout << simTrkItr->trackId() << " | " ;
+
+        int type = isPrimary((*simTrkItr), simHits_B);
+        if(type==-1) type = isPrimary((*simTrkItr), simHits_E);
+
         processTypes.push_back(type);
 
         // remove neutrinos
@@ -292,10 +360,15 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         }
     }
 
+    if(verbose>1) cout << endl;
+
     nSimTracks_->Fill(nTracks++);
 
     // Loop Over Digis and Fill Histograms
+    if(verbose>1) cout << "- Start looping over DetSetVector<PixelDigi>" << endl;
+
     for (DetSetVector<PixelDigi>::const_iterator DSViter = pixelDigis->begin(); DSViter != pixelDigis->end(); ++DSViter) {
+
         // Detector id
         unsigned int rawid = DSViter->id;
         DetId detId(rawid);
@@ -330,6 +403,9 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
         cluster.trkEta = -999.0;
         cluster.strip_charges.clear();
 
+        // Loop over the links in the detector unit
+	if(verbose>1) cout << endl << endl << "-- DetId=" << rawid << endl;
+
         // Loop over the Digis
         for (DetSet<PixelDigi>::const_iterator di = DSViter->data.begin(); di != DSViter->data.end(); ++di) {
             int adc = di->adc();    // charge, modifued to unsiged short
@@ -339,12 +415,21 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
             unsigned int channel = PixelChannelIdentifier::pixelToChannel(row, col);
             unsigned int simTkId = getSimTrackId(pixelSimLinks, detId, channel);
 
+	    if(verbose>1) cout << endl << "--- Digi :"
+			       << " col="     << col      
+			       << " row="     << row 
+			       << " ch="      << channel 
+			       << " simTkId=" << simTkId
+			       << endl;
+
             // Get the Digi position
             MeasurementPoint mp(row + 0.5, col + 0.5 );
+	    LocalPoint lPos;
+	    GlobalPoint pdPos;
 
             if (geomDetUnit) {
-                LocalPoint lPos = geomDetUnit->topology().localPosition(mp);
-                GlobalPoint pdPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
+                lPos  = geomDetUnit->topology().localPosition(mp);
+                pdPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
 
                 // Fill some histograms
                 iPos->second.LocalPosition->Fill(lPos.x(), lPos.y());
@@ -382,8 +467,91 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
                 // iPos->second.DigiChargeSecondary->Fill(adc);
                 nDigiS++;
             }
+	    else cout << "--- primaryTrk=" << primaryTrk 
+		      << " | simTkId="     << simTkId
+		      << " | iSimTrk="     << iSimTrk
+		      << endl;
 
             nDigiA++;
+
+	    // Get matched hits
+	    if(verbose>1) cout << "--- Getting hits matched to SimTrack (id " << simTkId << ")" << endl;
+	    matched_hits = map_hits[simTkId];
+
+	    if(verbose>1) {
+	      cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
+	      if(matched_hits.size()!=0) cout << " ids(" ;
+	      
+	      // printout list of SimHits matched to the SimTrack
+	      for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
+		cout << matched_hits[iH].first.detUnitId() ;
+		if(iH<matched_hits.size()-1) cout << "," ;
+		else cout << ")" ;
+	      }
+	      cout << endl;
+	    }
+	    
+	    // digi matching quantities
+	    for(int iM=0 ; iM<nTypes ; iM++)
+	      nMatchedHits[iM] = 0;
+
+	    // Loop over matched SimHits
+	    if(verbose>2) cout << "--- start looping over matched hits" << endl;
+	    for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
+	      
+	      if(verbose>2) cout << "---- iteration #" << iH << endl;
+	      
+	      // Consider only SimHits with same DetID as current cluster
+	      simh_detid = matched_hits[iH].first.detUnitId();
+	      if(simh_detid!=rawid) continue;
+	      else found_hits=true;
+	      
+	      // Map current digi to current SimHit
+	      map_hits[ simTkId ][ iH ].second.push_back(*di);
+
+	      simh_layer = getLayerNumber( simh_detid );
+	      simh_type  = matched_hits[iH].first.processType();
+	      pos_hit    = matched_hits[iH].first.localPosition();
+	      x_hit      = pos_hit.x();
+	      y_hit      = pos_hit.y();
+	      z_hit      = pos_hit.z();
+
+	      if(simh_type>=0 && simh_type<17) nMatchedHits[simh_type]++ ;
+	      nMatchedHits[17]++ ;
+	      
+	      if(simh_type==2) {
+		dx = x_hit - lPos.x();
+		dy = y_hit - lPos.y();
+		if(fill_dtruth==true) fill_dtruth=false; // eliminates cases with several type-2 hits
+		fill_dtruth=true; // toggle filling of the histo only when a type-2 hit is found
+	      }
+	      
+	      //if(simh_type == 2 || simh_type == 7 || simh_type == 9 || simh_type == 11 || simh_type == 15)
+	      
+	      if(verbose>1) cout << "----- SimHit #" << iH
+				 << " type="    << simh_type
+		//<< " s_id="    << simh_detid
+				 << " s_lay="   << simh_layer 
+				 << " c_lay="   << layer
+				 << " s("   << x_hit    << " , " << y_hit    << " , " << z_hit    << ")"
+		//<< " c_g(" << gPos.x() << " , " << gPos.y() << " , " << gPos.z() << ")"
+				 << endl;
+	      
+	    } // end loop over matched SimHits
+
+	    // Number of matched hits (per type)
+	    if(verbose>2) cout << "--- Filling NumberOfMatchedHits histograms" << endl;
+	    for(int iM=0 ; iM<nTypes ; iM++)
+	      iPos->second.NumberOfMatchedHits[iM]-> Fill(nMatchedHits[iM]);
+	    
+	    // Position resolution
+	    if(fill_dtruth) {
+	      if(verbose>2) cout << "--- Filling dx,dy histograms" << endl;
+	      iPos->second.h_dx_Truth->Fill(dx);
+	      iPos->second.h_dy_Truth->Fill(dy);
+	    }
+	    
+	    if(!found_hits && verbose>1) cout << "----- FOUND NO MATCHED HITS" << endl;
 
             // Form a cluster of continuous Digis in one row
             if (col_last == -1) {
@@ -519,6 +687,120 @@ void RunStepsDigiValidation::analyze(const Event& iEvent, const EventSetup& iSet
             fillMatchedSimTrackHistos(local_histos, (*simTracks.product())[index], pid, iPos->first);
         }
     }
+
+    ////////////////////////////////////
+    // COMPUTE CLUSTERIZER EFFICIENCY //
+    ////////////////////////////////////
+    
+    if(verbose>1) cout << "- Enter efficiency computation" << endl;
+
+    // Iterate over the map of hits & clusters
+    M_TRK_HIT_DIGI::const_iterator iMapHits;
+
+    // Counters
+    int nTrackHits=0;
+    int countHit=0;
+    int nMatchedDigis=0;
+    int nTotalHits=0;
+    int nMatchHits=0;
+    float efficiency=0;
+
+    // Hit informations
+    unsigned int theHit_id=0;   
+    unsigned int theHit_layer=0;
+    unsigned int theHit_type=0;
+
+    // Prepare the map of counters for efficiency
+    std::map<unsigned int, DigiHistos>::iterator iPos;
+    map< unsigned int , vector<vector<int>> > map_effi;
+    map< unsigned int , vector<vector<int>> >::const_iterator iMapEffi;
+    vector<int> init_counter;
+    for(int iM=0 ; iM<2 ; iM++) init_counter.push_back(0);
+
+    // Loop over the entries in the map of hits & clusters
+    if(verbose>1) cout << "- loop over map of hits & clusters (size=" << map_hits.size() << ")" << endl;
+
+    for( iMapHits=map_hits.begin() ; iMapHits!=map_hits.end() ; iMapHits++) {
+
+      if(verbose>1) cout << "-- SimTrack ID=" << iMapHits->first << endl;
+      nTrackHits = (iMapHits->second).size(); 
+      countHit  += nTrackHits;
+
+      // Loop over the hits matched to the current SimTrack ID
+      for(int iH=0 ; iH<nTrackHits ; iH++) {
+
+	// Current SimHit
+	if(verbose>1) cout << "--- SimHit #" << iH << endl;
+	PSimHit theHit( ((iMapHits->second)[iH]).first );
+	theHit_id    = theHit.detUnitId();
+	theHit_layer = getLayerNumber(theHit_id);
+	theHit_type  = theHit.processType();
+	//if(verbose>1) cout << theHit_id << theHit_layer << theHit_type << endl;
+
+	// Clusters matched to the SimHit
+	matched_digis = ((iMapHits->second)[iH]).second;
+	nMatchedDigis = matched_digis.size();
+
+	// Find layer in map of histograms
+	if(verbose>2) cout << "--- Find layer=" << theHit_layer << " in map of histograms" << endl;
+	iPos = layerHistoMap.find(theHit_layer);
+        if (iPos == layerHistoMap.end()) {
+	  if(verbose>2) cout << "---- add layer in the map" << endl;
+	  createLayerHistograms(theHit_layer);
+	  iPos = layerHistoMap.find(theHit_layer);
+        }
+
+	// Fill Histograms
+	(iPos->second.NumberOfMatchedDigis[17])->Fill( nMatchedDigis );
+	if(theHit_type<17)
+	  (iPos->second.NumberOfMatchedDigis[theHit_type])->Fill( nMatchedDigis );
+
+	if( nMatchedDigis==0 ) {
+	  if(verbose>1) cout << "---- No Digi Matched" << endl;
+	}
+	else {
+	  if(verbose>1) cout << "---- Yes Digi Matched = " << nMatchedDigis << endl;
+	}
+	
+	if( map_effi.find(theHit_layer)==map_effi.end() )
+	  for(int iT=0 ; iT<nTypes ; iT++) {
+	    map_effi[theHit_layer].push_back(init_counter);
+	    if(verbose>2) cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << endl;
+	  }
+	(map_effi[theHit_layer][theHit_type][0])++ ; // total number of hits of this type in this layer
+	if(nMatchedDigis>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 digi(s)
+
+	(map_effi[theHit_layer][17][0])++ ; // total number of hits of this type in this layer
+	if(nMatchedDigis>0) (map_effi[theHit_layer][17][1])++ ; // number of hits matched to >=1 digi(s)
+      }
+
+    }
+
+    // Fill histograms from the map_effi
+    if(verbose>1) cout << "- fill [per layer] effi histo from effi map (size=" << map_effi.size() << ")" << endl;
+    for( iMapEffi=map_effi.begin() ; iMapEffi!=map_effi.end() ; iMapEffi++ ) {
+      
+      iPos = layerHistoMap.find(iMapEffi->first);
+      if(verbose>1) cout << "-- layer=" << iMapEffi->first << endl;
+
+      for(int iT=0 ; iT<nTypes ; iT++) {
+	nTotalHits = iMapEffi->second[iT][0];
+	nMatchHits = iMapEffi->second[iT][1]; // number of hits in a given layer that have at least 1 digi matched
+	efficiency = nTotalHits!=0 ? float(nMatchHits)/float(nTotalHits) : -1 ;
+	if(efficiency>=0) (iPos->second.hEfficiency[iT])->Fill( efficiency );
+	if(verbose>1) cout << "--- type #"   << iT 
+			   << " nTotalHits=" << nTotalHits 
+			   << " nMatchHits=" << nMatchHits 
+			   << " efficiency=" << efficiency
+			   << endl;
+      }
+    }
+
+    // Check if all event's SimHits are mapped
+    if( countHit != nHits )
+      if(verbose>1) cout << "---- Missing hits in the efficiency computation : " 
+			 << countHit << " != " << nHits << endl;
+
 }
 
 void RunStepsDigiValidation::endJob() { }
@@ -734,6 +1016,38 @@ void RunStepsDigiValidation::createLayerHistograms(unsigned int ival) {
     histoName.str("");
     histoName << "LocalPosition" << tag.c_str() << id;
     local_histos.LocalPosition = td.make<TH2F>(histoName.str().c_str(),histoName.str().c_str(),10000, -5, 5 , 10000, -5 ,5);
+
+
+    // Truth Matching 
+
+    string name_types[nTypes] = {"Undefined","Unknown","Primary","Hadronic",
+				 "Decay","Compton","Annihilation","EIoni",
+				 "HIoni","MuIoni","Photon","MuPairProd",
+				 "Conversions","EBrem","SynchrotronRadiation",
+				 "MuBrem","MuNucl","AllTypes"};
+
+    for(int iM=0 ; iM<nTypes ; iM++) {
+      histoName.str("");
+      histoName << "NumberOfMatchedHits_" << name_types[iM] << tag.c_str() <<  id;
+      local_histos.NumberOfMatchedHits[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+
+      histoName.str("");
+      histoName << "NumberOfMatchedDigis_" << name_types[iM] << tag.c_str() <<  id;
+      local_histos.NumberOfMatchedDigis[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+
+      histoName.str("");
+      histoName << "Efficiency_" << name_types[iM] << tag.c_str() <<  id;
+      local_histos.hEfficiency[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 110, 0., 1.1);
+    }
+
+    histoName.str("");
+    histoName << "DeltaX_simhit_digi" << tag.c_str() <<  id;
+    local_histos.h_dx_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
+
+    histoName.str("");
+    histoName << "DeltaY_simhit_digi" << tag.c_str() <<  id;
+    local_histos.h_dy_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
+
 
     layerHistoMap.insert( make_pair(ival, local_histos));
 
