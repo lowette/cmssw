@@ -51,23 +51,19 @@
 int verbose=2;
 const int nTypes=18;
 
+class RunStepsClusterValidation : public edm::EDAnalyzer {
 
-using namespace std;
-using namespace edm;
-
-class RunStepsClusterValidation : public EDAnalyzer {
-
-  typedef vector< pair< PSimHit , vector<SiPixelCluster> > > V_HIT_CLUSTERS;
-  typedef map< int , V_HIT_CLUSTERS >                        M_TRK_HIT_CLUSTERS;
+  typedef std::vector< std::pair< PSimHit , std::vector<SiPixelCluster> > > V_HIT_CLUSTERS;
+  typedef std::map< int , V_HIT_CLUSTERS >                        M_TRK_HIT_CLUSTERS;
 
 public:
 
-    explicit RunStepsClusterValidation(const ParameterSet&);
+    explicit RunStepsClusterValidation(const edm::ParameterSet&);
     ~RunStepsClusterValidation();
     virtual void beginJob();
-    virtual void analyze(const Event&, const EventSetup&);
+    virtual void analyze(const edm::Event&, const edm::EventSetup&);
     virtual void endJob();
-    int isPrimary(const SimTrack& simTrk, Handle<PSimHitContainer>& simHits);
+    int isPrimary(const SimTrack& simTrk, edm::Handle<edm::PSimHitContainer>& simHits);
     int isPrimary(const SimTrack& simTrk, const PSimHit& simHit);
 
 private:
@@ -112,7 +108,7 @@ private:
 
     std::map<unsigned int, ClusterHistos> layerHistoMap;
 
-    InputTag src_;
+    edm::InputTag src_;
 
 public:
     void createLayerHistograms(unsigned int iLayer);
@@ -121,8 +117,8 @@ public:
     unsigned int getLayerNumber(unsigned int& detid);
 };
 
-RunStepsClusterValidation::RunStepsClusterValidation(const ParameterSet& iConfig) {
-    src_ = iConfig.getParameter<InputTag>("src");
+RunStepsClusterValidation::RunStepsClusterValidation(const edm::ParameterSet& iConfig) {
+    src_ = iConfig.getParameter<edm::InputTag>("src");
 
     std::cout << "------------------------------------------------------------" << std::endl
               << "-- Running RunSteps ClusterValidation v0.2" << std::endl
@@ -135,67 +131,69 @@ void RunStepsClusterValidation::beginJob() {
     createHistograms(19);
 }
 
-void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& iSetup) {
+void RunStepsClusterValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
   verbose=2;
 
     // Simulated information
     // SimHit
-    Handle<PSimHitContainer> simHits_B;
+    edm::Handle<edm::PSimHitContainer> simHits_B;
     iEvent.getByLabel("g4SimHits","TrackerHitsPixelBarrelLowTof" ,simHits_B);
 
-    Handle<PSimHitContainer> simHits_E;
+    edm::Handle<edm::PSimHitContainer> simHits_E;
     iEvent.getByLabel("g4SimHits","TrackerHitsPixelEndcapLowTof" ,simHits_E);
 
     // SimTrack
-    Handle<SimTrackContainer> simTracks;
+    edm::Handle<edm::SimTrackContainer> simTracks;
     iEvent.getByLabel("g4SimHits",simTracks);
 
     // SimVertex
-    Handle<SimVertexContainer> simVertices;
+    edm::Handle<edm::SimVertexContainer> simVertices;
     iEvent.getByLabel("g4SimHits", simVertices);
 
     // Get the clusters
-    Handle< DetSetVector<SiPixelCluster> > pixelClusters;
-    iEvent.getByLabel(src_, pixelClusters);
+    edm::Handle< SiPixelClusterCollectionNew > edmClusters;
+    iEvent.getByLabel(src_, edmClusters);
+
+    const edmNew::DetSetVector<SiPixelCluster>& pixelClusters = *edmClusters;
 
     // Get the links
-    Handle< DetSetVector<PixelClusterSimLink> > clusterLinks;
+    edm::Handle< edm::DetSetVector<PixelClusterSimLink> > clusterLinks;
     iEvent.getByLabel(src_, clusterLinks);
 
     // Get the geometry
-    ESHandle<TrackerGeometry> geomHandle;
+    edm::ESHandle<TrackerGeometry> geomHandle;
     iSetup.get<TrackerDigiGeometryRecord>().get(geomHandle);
     const TrackerGeometry* tkGeom = &(*geomHandle);
 
     ////////////////////////////////
     // MAP SIM HITS TO SIM TRACKS //
     ////////////////////////////////
-    vector<SiPixelCluster> matched_clusters;
+    std::vector<SiPixelCluster> matched_clusters;
     V_HIT_CLUSTERS         matched_hits;
     M_TRK_HIT_CLUSTERS     map_hits;
 
     // Fill the map
     int nHits=0;
-    for (PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
+    for (edm::PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
       map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
       nHits++ ;
     }
-    for (PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
+    for (edm::PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
       map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
       nHits++ ;
     }
 
-    if(verbose>1) cout << endl << "-- Number of SimHits in the event : " << nHits << endl;
-    
+    if(verbose>1) std::cout << std::endl << "-- Number of SimHits in the event : " << nHits << std::endl;
+
     //////////////////////////////////
     // LOOP OVER CLUSTER COLLECTION //
     //////////////////////////////////
 
     // Loop over the detector units
 
-    DetSetVector<SiPixelCluster>::const_iterator DSViter;
-    for (DSViter = pixelClusters->begin(); DSViter != pixelClusters->end(); DSViter++) {
+    edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter;
+    for (DSViter = pixelClusters.begin(); DSViter != pixelClusters.end(); DSViter++) {
         // Clusters
         unsigned int nClusters = 0;
 
@@ -219,8 +217,8 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         }
 
         // Loop over the clusters in the detector unit
-        DetSet<SiPixelCluster>::const_iterator cu;
-        for (cu = DSViter->data.begin(); cu != DSViter->data.end(); ++cu) {
+        edmNew::DetSet<SiPixelCluster>::const_iterator cu;
+        for (cu = DSViter->begin(); cu != DSViter->end(); ++cu) {
             // Get the cluster's size
             int size = cu->size();
             int sizeX = cu->sizeX();
@@ -260,10 +258,10 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
             }
 
             // Get the pixels that form the Cluster
-            const vector<SiPixelCluster::Pixel>& pixelsVec = cu->pixels();
+            const std::vector<SiPixelCluster::Pixel>& pixelsVec = cu->pixels();
 
             // Loop over the pixels
-            for (vector<SiPixelCluster::Pixel>::const_iterator pixelIt = pixelsVec.begin(); pixelIt != pixelsVec.end(); ++pixelIt) {
+            for (std::vector<SiPixelCluster::Pixel>::const_iterator pixelIt = pixelsVec.begin(); pixelIt != pixelsVec.end(); ++pixelIt) {
                 SiPixelCluster::Pixel PDigi = (SiPixelCluster::Pixel) *pixelIt;
 
                 iPos->second.digiPosition->Fill(PDigi.x, PDigi.y);
@@ -288,8 +286,8 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     // LOOP OVER CLUSTER LINKS //
     /////////////////////////////
 
-    DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
-    DetSet<PixelClusterSimLink>::const_iterator iterLinks;
+    edm::DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
+    edm::DetSet<PixelClusterSimLink>::const_iterator iterLinks;
     std::vector< unsigned int > simTrackID;
     PixelClusterSimLink link;
     SiPixelCluster cluster;
@@ -315,7 +313,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     bool found_hits=false;
     bool fill_dtruth=false;
 
-    if(verbose>1) cout << endl << "-- Enter loop over links" << endl;
+    if(verbose>1) std::cout << std::endl << "-- Enter loop over links" << std::endl;
 
     for (DSViterLinks = clusterLinks->begin(); DSViterLinks != clusterLinks->end(); DSViterLinks++) {
 
@@ -341,7 +339,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
         }
 
         // Loop over the links in the detector unit
-	if(verbose>1) cout << endl << endl << "--- DetId=" << rawid << endl;
+	if(verbose>1) std::cout << std::endl << std::endl << "--- DetId=" << rawid << std::endl;
 
         for (iterLinks = DSViterLinks->data.begin(); iterLinks != DSViterLinks->data.end(); ++iterLinks) {
 
@@ -364,40 +362,40 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
             LocalPoint lPos  = geomDetUnit->topology().localPosition(mp);
             //GlobalPoint gPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
 
-	    if(verbose>1) cout << endl << "---- Cluster size="  << cluster.size()    << " | " << sizeLink << " SimTracks: ids=(" ;
+	    if(verbose>1) std::cout << std::endl << "---- Cluster size="  << cluster.size()    << " | " << sizeLink << " SimTracks: ids=(" ;
 
-	    for(unsigned int i=0 ; i<sizeLink ; i++) {	      
+	    for(unsigned int i=0 ; i<sizeLink ; i++) {
 	      if(verbose>1) {
-		cout << simTrackID[i] ;
-		if(i<sizeLink-1) cout << "," ;
+		std::cout << simTrackID[i] ;
+		if(i<sizeLink-1) std::cout << "," ;
 	      }
 	      if(i==0) trkID=simTrackID[i];
-	      else if(simTrackID[i]!=trkID) combinatoric=true; 
+	      else if(simTrackID[i]!=trkID) combinatoric=true;
 	    }
 
 	    if(verbose>1) {
-	      if(combinatoric) cout << ") COMBINATORIC !!! ";
-	      cout << ")" << endl << "     cluster local position = (" << lPos.x() << " , " << lPos.y() << " , " << "n/a"    << ")"
+	      if(combinatoric) std::cout << ") COMBINATORIC !!! ";
+	      std::cout << ")" << std::endl << "     cluster local position = (" << lPos.x() << " , " << lPos.y() << " , " << "n/a"    << ")"
 		   << "   layer=" << layer
-		   << endl;
+		   << std::endl;
 	    }
 
 	    // Get matched SimHits from the map
 	    if(!combinatoric) {
-	      
+
 	      matched_hits = map_hits[trkID];
 
 	      if(verbose>1) {
-		cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
-		if(matched_hits.size()!=0) cout << " ids(" ;
+		std::cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
+		if(matched_hits.size()!=0) std::cout << " ids(" ;
 
 		// printout list of SimHits matched to the SimTrack
 		for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
-		  cout << matched_hits[iH].first.detUnitId() ;
-		  if(iH<matched_hits.size()-1) cout << "," ;
-		  else cout << ")" ;
+		  std::cout << matched_hits[iH].first.detUnitId() ;
+		  if(iH<matched_hits.size()-1) std::cout << "," ;
+		  else std::cout << ")" ;
 		}
-		cout << endl;
+		std::cout << std::endl;
 	      }
 
 	      found_hits=false;
@@ -406,7 +404,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 	      // Loop over matched SimHits
 
 	      for (unsigned int iH=0 ; iH<matched_hits.size() ; iH++) {
-		
+
 		// Consider only SimHits with same DetID as current cluster
 		simh_detid = matched_hits[iH].first.detUnitId();
 		if(simh_detid!=rawid) continue;
@@ -414,7 +412,7 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 
 		// Map current cluster to current SimHit for efficiency study
 		map_hits[ trkID ][ iH ].second.push_back( cluster );
-		
+
 		simh_layer = getLayerNumber( simh_detid );
 		simh_type  = matched_hits[iH].first.processType();
 		pos_hit    = matched_hits[iH].first.localPosition();
@@ -432,18 +430,18 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
 		  fill_dtruth=true; // toggle filling of the histo only when a type-2 hit is found
 		}
 
-		if(verbose>1) cout << "----- SimHit #" << iH
+		if(verbose>1) std::cout << "----- SimHit #" << iH
 				   << " type="    << simh_type
 		  //<< " s_id="    << simh_detid
-				   << " s_lay="   << simh_layer 
+				   << " s_lay="   << simh_layer
 				   << " c_lay="   << layer
 				   << " s("   << x_hit    << " , " << y_hit    << " , " << z_hit    << ")"
 		  //<< " c_g(" << gPos.x() << " , " << gPos.y() << " , " << gPos.z() << ")"
-				   << endl;
-		
+				   << std::endl;
+
 	      } // end loop over matched SimHits
 
-	      if(!found_hits && verbose>1) cout << "----- FOUND NO MATCHED HITS" << endl;
+	      if(!found_hits && verbose>1) std::cout << "----- FOUND NO MATCHED HITS" << std::endl;
 
 	    } // endif !combinatoric
 
@@ -467,8 +465,8 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     ////////////////////////////////////
     // COMPUTE CLUSTERIZER EFFICIENCY //
     ////////////////////////////////////
-    
-    if(verbose>1) cout << "- Enter efficiency computation" << endl;
+
+    if(verbose>1) std::cout << "- Enter efficiency computation" << std::endl;
 
     // Iterate over the map of hits & clusters
     M_TRK_HIT_CLUSTERS::const_iterator iMapHits;
@@ -482,76 +480,76 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     float efficiency=0;
 
     // Hit informations
-    unsigned int theHit_id=0;   
+    unsigned int theHit_id=0;
     unsigned int theHit_layer=0;
     unsigned int theHit_type=0;
 
     // Prepare the map of counters for efficiency
     std::map<unsigned int, ClusterHistos>::iterator iPos;
-    map< unsigned int , vector<vector<int>> > map_effi;
-    map< unsigned int , vector<vector<int>> >::const_iterator iMapEffi;
-    vector<int> init_counter;
+    std::map< unsigned int , std::vector<std::vector<int>> > map_effi;
+    std::map< unsigned int , std::vector<std::vector<int>> >::const_iterator iMapEffi;
+    std::vector<int> init_counter;
     for(int iM=0 ; iM<2 ; iM++) init_counter.push_back(0);
 
     // Loop over the entries in the map of hits & clusters
-    if(verbose>1) cout << "- loop over map of hits & clusters (size=" << map_hits.size() << ")" << endl;
+    if(verbose>1) std::cout << "- loop over map of hits & clusters (size=" << map_hits.size() << ")" << std::endl;
 
     for( iMapHits=map_hits.begin() ; iMapHits!=map_hits.end() ; iMapHits++) {
 
-      if(verbose>1) cout << "-- SimTrack ID=" << iMapHits->first << endl;
-      nTrackHits = (iMapHits->second).size(); 
+      if(verbose>1) std::cout << "-- SimTrack ID=" << iMapHits->first << std::endl;
+      nTrackHits = (iMapHits->second).size();
       countHit  += nTrackHits;
 
       // Loop over the hits matched to the current SimTrack ID
       for(int iH=0 ; iH<nTrackHits ; iH++) {
 
 	// Current SimHit
-	if(verbose>1) cout << "--- SimHit #" << iH ;
+	if(verbose>1) std::cout << "--- SimHit #" << iH ;
 	PSimHit theHit( ((iMapHits->second)[iH]).first );
 	theHit_id    = theHit.detUnitId();
 	theHit_layer = getLayerNumber(theHit_id);
 	theHit_type  = theHit.processType();
-	if(verbose>1) cout << " DetId=" << theHit_id
-			   << " Layer=" << theHit_layer 
+	if(verbose>1) std::cout << " DetId=" << theHit_id
+			   << " Layer=" << theHit_layer
 			   << " Type="  << theHit_type
-			   << endl;
+			   << std::endl;
 
 	// Check that the layer number makes sense
 	if(theHit_layer==0) {
-	  if(verbose>1) cout << "---- !! layer=0 !!" << endl;
+	  if(verbose>1) std::cout << "---- !! layer=0 !!" << std::endl;
 	  continue;
 	}
 
 	// Clusters matched to the SimHit
-	if(verbose>2) cout << "--- Getting corresponding clusters" << endl;
+	if(verbose>2) std::cout << "--- Getting corresponding clusters" << std::endl;
 	matched_clusters = ((iMapHits->second)[iH]).second;
 	nMatchedClusters = matched_clusters.size();
 
 	// Find layer in map of histograms
-	if(verbose>2) cout << "--- Find layer=" << theHit_layer << " in map of histograms" << endl;
+	if(verbose>2) std::cout << "--- Find layer=" << theHit_layer << " in map of histograms" << std::endl;
 	iPos = layerHistoMap.find(theHit_layer);
         if (iPos == layerHistoMap.end()) {
-	  if(verbose>2) cout << "---- add layer in the map" << endl;
+	  if(verbose>2) std::cout << "---- add layer in the map" << std::endl;
 	  createLayerHistograms(theHit_layer);
 	  iPos = layerHistoMap.find(theHit_layer);
         }
-	
+
 	// Fill Histograms
 	(iPos->second.NumberOfMatchedClusters[17])->Fill( nMatchedClusters );
 	if(theHit_type<17)
 	  (iPos->second.NumberOfMatchedClusters[theHit_type])->Fill( nMatchedClusters );
 
 	if( nMatchedClusters==0 ) {
-	  if(verbose>1) cout << "---- No Cluster Matched" << endl;
+	  if(verbose>1) std::cout << "---- No Cluster Matched" << std::endl;
 	}
 	else {
-	  if(verbose>1) cout << "---- Yes Cluster Matched = " << nMatchedClusters << endl;
+	  if(verbose>1) std::cout << "---- Yes Cluster Matched = " << nMatchedClusters << std::endl;
 	}
 
 	if( map_effi.find(theHit_layer)==map_effi.end() )
 	  for(int iT=0 ; iT<nTypes ; iT++) {
 	    map_effi[theHit_layer].push_back(init_counter);
-	    if(verbose>2) cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << endl;
+	    if(verbose>2) std::cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << std::endl;
 	  }
 	(map_effi[theHit_layer][theHit_type][0])++ ; // total number of hits of this type in this layer
 	if(nMatchedClusters>0) (map_effi[theHit_layer][theHit_type][1])++ ; // number of hits matched to >=1 cluster(s)
@@ -563,31 +561,31 @@ void RunStepsClusterValidation::analyze(const Event& iEvent, const EventSetup& i
     }
 
     // Fill histograms from the map_effi
-    if(verbose>1) cout << "- fill [per layer] effi histo from effi map (size=" << map_effi.size() << ")" << endl;
+    if(verbose>1) std::cout << "- fill [per layer] effi histo from effi map (size=" << map_effi.size() << ")" << std::endl;
     for( iMapEffi=map_effi.begin() ; iMapEffi!=map_effi.end() ; iMapEffi++ ) {
-      
+
       iPos = layerHistoMap.find(iMapEffi->first);
-      if(verbose>1) cout << "-- layer=" << iMapEffi->first << endl;
+      if(verbose>1) std::cout << "-- layer=" << iMapEffi->first << std::endl;
 
       for(int iT=0 ; iT<nTypes ; iT++) {
 	nTotalHits = iMapEffi->second[iT][0];
 	nMatchHits = iMapEffi->second[iT][1];
 	efficiency = nTotalHits!=0 ? float(nMatchHits)/float(nTotalHits) : -1 ;
 	if(efficiency>=0) (iPos->second.hEfficiency[iT])->Fill( efficiency );
-	if(verbose>1) cout << "--- type #"   << iT 
-			   << " nTotalHits=" << nTotalHits 
-			   << " nMatchHits=" << nMatchHits 
+	if(verbose>1) std::cout << "--- type #"   << iT
+			   << " nTotalHits=" << nTotalHits
+			   << " nMatchHits=" << nMatchHits
 			   << " efficiency=" << efficiency
-			   << endl;
+			   << std::endl;
       }
     }
 
     // Check if all event's SimHits are mapped
     if( countHit != nHits )
-      if(verbose>1) cout << "---- Missing hits in the efficiency computation : " 
-			 << countHit << " != " << nHits << endl;
+      if(verbose>1) std::cout << "---- Missing hits in the efficiency computation : "
+			 << countHit << " != " << nHits << std::endl;
 
-    if(verbose>999) cout << nTotalHits << nMatchHits << efficiency << endl;
+    if(verbose>999) std::cout << nTotalHits << nMatchHits << efficiency << std::endl;
 }
 
 void RunStepsClusterValidation::endJob() { }
@@ -596,7 +594,7 @@ void RunStepsClusterValidation::endJob() { }
 void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
     std::ostringstream fname1, fname2;
 
-    Service<TFileService> fs;
+    edm::Service<TFileService> fs;
     fs->file().cd("/");
 
     std::string tag;
@@ -643,8 +641,8 @@ void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
     histoName << "Number_of_Clusters_Link" << tag.c_str() <<  id;
     local_histos.NumberOfClustersLink = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
 
-    // Truth Matching 
-    string name_types[nTypes] = {"Undefined","Unknown","Primary","Hadronic",
+    // Truth Matching
+    std::string name_types[nTypes] = {"Undefined","Unknown","Primary","Hadronic",
 				 "Decay","Compton","Annihilation","EIoni",
 				 "HIoni","MuIoni","Photon","MuPairProd",
 				 "Conversions","EBrem","SynchrotronRadiation",
@@ -734,7 +732,7 @@ void RunStepsClusterValidation::createLayerHistograms(unsigned int ival) {
 }
 
 void RunStepsClusterValidation::createHistograms(unsigned int nLayer) {
-    Service<TFileService> fs;
+    edm::Service<TFileService> fs;
     fs->file().cd("/");
     TFileDirectory td = fs->mkdir("Common");
 
@@ -783,12 +781,12 @@ unsigned int RunStepsClusterValidation::getLayerNumber(unsigned int & detid) {
     return layer;
 }
 
-int RunStepsClusterValidation::isPrimary(const SimTrack& simTrk, Handle<PSimHitContainer>& simHits) {
+int RunStepsClusterValidation::isPrimary(const SimTrack& simTrk, edm::Handle<edm::PSimHitContainer>& simHits) {
     int result = -1;
     unsigned int trkId = simTrk.trackId();
     if (trkId > 0) {
         int vtxIndx = simTrk.vertIndex();
-        for (PSimHitContainer::const_iterator iHit = simHits->begin(); iHit != simHits->end(); ++iHit) {
+        for (edm::PSimHitContainer::const_iterator iHit = simHits->begin(); iHit != simHits->end(); ++iHit) {
             if (trkId == iHit->trackId()) {
                 int ptype = iHit->processType();
                 if ((vtxIndx == 0) && (ptype == 2 || ptype == 7 || ptype == 9 || ptype == 11 || ptype == 15)) result = 1;
