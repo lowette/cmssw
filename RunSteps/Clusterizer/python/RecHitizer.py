@@ -3,12 +3,6 @@ import os, sys
 import FWCore.ParameterSet.Config as cms
 from Configuration.AlCa.GlobalTag import GlobalTag
 from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D
-from RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi import *
-from RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitMatcher_cfi import *
-from RecoLocalTracker.SiStripRecHitConverter.StripCPEfromTrackAngle_cfi import *
-from RecoLocalTracker.SiStripZeroSuppression.SiStripZeroSuppression_cfi import *
-from RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi import *
-from RecoLocalTracker.SubCollectionProducers.clustersummaryproducer_cfi import *
 
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
@@ -34,15 +28,22 @@ print '------------------------------------------------------------'
 process = cms.Process('RecHitAnnik')
 
 # Import all the necessary files
-process.load('Configuration.StandardSequences.Services_cff')
-process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
-process.load('RunSteps.Clusterizer.Configuration')
-process.load('Configuration.StandardSequences.EndOfProcess_cff')
+process.load('RunSteps.Clusterizer.Configuration')                                #Our personal clusterizer configuration file
+process.load('Configuration.EventContent.EventContent_cff')                       #Needed to avoid FEVTDEBUGEventContent error
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')       #Needed to avoid CSCGeometryESModule error
+process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')     #Without this, no siPixelRecHits produced
+#process.load('Configuration.StandardSequences.EndOfProcess_cff')                 #Not needed when the step is removed from the sequence
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi')
+process.load('RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi')               #Needed to avoid siPixelRecHits attribute error
+process.load('RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff')           #Needed for producing these PixelCPE (Cluster Parameter Estimator)
+
+#Suggestions from Ryo  --> Works with these changes!
+process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
+process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
+process.PixelCPEGenericESProducer.LoadTemplatesFromDB = cms.bool(False)
+process.PixelCPEGenericESProducer.TruncatePixelCharge = cms.bool(False)
+process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
+process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
@@ -62,6 +63,11 @@ process.configurationMetadata = cms.untracked.PSet(
     version = cms.untracked.string('$Revision: 0.5 $'),
     annotation = cms.untracked.string('RunSteps Clusterizer'),
     name = cms.untracked.string('Applications')
+)
+
+#Full trig and Time report
+process.options = cms.untracked.PSet(
+    wantSummary = cms.untracked.bool(False)  #Set this to true for full Trig and TimeReport
 )
 
 # TAG
@@ -84,13 +90,9 @@ process.FEVTDEBUGoutput.outputCommands.extend([
 
 # Steps
 process.clusterizer_step = cms.Path(cms.Sequence(process.siPixelClusters*process.siPixelRecHits));
-#process.pixeltrackerlocalreco = cms.Path(process.siPixelRecHits)
-
-process.endjob_step = cms.EndPath(process.endOfProcess)
-
 process.FEVTDEBUGoutput_step = cms.EndPath(process.FEVTDEBUGoutput)
 
 # Processes to run
-process.schedule = cms.Schedule(process.clusterizer_step, process.endjob_step, process.FEVTDEBUGoutput_step)
+process.schedule = cms.Schedule(process.clusterizer_step, process.FEVTDEBUGoutput_step)
 
 process = cust_phase2_BE5D(process)
