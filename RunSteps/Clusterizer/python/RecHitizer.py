@@ -6,7 +6,7 @@ from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5
 
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
-output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLURechHit.root'
+output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLURecHit.root'
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
@@ -44,6 +44,7 @@ process.PixelCPEGenericESProducer.LoadTemplatesFromDB = cms.bool(False)
 process.PixelCPEGenericESProducer.TruncatePixelCharge = cms.bool(False)
 process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
 process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
+#process.siPixelRecHits.CPE = cms.string('PixelCPEGeneric')                        #Needed??
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
@@ -67,7 +68,7 @@ process.configurationMetadata = cms.untracked.PSet(
 
 #Full trig and Time report
 process.options = cms.untracked.PSet(
-    wantSummary = cms.untracked.bool(False)  #Set this to true for full Trig and TimeReport
+    wantSummary = cms.untracked.bool(True)  #Set this to true for full Trig and TimeReport
 )
 
 # TAG
