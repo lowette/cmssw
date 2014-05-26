@@ -1,5 +1,6 @@
 <use name="RunSteps/Clusterizer"/>
 <use name="CalibTracker/SiPixelESProducers"/>
+<use name="DataFormats/TrackerRecHit2D"/> 
 <library file="*.cc" name="RunStepsClusterizerPlugins">
 	<flags EDM_PLUGIN="1"/>
 </library>

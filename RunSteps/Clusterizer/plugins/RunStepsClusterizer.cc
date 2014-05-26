@@ -12,61 +12,67 @@
 #include "DataFormats/DetId/interface/DetId.h"
 #include "SimDataFormats/TrackerDigiSimLink/interface/PixelDigiSimLink.h"
 
-#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationService.h"
-#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationOfflineService.h"
-#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationForHLTService.h"
+//#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationService.h"
+//#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationOfflineService.h"
+//#include "CalibTracker/SiPixelESProducers/interface/SiPixelGainCalibrationForHLTService.h"
 
-#include "DataFormats/Common/interface/Handle.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
+//#include "DataFormats/Common/interface/Handle.h"
+//#include "FWCore/Framework/interface/ESHandle.h"
+//#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 //From HitEff.cc file
-#include "RecoLocalTracker/ClusterParameterEstimator/interface/StripClusterParameterEstimator.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
-#include "DataFormats/Common/interface/Handle.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/EventSetup.h"
-#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
-#include "DataFormats/GeometryVector/interface/GlobalVector.h"
-#include "DataFormats/GeometryVector/interface/LocalVector.h"
-#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
-#include "Geometry/CommonDetUnit/interface/GeomDetType.h"
-#include "Geometry/CommonDetUnit/interface/GeomDetUnit.h"
-#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
-#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
-#include "Geometry/CommonDetUnit/interface/TrackingGeometry.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "DataFormats/TrackReco/interface/TrackExtra.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-#include "TrackingTools/Records/interface/TransientRecHitRecord.h" 
-#include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
-#include "DataFormats/SiStripDetId/interface/TIBDetId.h"
-#include "DataFormats/SiStripDetId/interface/TIDDetId.h"
-#include "DataFormats/SiStripDetId/interface/TOBDetId.h"
-#include "DataFormats/SiStripDetId/interface/TECDetId.h"
-#include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
-#include "DataFormats/SiPixelDetId/interface/PXFDetId.h"
-#include "RecoLocalTracker/ClusterParameterEstimator/interface/StripClusterParameterEstimator.h"
-#include "TrackingTools/GeomPropagators/interface/AnalyticalPropagator.h"
-#include "DataFormats/TrackReco/interface/DeDxData.h"
+//#include "FWCore/ParameterSet/interface/ParameterSet.h"
+//#include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
+//#include "DataFormats/Common/interface/Handle.h"
+//#include "FWCore/Framework/interface/ESHandle.h"
+//#include "FWCore/Framework/interface/EventSetup.h"
+//#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
+//#include "DataFormats/GeometryVector/interface/GlobalVector.h"
+//#include "DataFormats/GeometryVector/interface/LocalVector.h"
+//#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+//#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+//#include "Geometry/CommonDetUnit/interface/GeomDetType.h"
+//#include "Geometry/CommonDetUnit/interface/GeomDetUnit.h"
+//#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
+//#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
+//#include "Geometry/CommonDetUnit/interface/TrackingGeometry.h"
+//#include "DataFormats/TrackReco/interface/Track.h"
+//#include "DataFormats/TrackReco/interface/TrackFwd.h"
+//#include "DataFormats/TrackReco/interface/TrackExtra.h"
+//#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+//#include "TrackingTools/Records/interface/TransientRecHitRecord.h" 
+//#include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
+#include "RecoLocalTracker/Records/interface/TkPixelCPERecord.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHit.h"
+//#include "DataFormats/SiStripDetId/interface/TIBDetId.h"
+//#include "DataFormats/SiStripDetId/interface/TIDDetId.h"
+//#include "DataFormats/SiStripDetId/interface/TOBDetId.h"
+//#include "DataFormats/SiStripDetId/interface/TECDetId.h"
+//#include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
+//#include "DataFormats/SiPixelDetId/interface/PXFDetId.h"
+//#include "RecoLocalTracker/ClusterParameterEstimator/interface/StripClusterParameterEstimator.h"
+//#include "TrackingTools/GeomPropagators/interface/AnalyticalPropagator.h"
+//#include "DataFormats/TrackReco/interface/DeDxData.h"
 
-#include "AnalysisDataFormats/SiStripClusterInfo/interface/SiStripClusterInfo.h"
-#include "CalibTracker/Records/interface/SiStripDetCablingRcd.h"
-#include "CalibFormats/SiStripObjects/interface/SiStripDetCabling.h"
-#include "CalibTracker/Records/interface/SiStripQualityRcd.h"
-#include "CalibFormats/SiStripObjects/interface/SiStripQuality.h"
-#include "DataFormats/SiStripDetId/interface/SiStripSubStructure.h"
-#include "Geometry/TrackerGeometryBuilder/interface/GluedGeomDet.h"
-#include "DataFormats/Common/interface/DetSetVector.h"
-#include "DataFormats/Common/interface/DetSetVectorNew.h"
-#include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
-#include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
+//#include "AnalysisDataFormats/SiStripClusterInfo/interface/SiStripClusterInfo.h"
+//#include "CalibTracker/Records/interface/SiStripDetCablingRcd.h"
+//#include "CalibFormats/SiStripObjects/interface/SiStripDetCabling.h"
+//#include "CalibTracker/Records/interface/SiStripQualityRcd.h"
+//#include "CalibFormats/SiStripObjects/interface/SiStripQuality.h"
+//#include "DataFormats/SiStripDetId/interface/SiStripSubStructure.h"
+//#include "Geometry/TrackerGeometryBuilder/interface/GluedGeomDet.h"
+//#include "DataFormats/Common/interface/DetSetVector.h"
+//#include "DataFormats/Common/interface/DetSetVectorNew.h"
+//#include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
+//#include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
 
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
+
+//Needed for RecHits:
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
+#include "RecoLocalTracker/ClusterParameterEstimator/interface/PixelClusterParameterEstimator.h"
+//#include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
 
 #include <vector>
 #include <memory>
@@ -88,9 +94,15 @@ namespace cms {
         produces< SiPixelClusterCollectionNew >().setBranchAlias(alias);
         produces< edm::DetSetVector<PixelClusterSimLink> >().setBranchAlias(alias);
 
+	//RecHit information: (from https://cmssdt.cern.ch/SDT/lxr/source/RecoLocalTracker/SiPixelRecHits/plugins/SiPixelRecHitConverter.cc)
+        //tPixelCluster(consumes< edmNew::DetSetVector<SiPixelCluster> >( src_)) {
+        //--- Declare to the EDM what kind of collections we will be making.
+        //produces<SiPixelRecHitCollection>();
+
         // Debug
         std::cout << "------------------------------------------------------------" << std::endl
                   << "-- Running RunSteps Clusterizer v0.5" << std::endl
+		  << "       * 26/05/2014 RecHit info added (AO) " << std::endl
                   << "------------------------------------------------------------" << std::endl;
 
         // Set the algorithm to use
@@ -127,18 +139,21 @@ namespace cms {
         edm::ESHandle<TrackerGeometry> geom;
         eventSetup.get<TrackerDigiGeometryRecord>().get(geom);
 
-	//get pixel Cluster Parameter Estimator    //Based on : https://github.com/cms-analysis/TrackingAnalysis-Cosmics/blob/master/src/HitEff.cc
-	edm::ESHandle<PixelClusterParameterEstimator> pixelCPE;
-	//es.get<TkPixelCPERecord>().get("PixelCPEfromTrackAngle", pixelCPE); 
-	es.get<TkPixelCPERecord>().get("PixelCPETemplateReco", pixelCPE); 
-	const PixelClusterParameterEstimator &pixelcpe(*pixelCPE);
-
-
         // Global container for the clusters of each detector and the clusterLinks
         std::auto_ptr<SiPixelClusterCollectionNew> outputClusters( new SiPixelClusterCollectionNew() );
         std::vector<edm::DetSet<PixelClusterSimLink> > linksByDet;
 
-        // Go over all the detectors
+	//Create empty output collection for the RecHits (from https://cmssdt.cern.ch/SDT/lxr/source/RecoLocalTracker/SiPixelRecHits/plugins/SiPixelRecHitConverter.cc)
+	//std::auto_ptr<SiPixelRecHitCollectionNew> output(new SiPixelRecHitCollectionNew);
+        
+	// Step B*: create CPE
+        //edm::ESHandle<PixelClusterParameterEstimator> hCPE;
+        //std::string cpeName_ = conf_.getParameter<std::string>("CPE");
+        //eventSetup.get<TkPixelCPERecord>().get(cpeName_,hCPE);
+        //cpe_ = dynamic_cast< const PixelCPEBase* >(&(*hCPE));
+	//cpe_ = &cpe;
+       
+	// Go over all the detectors
         for (edm::DetSetVector<PixelDigi>::const_iterator DSViter = digis->begin(); DSViter != digis->end(); ++DSViter) {
             DetId detIdObject(DSViter->detId());
             const GeomDetUnit* geoUnit = geom->idToDetUnit(detIdObject);

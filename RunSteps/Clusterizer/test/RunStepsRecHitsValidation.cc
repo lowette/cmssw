@@ -47,6 +47,7 @@
 #include <TH1F.h>
 #include <THStack.h>
 #include <TProfile.h>
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
 
 int verbose=2;
 const int nTypes=18;
@@ -106,7 +107,7 @@ private:
         TH2F* digiPosition;
     };
 
-    //std::map<unsigned int, ClusterHistos> layerHistoMap;
+    std::map<unsigned int, ClusterHistos> layerHistoMap;
 
     edm::InputTag src_;
     edm::InputTag clu_;
@@ -170,9 +171,17 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
     const TrackerGeometry* tkGeom = &(*geomHandle);
 
     //Get the RecHits
-    edm::Handle< SiPixelRecHitCollectionNew > edmRecHits;
+    edm::Handle< SiPixelRecHitCollection > edmRecHits;
+    //edm::Handle< edm::DetSetVector< SiPixelRecHits> > pixelRecHits;
     iEvent.getByLabel(src_, edmRecHits);
-    const edmNew::DetSetVector<SiPixelRecHits>& pixelRecHits = *edmRecHits;
+    const edmNew::DetSetVector<SiPixelRecHit>& pixelRecHits = *edmRecHits;
+
+    //Loop over recHits:
+    std::cout << " Size of PixelRecHits : " << pixelRecHits.size() << std::endl;
+    edmNew::DetSetVector<SiPixelRecHit>::const_iterator DSViterRecHit;
+    for(DSViterRecHit = pixelRecHits.begin(); DSViterRecHit != pixelRecHits.end(); DSViterRecHit++){
+	std::cout << " test" << std::endl;
+    }
 
     ////////////////////////////////
     // MAP SIM HITS TO SIM TRACKS //

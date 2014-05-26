@@ -13,6 +13,7 @@
 <use name="Geometry/Records"/>
 <use name="DataFormats/DetId"/>
 <use name="RecoLocalTracker/SiPixelClusterizer"/>
-<library file="RunStepsClusterValidation.cc" name="RunStepsClusterValidation">
+<use name="DataFormats/TrackerRecHit2D"/> 
+<library file="RunStepsRecHitsValidation.cc" name="RunStepsRecHitsValidation">
 	<flags EDM_PLUGIN="1"/>
 </library>
