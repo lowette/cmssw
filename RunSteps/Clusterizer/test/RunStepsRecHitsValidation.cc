@@ -49,8 +49,13 @@
 #include <TProfile.h>
 #include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
 
-int verbose=2;
+///////////////////////////////////
+//  Booleans to choose actions   //
+///////////////////////////////////
+//  --> Maybe possible to move this to the configuration file ?
+int verbose=0;
 const int nTypes=18;
+bool FullFigures = False;
 
 class RunStepsRecHitsValidation : public edm::EDAnalyzer {
 
@@ -66,6 +71,11 @@ public:
     virtual void endJob();
     int isPrimary(const SimTrack& simTrk, edm::Handle<edm::PSimHitContainer>& simHits);
     int isPrimary(const SimTrack& simTrk, const PSimHit& simHit);
+
+    //New classes to choose the right execution depending on the input available!
+    //virtual void runClusters();
+    //virtual void runRecHits();
+    //virtual void clusterEfficiency();
 
 private:
     TH2F* trackerLayout_;
@@ -107,9 +117,13 @@ private:
         TH2F* digiPosition;
     };
 
+    struct RecHitHistos {
+
+    };
+
     std::map<unsigned int, ClusterHistos> layerHistoMap;
 
-    edm::InputTag src_;
+    edm::InputTag rechit_;
     edm::InputTag clu_;
 
 public:
@@ -120,8 +134,11 @@ public:
 };
 
 RunStepsRecHitsValidation::RunStepsRecHitsValidation(const edm::ParameterSet& iConfig) {
-    src_ = iConfig.getParameter<edm::InputTag>("src");
+    rechit_ = iConfig.getParameter<edm::InputTag>("rechit");
     clu_ = iConfig.getParameter<edm::InputTag>("clu");
+
+    //Obtain booleans from the configuration file which are used here!
+    //Define different classes!
 
     std::cout << "------------------------------------------------------------" << std::endl
               << "-- Running RunSteps RecHitsValidation v0.1" << std::endl
@@ -132,12 +149,10 @@ RunStepsRecHitsValidation::RunStepsRecHitsValidation(const edm::ParameterSet& iC
 RunStepsRecHitsValidation::~RunStepsRecHitsValidation() { }
 
 void RunStepsRecHitsValidation::beginJob() {
-    //createHistograms(19);
+    createHistograms(19);
 }
 
 void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-
-  verbose=2;
 
     // Simulated information
     // SimHit
@@ -173,19 +188,39 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
     //Get the RecHits
     edm::Handle< SiPixelRecHitCollection > edmRecHits;
     //edm::Handle< edm::DetSetVector< SiPixelRecHits> > pixelRecHits;
-    iEvent.getByLabel(src_, edmRecHits);
+    iEvent.getByLabel(rechit_, edmRecHits);
     const edmNew::DetSetVector<SiPixelRecHit>& pixelRecHits = *edmRecHits;
 
-    //Loop over recHits:
+//}
+
+/*
+void RunStepsRecHitsValidation::matchSimHitsToTracks(){
+
+    // Fill the map
+    for (edm::PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
+    }
+    for (edm::PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
+      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
+    }
+
+}
+*/
+    //////////////////////////
+    //  Loop over recHits   //
+    //////////////////////////
     std::cout << " Size of PixelRecHits : " << pixelRecHits.size() << std::endl;
     edmNew::DetSetVector<SiPixelRecHit>::const_iterator DSViterRecHit;
     for(DSViterRecHit = pixelRecHits.begin(); DSViterRecHit != pixelRecHits.end(); DSViterRecHit++){
-	std::cout << " test" << std::endl;
+	std::cout << " ---        Id of pixelRecHit : " << DSViterRecHit->id() << std::endl;
     }
 
     ////////////////////////////////
     // MAP SIM HITS TO SIM TRACKS //
     ////////////////////////////////
+    //
+    //Class should return this map_hits
+    //Input is this simHits_B, _E and matched_clusters (which appears to be empty ... ?)
     std::vector<SiPixelCluster> matched_clusters;
     V_HIT_CLUSTERS         matched_hits;
     M_TRK_HIT_CLUSTERS     map_hits;
@@ -200,8 +235,8 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
       map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
       nHits++ ;
     }
-
-    if(verbose>1) std::cout << std::endl << "-- Number of SimHits in the event : " << nHits << std::endl;
+    std::cout << " Final value for nHits : " << nHits << " --- compare against size of map_hits : " << map_hits.size() << std::endl;
+    std::cout << "  .... How to get the size of this map_hits ?? " << std::endl;
 
     //////////////////////////////////
     // LOOP OVER CLUSTER COLLECTION //
@@ -209,6 +244,7 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
 
     // Loop over the detector units
 
+    if(verbose > 2) std::cout << " Size of pixelClusters : " << pixelClusters.size() << std::endl;
     edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter;
     for (DSViter = pixelClusters.begin(); DSViter != pixelClusters.end(); DSViter++) {
         // Clusters
@@ -278,6 +314,8 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
             const std::vector<SiPixelCluster::Pixel>& pixelsVec = cu->pixels();
 
             // Loop over the pixels
+	    if(verbose > 2) std::cout << " Looping over the pixels in the cluster " << std::endl;
+	    if(verbose > 2) std::cout << " size of pixels : " << pixelsVec.size() << std::endl;
             for (std::vector<SiPixelCluster::Pixel>::const_iterator pixelIt = pixelsVec.begin(); pixelIt != pixelsVec.end(); ++pixelIt) {
                 SiPixelCluster::Pixel PDigi = (SiPixelCluster::Pixel) *pixelIt;
 
@@ -303,6 +341,7 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
     // LOOP OVER CLUSTER LINKS //
     /////////////////////////////
 
+    if(verbose > 2) std::cout << " Looping over the cluster links " << std::endl;
     edm::DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
     edm::DetSet<PixelClusterSimLink>::const_iterator iterLinks;
     std::vector< unsigned int > simTrackID;
@@ -484,7 +523,7 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
     ////////////////////////////////////
 
     if(verbose>1) std::cout << "- Enter efficiency computation" << std::endl;
-
+/*
     // Iterate over the map of hits & clusters
     M_TRK_HIT_CLUSTERS::const_iterator iMapHits;
 
@@ -598,11 +637,12 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
     }
 
     // Check if all event's SimHits are mapped
-    if( countHit != nHits )
+    if( countHit != nHits ) //Can this not be compared with map_hits.size()
       if(verbose>1) std::cout << "---- Missing hits in the efficiency computation : "
 			 << countHit << " != " << nHits << std::endl;
 
     if(verbose>999) std::cout << nTotalHits << nMatchHits << efficiency << std::endl;
+*/
 }
 
 void RunStepsRecHitsValidation::endJob() { }

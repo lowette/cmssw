@@ -65,7 +65,7 @@ process.MessageLogger = cms.Service('MessageLogger',
 
 # Analyzer
 process.analysis = cms.EDAnalyzer('RunStepsRecHitsValidation',
-    src = cms.InputTag('siPixelRecHits'),
+    rechit = cms.InputTag('siPixelRecHits'),
     clu = cms.InputTag('siPixelClusters')
 
 )
