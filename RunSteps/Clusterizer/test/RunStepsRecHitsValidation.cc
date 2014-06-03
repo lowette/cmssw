@@ -55,7 +55,7 @@
 //  --> Maybe possible to move this to the configuration file ?
 int verbose=0;
 const int nTypes=18;
-bool FullFigures = False;
+bool FullFigures = false;
 
 class RunStepsRecHitsValidation : public edm::EDAnalyzer {
 
@@ -174,7 +174,7 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
     edm::Handle< SiPixelClusterCollectionNew > edmClusters;
     iEvent.getByLabel(clu_, edmClusters);
 
-    const edmNew::DetSetVector<SiPixelCluster>& pixelClusters = *edmClusters;
+    //const edmNew::DetSetVector<SiPixelCluster>& pixelClusters = *edmClusters;
 
     // Get the links
     edm::Handle< edm::DetSetVector<PixelClusterSimLink> > clusterLinks;
@@ -239,20 +239,24 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
     std::cout << "  .... How to get the size of this map_hits ?? " << std::endl;
 
     //////////////////////////////////
-    // LOOP OVER CLUSTER COLLECTION //
+    // LOOP OVER CLUSTER COLLECTION //  --> Update this to recHits !
     //////////////////////////////////
 
     // Loop over the detector units
 
-    if(verbose > 2) std::cout << " Size of pixelClusters : " << pixelClusters.size() << std::endl;
-    edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter;
-    for (DSViter = pixelClusters.begin(); DSViter != pixelClusters.end(); DSViter++) {
+    if(verbose > 2) std::cout << " Size of pixelRecHits : " << pixelRecHits.size() << std::endl;
+    //edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter;
+    edmNew::DetSetVector<SiPixelRecHit>::const_iterator DSViter;
+    for (DSViter = pixelRecHits.begin(); DSViter != pixelRecHits.end(); DSViter++) {
         // Clusters
-        unsigned int nClusters = 0;
+        unsigned int nRecHits = 0;
+	if(verbose > 2) std::cout << " Number of RecHits : " << nRecHits << std::endl;
 
         // Get the detector unit's id
-        unsigned int rawid = DSViter->detId();
+        unsigned int rawid = DSViter->id();
+	if(verbose > 2) std::cout << " id of RecHit : " << rawid << std::endl;
         unsigned int layer = getLayerNumber(rawid);
+	if(verbose > 2) std::cout << " layer of RecHit : " << layer << std::endl;
         DetId detId(rawid);
 
         // Get the geometry of the tracker
@@ -262,30 +266,50 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 
         if (!geomDetUnit) break;
 
-        // Create histograms for the layer if they do not yet exist
+       // Create histograms for the layer if they do not yet exist
         std::map<unsigned int, ClusterHistos>::iterator iPos = layerHistoMap.find(layer);
         if (iPos == layerHistoMap.end()) {
             createLayerHistograms(layer);
             iPos = layerHistoMap.find(layer);
         }
 
-        // Loop over the clusters in the detector unit
-        edmNew::DetSet<SiPixelCluster>::const_iterator cu;
+        // Loop over the recHits in the detector unit
+        edmNew::DetSet<SiPixelRecHit>::const_iterator cu;
         for (cu = DSViter->begin(); cu != DSViter->end(); ++cu) {
-            // Get the cluster's size
-            int size = cu->size();
-            int sizeX = cu->sizeX();
-            int sizeY = cu->sizeY();
+
+	LocalPoint lp = cu->localPosition();
+	float RecHitX = lp.x();
+	float RecHitY = lp.y();
+	if(verbose > 2) std::cout << " RecHit position : " << RecHitX << " & " << RecHitY << std::endl;
+
+	LocalError lpE = cu->localPositionError();
+	float RecHitPosErXX = lpE.xx();
+	float RecHitPosErXY = lpE.xy();
+	float RecHitPosErYY = lpE.yy();
+	if(verbose > 2) std::cout << " RecHit LocalError : " << RecHitPosErXX << ", " << RecHitPosErXY << " & " << RecHitPosErYY << std::endl;
+
+	// Get cluster 
+	edm::Ref<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster> const& clust = cu->cluster();
+	//cout << " Charge of cluster : " << (clust->charge());
+
+	// Get the cluster's size
+	int size = clust->size();
+	int sizeX = clust->sizeX();
+	int sizeY = clust->sizeY();
+
+	iPos->second.clusterSize->Fill(size);
+            iPos->second.clusterSizeX->Fill(sizeX);
+            iPos->second.clusterSizeY->Fill(sizeY);
+
+            // Get the cluster's local
+            float x = clust->x();
+            float y = clust->y();
 
             iPos->second.clusterSize->Fill(size);
             iPos->second.clusterSizeX->Fill(sizeX);
             iPos->second.clusterSizeY->Fill(sizeY);
 
-            // Get the cluster's local
-            float x = cu->x();
-            float y = cu->y();
-
-            // Get the cluster's global position
+	    // Get the cluster's global position
             MeasurementPoint mp(x, y);
             LocalPoint lPos = geomDetUnit->topology().localPosition(mp);
             GlobalPoint gPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
@@ -311,7 +335,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
             }
 
             // Get the pixels that form the Cluster
-            const std::vector<SiPixelCluster::Pixel>& pixelsVec = cu->pixels();
+            const std::vector<SiPixelCluster::Pixel>& pixelsVec = clust->pixels();
 
             // Loop over the pixels
 	    if(verbose > 2) std::cout << " Looping over the pixels in the cluster " << std::endl;
@@ -328,20 +352,22 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
                 iPos->second.clusterShapeY->Fill(lPos.y() - PDigi.y);
             }
 
-            ++nClusters;
+            //++nClusters;
+
         }
 
         // Pixel module
-        if (topol.ncolumns() == 32) iPos->second.NumberOfClusterPixel->Fill(nClusters);
+        //if (topol.ncolumns() == 32) iPos->second.NumberOfClusterPixel->Fill(nClusters);  //--> Not sure which counter you want here ...
         // Strip module
-        else if (topol.ncolumns() == 2) iPos->second.NumberOfClusterStrip->Fill(nClusters);
+        //else if (topol.ncolumns() == 2) iPos->second.NumberOfClusterStrip->Fill(nClusters);
+
     }
 
     /////////////////////////////
     // LOOP OVER CLUSTER LINKS //
     /////////////////////////////
 
-    if(verbose > 2) std::cout << " Looping over the cluster links " << std::endl;
+/*  if(verbose > 2) std::cout << " Looping over the cluster links " << std::endl;
     edm::DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
     edm::DetSet<PixelClusterSimLink>::const_iterator iterLinks;
     std::vector< unsigned int > simTrackID;
@@ -410,7 +436,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 	    for(int iM=0 ; iM<nTypes ; iM++)
 	      nMatchedHits[iM] = 0;
 
-	    // Cluster informations
+	    // Cluster informations             --> Should make sure this cluster is one of the RecHits!
 	    cluster = link.getCluster();
 	    x_cl    = cluster.x();
 	    y_cl    = cluster.y();
@@ -516,7 +542,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
         iPos->second.NumberOfClustersLink         -> Fill(nLinks);
 
     } // end loop over all links
-
+*/
 
     ////////////////////////////////////
     // COMPUTE CLUSTERIZER EFFICIENCY //
@@ -674,6 +700,7 @@ void RunStepsRecHitsValidation::createLayerHistograms(unsigned int ival) {
     TFileDirectory td = td1.mkdir(fname2.str().c_str());
 
     ClusterHistos local_histos;
+    //RecHitHistos local_histos;
 
     std::ostringstream histoName;
 
