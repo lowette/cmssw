@@ -1,0 +1,46 @@
+140521_102107: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_105609: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_105653: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_105717: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_105912: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_110043: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_110107: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_110213: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_110258: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_110514: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_110610: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_110653: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_143235: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_143310: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_143954: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_144011: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_144258: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_144338: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_144416: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_144452: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_144536: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_145809: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_145830: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_145847: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_145858: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_150137: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_150327: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_150551: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -create
+140521_150616: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -submit
+140521_150729: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_150957: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_151206: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_152921: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_153736: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_154238: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_154718: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_155150: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140521_155844: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140522_090032: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140522_090139: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -resubmit 21,56,62
+140522_090203: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -getoutput
+140522_090221: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -resubmit 21,56,62
+140522_091016: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140522_112923: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -status
+140522_112951: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -getoutput
+140522_113529: /cvmfs/cms.cern.ch/crab/CRAB_2_10_5_patch1/python/crab.py -c /user/tlenzi/CRAB/ -getoutput
