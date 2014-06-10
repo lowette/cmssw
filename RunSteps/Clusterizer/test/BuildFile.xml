@@ -17,3 +17,6 @@
 <library file="RunStepsRecHitsValidation.cc" name="RunStepsRecHitsValidation">
 	<flags EDM_PLUGIN="1"/>
 </library>
+<library file="RunStepsClusterValidation.cc" name="RunStepsClusterValidation">
+	<flags EDM_PLUGIN="1"/>
+</library>

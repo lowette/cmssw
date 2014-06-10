@@ -5,6 +5,7 @@ all:
 	cmsRun Digitizer/test/RunDigiValidation.py
 	cmsRun L1Trigger/test/RunL1TriggerValidation.py
 	cmsRun Clusterizer/test/RunClusterValidation.py
+	cmsRun Clusterizer/test/RunRecHitsValidation.py
 
 generation:
 	cmsRun Generation/python/Generation.py _n $(n) _output $(output)
@@ -27,7 +28,10 @@ validation_l1trigger:
 validation_clusterizer:
 	cmsRun Clusterizer/test/RunClusterValidation.py _input $(input) _output $(output)
 
-validation: validation_digitizer validation_clusterizer validation_l1trigger
+validation_rechits:
+	cmsRun Clusterizer/test/RunRecHitsValidation.py _input $(input) _output $(output)
+
+validation: validation_digitizer validation_clusterizer validation_l1trigger validation_rechits
 
 configure:
 	mkdir -p Output
@@ -47,6 +51,7 @@ help:
 	@echo "| make validation_digitizer input=<path> output=<path>   |"
 	@echo "| make validation_l1trigger input=<path> output=<path>   |"
 	@echo "| make validation_clusterizer input=<path> output=<path> |"
+	@echo "| make validation_rechits input=<path> output=<path>     |"
 	@echo "| make validation                                        |"
 	@echo "| make configure                                         |"
 	@echo "| make help                                              |"
