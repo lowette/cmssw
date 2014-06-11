@@ -355,14 +355,14 @@ void RunStepsClusterValidation::analyze(const edm::Event& iEvent, const edm::Eve
 	      nMatchedHits[iM] = 0;
 
 	    // Cluster informations
-	    cluster = link.getCluster();
-	    x_cl    = cluster.x();
-	    y_cl    = cluster.y();
+        edm::Ref<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster> const& cluster = link.getCluster();
+	    x_cl    = cluster->x();
+	    y_cl    = cluster->y();
             MeasurementPoint mp(x_cl, y_cl);
             LocalPoint lPos  = geomDetUnit->topology().localPosition(mp);
             //GlobalPoint gPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
 
-	    if(verbose>1) std::cout << std::endl << "---- Cluster size="  << cluster.size()    << " | " << sizeLink << " SimTracks: ids=(" ;
+	    if(verbose>1) std::cout << std::endl << "---- Cluster size="  << cluster->size()    << " | " << sizeLink << " SimTracks: ids=(" ;
 
 	    for(unsigned int i=0 ; i<sizeLink ; i++) {
 	      if(verbose>1) {
@@ -411,7 +411,7 @@ void RunStepsClusterValidation::analyze(const edm::Event& iEvent, const edm::Eve
 		else found_hits=true;
 
 		// Map current cluster to current SimHit for efficiency study
-		map_hits[ trkID ][ iH ].second.push_back( cluster );
+		map_hits[ trkID ][ iH ].second.push_back(*cluster);
 
 		simh_layer = getLayerNumber( simh_detid );
 		simh_type  = matched_hits[iH].first.processType();

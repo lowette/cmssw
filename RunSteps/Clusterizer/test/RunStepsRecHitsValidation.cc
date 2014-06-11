@@ -288,7 +288,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 	float RecHitPosErYY = lpE.yy();
 	if(verbose > 2) std::cout << " RecHit LocalError : " << RecHitPosErXX << ", " << RecHitPosErXY << " & " << RecHitPosErYY << std::endl;
 
-	// Get cluster 
+	// Get cluster
 	edm::Ref<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster> const& clust = cu->cluster();
 	//cout << " Charge of cluster : " << (clust->charge());
 

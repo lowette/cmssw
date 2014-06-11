@@ -37,13 +37,9 @@ namespace cms {
   	private:
     		edm::ParameterSet conf_;
     		PixelClusterizer* clusterizer_;
-                edm::InputTag src_;
+            edm::InputTag src_;
     		std::string algorithm_;
-                bool clusterSimLink_;
-		//edm::EDGetTokenT<edmNew::DetSetVector<SiPixelCluster>> tPixelCluster;
-		std::string cpeName_;                   // what the user said s/he wanted
-		const PixelClusterParameterEstimator * cpe_;  // what we got (for now, one ptr to base class)
-		//PixelCPEBase const * cpe_=nullptr;                  
+            bool clusterSimLink_;
   	};
 }
 
