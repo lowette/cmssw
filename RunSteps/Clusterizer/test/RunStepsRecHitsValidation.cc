@@ -193,19 +193,19 @@ void RunStepsRecHitsValidation::analyze(const edm::Event& iEvent, const edm::Eve
 
 //}
 
-/*
-void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 
-    // Fill the map
-    for (edm::PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
-      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
-    }
-    for (edm::PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
-      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
-    }
+//void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 
-}
-*/
+//    // Fill the map
+//    for (edm::PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
+//      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
+//    }
+//    for (edm::PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
+//      map_hits[iHit->trackId()].push_back( make_pair(*iHit , matched_clusters) ) ;
+//    }
+
+//}
+
     //////////////////////////
     //  Loop over recHits   //
     //////////////////////////
@@ -367,7 +367,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
     // LOOP OVER CLUSTER LINKS //
     /////////////////////////////
 
-/*  if(verbose > 2) std::cout << " Looping over the cluster links " << std::endl;
+  if(verbose > 2) std::cout << " Looping over the cluster links " << std::endl;
     edm::DetSetVector<PixelClusterSimLink>::const_iterator DSViterLinks;
     edm::DetSet<PixelClusterSimLink>::const_iterator iterLinks;
     std::vector< unsigned int > simTrackID;
@@ -391,7 +391,8 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
     int    nMatchedHits[nTypes]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     //
     Local3DPoint pos_hit;
-    double x_hit=0,y_hit=0,z_hit=0,x_cl=0,y_cl=0,dx=0,dy=0;
+    double x_hit=0,y_hit=0,z_hit=0,dx=0,dy=0; 
+    double x_cl =0, y_cl = 0;
     bool found_hits=false;
     bool fill_dtruth=false;
 
@@ -431,41 +432,73 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 	    link = *iterLinks;
 	    simTrackID = link.getSimTracks();
 	    sizeLink   = simTrackID.size();
+	    if(verbose > 1){
+		std::cout << " size of links : " << sizeLink << std::endl;
+		std::cout << " combinatoric : " << combinatoric << std::endl;
+	    }
 
 	    // cluster matching quantities
-	    for(int iM=0 ; iM<nTypes ; iM++)
+	    for(int iM=0 ; iM<nTypes ; iM++){
 	      nMatchedHits[iM] = 0;
+	      if(verbose > 1) std::cout << " nMatchedHits : " << nMatchedHits[iM] << std::endl;		
+	    }
 
 	    // Cluster informations             --> Should make sure this cluster is one of the RecHits!
 	    cluster = link.getCluster();
 	    x_cl    = cluster.x();
 	    y_cl    = cluster.y();
-            MeasurementPoint mp(x_cl, y_cl);
+           MeasurementPoint mp(x_cl, y_cl);
             LocalPoint lPos  = geomDetUnit->topology().localPosition(mp);
             //GlobalPoint gPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
+	
+	    //****************************************************************//
+	    //  Check whether the cluster can be matched to a RecHit cluster  //
+ 	    //****************************************************************//
 
-	    if(verbose>1) std::cout << std::endl << "---- Cluster size="  << cluster.size()    << " | " << sizeLink << " SimTracks: ids=(" ;
+	    if(verbose > 1) std::cout << " DetId of the simLink : " << rawid << std::endl;
+	    //Loop over all the RecHits and get the reference to the cluster:
+	    edmNew::DetSetVector<SiPixelRecHit>::const_iterator DSViter;
+    	    for(DSViter = pixelRecHits.begin(); DSViter != pixelRecHits.end(); DSViter++) {
+	        unsigned int rawidRecHit = DSViter->id();
 
-	    for(unsigned int i=0 ; i<sizeLink ; i++) {
-	      if(verbose>1) {
-		std::cout << simTrackID[i] ;
-		if(i<sizeLink-1) std::cout << "," ;
-	      }
-	      if(i==0) trkID=simTrackID[i];
-	      else if(simTrackID[i]!=trkID) combinatoric=true;
-	    }
+		if(rawid == rawidRecHit){
+		   if(verbose > 1){
+		      std::cout << " RecHit has the same detId as the simLink " << rawidRecHit << std::endl;
+		      std::cout << " cluster position : " << x_cl << " , " << y_cl << std::endl;
+		   }
+	           // Loop over the recHits in the detector unit
+        	   edmNew::DetSet<SiPixelRecHit>::const_iterator cu;
+        	   for(cu = DSViter->begin(); cu != DSViter->end(); ++cu) {
+		      edm::Ref<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster> const& clust = cu->cluster();
+		      if(verbose > 1) std::cout << " Cluster of recHit has position (x,y) : " << clust->x() << " , " << clust->y() << std::endl;
 
-	    if(verbose>1) {
-	      if(combinatoric) std::cout << ") COMBINATORIC !!! ";
-	      std::cout << ")" << std::endl << "     cluster local position = (" << lPos.x() << " , " << lPos.y() << " , " << "n/a"    << ")"
-		   << "   layer=" << layer
-		   << std::endl;
-	    }
+		      if(clust->x() == x_cl && clust->y() == y_cl){
+			if(verbose > 1) std::cout << " Cluster of simLink matched to cluster of RecHit ! " << std::endl;
 
-	    // Get matched SimHits from the map
-	    if(!combinatoric) {
+			//******************************************//
+		        // Start validation of the clusters here!!  //
+			//******************************************//
+			if(verbose>1) std::cout << std::endl << "---- Cluster size="  << cluster.size()    << " | " << sizeLink << " SimTracks: ids=(" ;
 
-	      matched_hits = map_hits[trkID];
+	    		for(unsigned int i=0 ; i<sizeLink ; i++) {
+			   if(verbose>1) {
+			      std::cout << simTrackID[i] ;
+			      if(i<sizeLink-1) std::cout << "," ;
+	      		   }
+	      		   if(i==0) trkID=simTrackID[i];
+	       		   else if(simTrackID[i]!=trkID) combinatoric=true;
+	    		}
+
+			if(verbose>1) {
+	 	        if(combinatoric) std::cout << ") COMBINATORIC !!! ";
+	      		   std::cout << ")" << std::endl << "     cluster local position = (" << lPos.x() << " , " << lPos.y() << " , " << "n/a"    << ")"
+		   	   << "   layer=" << layer
+		   	   << std::endl;
+	     		}
+
+		        // Get matched SimHits from the map
+	 	        if(!combinatoric) {
+	  	          matched_hits = map_hits[trkID];
 
 	      if(verbose>1) {
 		std::cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
@@ -537,19 +570,28 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 	      iPos->second.h_dy_Truth->Fill(dy);
 	    }
 
+		      } //Cluster of SimLink matched to cluster of RecHit (using x and y coordinate)
+		      else{
+			std::cout << " Found an additional cluster with different x and y coordinates for detId " << rawidRecHit << " ! " << std::endl;
+			std::cout << " simLink cluster vs RecHit cluster : " << x_cl << " <-> " << clust->x() << " and " << y_cl << " <-> " << clust->y() << std::endl;
+		      }
+		   }// End of loop over the recHits in the detector unit (using the cu iterator)
+		} //detId of RecHit matched to detId of simLink!
+	    }//End of the loop over the RecHits (using the DSViter iterator)
+
         } // end loop over links within a single DetID
 
-        iPos->second.NumberOfClustersLink         -> Fill(nLinks);
+        //iPos->second.NumberOfClustersLink         -> Fill(nLinks);
 
     } // end loop over all links
-*/
+
 
     ////////////////////////////////////
     // COMPUTE CLUSTERIZER EFFICIENCY //
     ////////////////////////////////////
 
     if(verbose>1) std::cout << "- Enter efficiency computation" << std::endl;
-/*
+
     // Iterate over the map of hits & clusters
     M_TRK_HIT_CLUSTERS::const_iterator iMapHits;
 
@@ -602,7 +644,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 	  continue;
 	}
 
-	// Clusters matched to the SimHit
+	// Clusters matched to the SimHit                                                 //--> Should only do this for the clusters which correspond to a RecHit!
 	if(verbose>2) std::cout << "--- Getting corresponding clusters" << std::endl;
 	matched_clusters = ((iMapHits->second)[iH]).second;
 	nMatchedClusters = matched_clusters.size();
@@ -668,7 +710,7 @@ void RunStepsRecHitsValidation::matchSimHitsToTracks(){
 			 << countHit << " != " << nHits << std::endl;
 
     if(verbose>999) std::cout << nTotalHits << nMatchHits << efficiency << std::endl;
-*/
+
 }
 
 void RunStepsRecHitsValidation::endJob() { }
