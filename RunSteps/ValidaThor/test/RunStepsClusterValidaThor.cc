@@ -14,7 +14,7 @@
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
 
-#include "RunSteps/ValidaThor/interface/ValHit.h"
+#include "RunSteps/ValidaThor/interface/ValHits.h"
 
 class RunStepsRecHitsValidaThor : public edm::EDAnalyzer {
 
@@ -57,7 +57,23 @@ void RunStepsRecHitsValidaThor::analyze(const edm::Event& iEvent, const edm::Eve
 
     const edm::DetSetVector< PixelClusterSimLink >& clusterLinks = *clusterLinksHandle;
 
-    ValHit hits((edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks);
+    ValHitsCollection hitsCollection = ValHitsBuilder((edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks);
+
+    for (ValHitsCollection::const_iterator vhCollectionIter = hitsCollection.begin(); vhCollectionIter != hitsCollection.end(); ++vhCollectionIter) {
+
+        // unsigned int detId = vhCollectionIter->first;
+        ValHitsVector hitsVector = vhCollectionIter->second;
+
+
+        for (ValHitsVector::const_iterator vhVectorIter = hitsVector.begin(); vhVectorIter != hitsVector.end(); ++vhVectorIter) {
+
+            ValHit hit = *vhVectorIter;
+
+            std::cout << hit.x << std::endl;
+
+        }
+
+    }
 
 }
 

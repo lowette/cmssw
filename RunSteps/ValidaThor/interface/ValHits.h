@@ -10,20 +10,16 @@
 #include <vector>
 #include <map>
 
-struct HitSidor {
+typedef std::map< unsigned int, std::vector< struct ValHit > > ValHitsCollection;
+typedef std::vector< struct ValHit > ValHitsVector;
+typedef struct ValHit ValHit;
+
+struct ValHit {
     double x, y;
     std::vector< unsigned int > simTracks;
 };
 
-class ValHit {
-
-public:
-    ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks);
-    ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits);
-
-private:
-    std::map< unsigned int, std::vector< struct HitSidor > > hits_;
-
-};
+ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks);
+ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits);
 
 #endif

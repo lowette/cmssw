@@ -1,8 +1,8 @@
-#include "RunSteps/ValidaThor/interface/ValHit.h"
+#include "RunSteps/ValidaThor/interface/ValHits.h"
 
-#include <iostream>
+ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks) {
 
-ValHit::ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks) {
+    ValHitsCollection hits;
 
     edm::DetSetVector< PixelClusterSimLink >::const_iterator DSViter;
     edm::DetSet< PixelClusterSimLink >::const_iterator clusterLink;
@@ -18,20 +18,24 @@ ValHit::ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks) {
             edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > const& cluster = link.getCluster();
 
             // Get the parameters
-            HitSidor newHit;
+            ValHit newHit;
             newHit.x = cluster->x();
             newHit.y = cluster->y();
             newHit.simTracks = link.getSimTracks();
 
 
             // Add the Hit
-            hits_[DSViter->detId()].push_back(newHit);
+            hits[DSViter->detId()].push_back(newHit);
 
         }
     }
+
+    return hits;
 }
 
-ValHit::ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits) {
+ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits) {
+
+    ValHitsCollection hits;
 
     edmNew::DetSetVector< SiPixelRecHit >::const_iterator DSViter;
     edmNew::DetSet< SiPixelRecHit >::const_iterator rechHitIter;
@@ -50,7 +54,7 @@ ValHit::ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::D
             edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > const& cluster = rechHitIter->cluster();
 
             // Get the parameters
-            HitSidor newHit;
+            ValHit newHit;
             newHit.x = rechHitIter->localPosition().x();
             newHit.y = rechHitIter->localPosition().y();
 
@@ -71,8 +75,10 @@ ValHit::ValHit(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::D
             }
 
             // Add the Hit
-            if (clusterFound) hits_[DSViter->detId()].push_back(newHit);
+            if (clusterFound) hits[DSViter->detId()].push_back(newHit);
 
         }
     }
+
+    return hits;
 }
