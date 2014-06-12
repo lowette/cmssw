@@ -12,7 +12,7 @@
 
 using namespace std;
 
-void PixelClusterizer::makeLinks(edm::OrphanHandle< edmNew::DetSetVector<SiPixelCluster> > & clusters, std::vector<edm::DetSet<PixelClusterSimLink> > linksByDet) {
+void PixelClusterizer::makeLinks(edm::OrphanHandle< edmNew::DetSetVector<SiPixelCluster> > & clusters, std::vector<edm::DetSet<PixelClusterSimLink> > & linksByDet) {
 
     // Go over all the detectors
     for (edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter = clusters->begin(); DSViter != clusters->end(); ++DSViter) {

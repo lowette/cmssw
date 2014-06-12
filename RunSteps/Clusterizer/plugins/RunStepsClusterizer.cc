@@ -101,9 +101,9 @@ namespace cms {
         // Same for links
 
         if (clusterSimLink_) {
-            std::vector<edm::DetSet<PixelClusterSimLink> > linksByDet;
+            std::vector< edm::DetSet< PixelClusterSimLink > > linksByDet;
             clusterizer_->makeLinks(clusterCollection, linksByDet);
-            std::auto_ptr< edm::DetSetVector<PixelClusterSimLink> > outputLinks(new edm::DetSetVector<PixelClusterSimLink>(linksByDet));
+            std::auto_ptr< edm::DetSetVector< PixelClusterSimLink > > outputLinks(new edm::DetSetVector< PixelClusterSimLink >(linksByDet));
             e.put(outputLinks);
         }
     }
