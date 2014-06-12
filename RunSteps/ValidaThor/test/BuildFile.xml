@@ -1,0 +1,24 @@
+<use name="Geometry/TrackerGeometryBuilder"/>
+<use name="FWCore/Framework"/>
+<use name="DataFormats/Common"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/PluginManager"/>
+<use name="clhep"/>
+<use name="boost"/>
+<use name="root"/>
+<use name="DataFormats/L1GlobalTrigger"/>
+<use name="CondFormats/L1TObjects"/>
+<use name="L1Trigger/GlobalTriggerAnalyzer"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="Geometry/Records"/>
+<use name="DataFormats/DetId"/>
+<use name="RecoLocalTracker/SiPixelClusterizer"/>
+<use name="DataFormats/TrackerRecHit2D"/>
+<use name="DataFormats/SiPixelDetId"/>
+<use name="DataFormats/SiPixelCluster"/>
+<use name="DataFormats/ParticleFlowCandidate"/>
+<use name="DataFormats/ParticleFlowReco"/>
+
+<library file="RunStepsClusterValidaThor.cc ../src/*.cc" name="RunStepsRecHitsValidaThor">
+	<flags EDM_PLUGIN="1"/>
+</library>
