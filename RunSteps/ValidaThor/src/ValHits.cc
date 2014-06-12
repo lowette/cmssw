@@ -21,7 +21,9 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
             ValHit newHit;
             newHit.x = cluster->x();
             newHit.y = cluster->y();
+            newHit.xx = newHit.xy = newHit.yy = -1;
             newHit.simTracks = link.getSimTracks();
+            newHit.cluster = link.getCluster();
 
 
             // Add the Hit
@@ -57,6 +59,9 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
             ValHit newHit;
             newHit.x = rechHitIter->localPosition().x();
             newHit.y = rechHitIter->localPosition().y();
+            newHit.xx = rechHitIter->localPositionError().xx();
+            newHit.xy = rechHitIter->localPositionError().xy();
+            newHit.yy = rechHitIter->localPositionError().yy();
 
             bool clusterFound = false;
 
@@ -69,6 +74,8 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
                 // Compare the clusters
                 if (cluster == clusterFromLink) {
                     newHit.simTracks = link.getSimTracks();
+                    newHit.cluster = link.getCluster();
+
                     clusterFound = true;
                     break;
                 }

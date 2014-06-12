@@ -1,5 +1,3 @@
-#include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
-
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -13,6 +11,8 @@
 
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
+#include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
 #include "RunSteps/ValidaThor/interface/ValHits.h"
 
@@ -27,16 +27,23 @@ public:
     virtual void endJob();
 
 private:
-    edm::InputTag src_;
-
+    edm::InputTag rechits_, clusters_;
+    bool useRecHits_;
 };
 
 RunStepsRecHitsValidaThor::RunStepsRecHitsValidaThor(const edm::ParameterSet& iConfig) {
-    src_ = iConfig.getParameter<edm::InputTag>("src");
+    rechits_ = iConfig.getParameter< edm::InputTag >("rechits");
+    clusters_ = iConfig.getParameter< edm::InputTag >("clusters");
+    useRecHits_ = iConfig.getParameter< bool >("useRecHits");
 
     std::cout << "------------------------------------------------------------" << std::endl
               << "-- Running RunSteps RunStepsRecHitsValidaThor v0.0" << std::endl
               << "------------------------------------------------------------" << std::endl;
+
+    // Use RecHits
+    if (useRecHits_) std::cout << "INFO: Using RecHits" << std::endl;
+    // Use Clusters
+    else std::cout << "INFO: Using Clusters" << std::endl;
 }
 
 RunStepsRecHitsValidaThor::~RunStepsRecHitsValidaThor() { }
@@ -47,18 +54,33 @@ void RunStepsRecHitsValidaThor::analyze(const edm::Event& iEvent, const edm::Eve
 
     // Get the clusters
     edm::Handle< SiPixelClusterCollectionNew > clustersHandle;
-    iEvent.getByLabel(src_, clustersHandle);
-
+    iEvent.getByLabel(clusters_, clustersHandle);
     // const edmNew::DetSetVector< SiPixelCluster >& clusters = *clustersHandle;
 
     // Get the links
     edm::Handle< edm::DetSetVector< PixelClusterSimLink > > clusterLinksHandle;
-    iEvent.getByLabel(src_, clusterLinksHandle);
-
+    iEvent.getByLabel(clusters_, clusterLinksHandle);
     const edm::DetSetVector< PixelClusterSimLink >& clusterLinks = *clusterLinksHandle;
 
-    ValHitsCollection hitsCollection = ValHitsBuilder((edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks);
+    //Get the RecHits
+    edm::Handle< SiPixelRecHitCollection > recHitsHandle;
+    iEvent.getByLabel(rechits_, recHitsHandle);
+    const edmNew::DetSetVector< SiPixelRecHit >& recHits = *recHitsHandle;
 
+
+    // Make selection on RecHits or Clusters
+    ValHitsCollection hitsCollection;
+
+    // Use RecHits
+    if (useRecHits_) hitsCollection = ValHitsBuilder((edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks, (edmNew::DetSetVector< SiPixelRecHit >*) & recHits);
+    // Use Clusters
+    else hitsCollection = ValHitsBuilder((edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks);
+
+    //////////////////////////////////////////////////////////////////////
+    // Give hitsCollection to Validatator to play with the hits         //
+    //////////////////////////////////////////////////////////////////////
+
+    // Loop over the Hits
     for (ValHitsCollection::const_iterator vhCollectionIter = hitsCollection.begin(); vhCollectionIter != hitsCollection.end(); ++vhCollectionIter) {
 
         // unsigned int detId = vhCollectionIter->first;
@@ -67,12 +89,13 @@ void RunStepsRecHitsValidaThor::analyze(const edm::Event& iEvent, const edm::Eve
 
         for (ValHitsVector::const_iterator vhVectorIter = hitsVector.begin(); vhVectorIter != hitsVector.end(); ++vhVectorIter) {
 
-            ValHit hit = *vhVectorIter;
+            // ValHit hit = *vhVectorIter;
 
-            std::cout << hit.x << std::endl;
+            /////////////////////////////////////////
+            // Do things here to the hits          //
+            /////////////////////////////////////////
 
         }
-
     }
 
 }

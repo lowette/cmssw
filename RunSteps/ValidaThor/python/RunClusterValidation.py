@@ -35,6 +35,8 @@ process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load('RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi')
+process.load('RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff')
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
@@ -54,6 +56,22 @@ process.TFileService = cms.Service('TFileService',
     fileName = cms.string('file:' + output_file)
 )
 
+# Output
+process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
+    splitLevel = cms.untracked.int32(0),
+    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
+    outputCommands = process.FEVTDEBUGEventContent.outputCommands,
+    fileName = cms.untracked.string('file:' + output_file),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(''),
+        dataTier = cms.untracked.string('GEM-SIM-DIGI-CLU-REC')
+    )
+)
+
+process.FEVTDEBUGoutput.outputCommands.extend([
+  'keep *_siPixelRecHits_*_*'
+])
+
 # DEBUG
 process.MessageLogger = cms.Service('MessageLogger',
 	debugModules = cms.untracked.vstring('siPixelClusters'),
@@ -63,10 +81,24 @@ process.MessageLogger = cms.Service('MessageLogger',
 	)
 )
 
+# CPE Parameters
+process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
+process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
+process.PixelCPEGenericESProducer.LoadTemplatesFromDB = cms.bool(False)
+process.PixelCPEGenericESProducer.TruncatePixelCharge = cms.bool(False)
+process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
+process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
+
 # Analyzer
 process.analysis = cms.EDAnalyzer('RunStepsRecHitsValidaThor',
-    src = cms.InputTag('siPixelClusters')
+    rechits = cms.InputTag('siPixelRecHits'),
+    clusters = cms.InputTag('siPixelClusters'),
+    useRecHits = cms.bool(True)
 )
 
+process.clusterizer_step = cms.Path(cms.Sequence(process.siPixelRecHits*process.analysis));
+
+process.FEVTDEBUGoutput_step = cms.EndPath(process.FEVTDEBUGoutput)
+
 # Processes to run
-process.p = cms.Path(process.analysis)
+process.schedule = cms.Schedule(process.clusterizer_step)

@@ -15,8 +15,9 @@ typedef std::vector< struct ValHit > ValHitsVector;
 typedef struct ValHit ValHit;
 
 struct ValHit {
-    double x, y;
+    double x, y, xx, xy, yy;
     std::vector< unsigned int > simTracks;
+    edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > cluster;
 };
 
 ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks);
