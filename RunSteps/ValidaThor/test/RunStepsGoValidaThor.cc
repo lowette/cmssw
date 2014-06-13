@@ -24,6 +24,7 @@
 #include "Geometry/TrackerGeometryBuilder/interface/RectangularPixelTopology.h"
 
 #include "RunSteps/ValidaThor/interface/ValHits.h"
+#include "RunSteps/ValidaThor/interface/ValidaThor.h"
 
 #include <TH2F.h>
 
@@ -38,15 +39,12 @@ public:
     virtual void endJob();
 
 private:
-    edm::InputTag rechits_, clusters_;
     bool useRecHits_;
+    ValidaThor* validaThor;
 
-    TH2D* xyhisto;
 };
 
 RunStepsGoValidaThor::RunStepsGoValidaThor(const edm::ParameterSet& iConfig) {
-    rechits_ = iConfig.getParameter< edm::InputTag >("rechits");
-    clusters_ = iConfig.getParameter< edm::InputTag >("clusters");
     useRecHits_ = iConfig.getParameter< bool >("useRecHits");
 
     std::cout << "------------------------------------------------------------" << std::endl
@@ -58,10 +56,7 @@ RunStepsGoValidaThor::RunStepsGoValidaThor(const edm::ParameterSet& iConfig) {
     // Use Clusters
     else std::cout << "INFO: Using Clusters" << std::endl;
 
-
-    // Make test histo
-    edm::Service<TFileService> fs;
-    xyhisto = fs->make<TH2D>("2D", "2D", 1000, 0., 0., 1000, 0., 0.);
+    validaThor = new ValidaThor();
 }
 
 RunStepsGoValidaThor::~RunStepsGoValidaThor() { }
@@ -72,12 +67,12 @@ void RunStepsGoValidaThor::analyze(const edm::Event& iEvent, const edm::EventSet
 
     // Get the clusters
     edm::Handle< SiPixelClusterCollectionNew > clustersHandle;
-    iEvent.getByLabel(clusters_, clustersHandle);
+    iEvent.getByLabel("siPixelClusters", clustersHandle);
     // const edmNew::DetSetVector< SiPixelCluster >& clusters = *clustersHandle;
 
     // Get the cluster simlinks
     edm::Handle< edm::DetSetVector< PixelClusterSimLink > > clusterLinksHandle;
-    iEvent.getByLabel(clusters_, clusterLinksHandle);
+    iEvent.getByLabel("siPixelClusters", clusterLinksHandle);
     const edm::DetSetVector< PixelClusterSimLink >& clusterLinks = *clusterLinksHandle;
 
     // Get the Geometry
@@ -92,7 +87,7 @@ void RunStepsGoValidaThor::analyze(const edm::Event& iEvent, const edm::EventSet
     //Get the RecHits
     if (useRecHits_) {
         edm::Handle< SiPixelRecHitCollection > recHitsHandle;
-        iEvent.getByLabel(rechits_, recHitsHandle);
+        iEvent.getByLabel("siPixelRecHits", recHitsHandle);
         const edmNew::DetSetVector< SiPixelRecHit >& recHits = *recHitsHandle;
 
         hitsCollection = ValHitsBuilder((TrackerGeometry*) & tkGeom, (edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks, (edmNew::DetSetVector< SiPixelRecHit >*) & recHits);
@@ -100,28 +95,27 @@ void RunStepsGoValidaThor::analyze(const edm::Event& iEvent, const edm::EventSet
     // Use Clusters
     else hitsCollection = ValHitsBuilder((TrackerGeometry*) & tkGeom, (edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks);
 
-    //////////////////////////////////////////////////////////////////////
-    // Give hitsCollection to Validatator to play with the hits         //
-    //////////////////////////////////////////////////////////////////////
+    // SimHit
+    edm::Handle< edm::PSimHitContainer > simHits_BHandle;
+    iEvent.getByLabel("g4SimHits", "TrackerHitsPixelBarrelLowTof", simHits_BHandle);
+    const edm::PSimHitContainer& simHits_B = *simHits_BHandle;
 
-    // Loop over the Hits
-    for (ValHitsCollection::const_iterator vhCollectionIter = hitsCollection.begin(); vhCollectionIter != hitsCollection.end(); ++vhCollectionIter) {
+    edm::Handle< edm::PSimHitContainer > simHits_EHandle;
+    iEvent.getByLabel("g4SimHits", "TrackerHitsPixelEndcapLowTof", simHits_EHandle);
+    const edm::PSimHitContainer& simHits_E = *simHits_EHandle;
 
-        // unsigned int detId = vhCollectionIter->first;
-        ValHitsVector hitsVector = vhCollectionIter->second;
+    // SimTrack
+    edm::Handle< edm::SimTrackContainer > simTracksHandle;
+    iEvent.getByLabel("g4SimHits", simTracksHandle);
+    const edm::SimTrackContainer& simTracks = *simTracksHandle;
 
+    // SimVertex
+    edm::Handle< edm::SimVertexContainer > simVerticesHandle;
+    iEvent.getByLabel("g4SimHits", simVerticesHandle);
+    const edm::SimVertexContainer& simVertices = *simVerticesHandle;
 
-        for (ValHitsVector::const_iterator vhVectorIter = hitsVector.begin(); vhVectorIter != hitsVector.end(); ++vhVectorIter) {
-
-            ValHit hit = *vhVectorIter;
-
-            /////////////////////////////////////////
-            // Do things here to the hits          //
-            /////////////////////////////////////////
-            xyhisto->Fill(hit.globalPos.x(), hit.globalPos.y());
-        }
-    }
-
+    // Validation module
+    validaThor->analyze((ValHitsCollection*) & hitsCollection, (edm::PSimHitContainer*) & simHits_B, (edm::PSimHitContainer*) & simHits_E, (edm::SimTrackContainer*) & simTracks, (edm::SimVertexContainer*) & simVertices, (TrackerGeometry*) & tkGeom);
 }
 
 void RunStepsGoValidaThor::endJob() { }
