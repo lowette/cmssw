@@ -19,6 +19,6 @@
 <use name="DataFormats/ParticleFlowCandidate"/>
 <use name="DataFormats/ParticleFlowReco"/>
 
-<library file="RunStepsClusterValidaThor.cc ../src/*.cc" name="RunStepsRecHitsValidaThor">
+<library file="RunStepsGoValidaThor.cc ../src/*.cc" name="RunStepsGoValidaThor">
 	<flags EDM_PLUGIN="1"/>
 </library>

@@ -5,7 +5,7 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
-output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/ClusterValidation.root'
+output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/RecHitValidation.root'
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
@@ -18,13 +18,13 @@ for i in range(2, len(sys.argv)):
 
 # Greetings
 print '------------------------------------------------------------'
-print '-- Running the RunStepsClusterValidaThor step with the following arguments:'
+print '-- Running the RunStepsRecHitValidaThor step with the following arguments:'
 print '-- Input file: ' + input_file
 print '-- Output file: ' + output_file
 print '------------------------------------------------------------'
 
 # Create a new CMS process
-process = cms.Process('cluTest')
+process = cms.Process('recTest')
 
 # Import all the necessary files
 process.load('Configuration.StandardSequences.Services_cff')
@@ -35,6 +35,8 @@ process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load('RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi')
+process.load('RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff')
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
@@ -62,9 +64,13 @@ process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
     fileName = cms.untracked.string('file:' + output_file),
     dataset = cms.untracked.PSet(
         filterName = cms.untracked.string(''),
-        dataTier = cms.untracked.string('GEM-SIM-DIGI-CLU')
+        dataTier = cms.untracked.string('GEM-SIM-DIGI-CLU-REC')
     )
 )
+
+process.FEVTDEBUGoutput.outputCommands.extend([
+  'keep *_siPixelRecHits_*_*'
+])
 
 # DEBUG
 process.MessageLogger = cms.Service('MessageLogger',
@@ -75,16 +81,24 @@ process.MessageLogger = cms.Service('MessageLogger',
 	)
 )
 
+# CPE Parameters
+process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
+process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
+process.PixelCPEGenericESProducer.LoadTemplatesFromDB = cms.bool(False)
+process.PixelCPEGenericESProducer.TruncatePixelCharge = cms.bool(False)
+process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
+process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
+
 # Analyzer
 process.analysis = cms.EDAnalyzer('RunStepsGoValidaThor',
     rechits = cms.InputTag('siPixelRecHits'),
     clusters = cms.InputTag('siPixelClusters'),
-    useRecHits = cms.bool(False)
+    useRecHits = cms.bool(True)
 )
 
-process.analysis_step = cms.Path(cms.Sequence(process.analysis))
+process.clusterizer_step = cms.Path(cms.Sequence(process.siPixelRecHits*process.analysis))
 
 process.FEVTDEBUGoutput_step = cms.EndPath(process.FEVTDEBUGoutput)
 
 # Processes to run
-process.schedule = cms.Schedule(process.analysis_step)
+process.schedule = cms.Schedule(process.clusterizer_step)

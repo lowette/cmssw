@@ -1,6 +1,6 @@
 #include "RunSteps/ValidaThor/interface/ValHits.h"
 
-ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks) {
+ValHitsCollection ValHitsBuilder(const TrackerGeometry* tkGeom, edm::DetSetVector< PixelClusterSimLink >* clusterLinks) {
 
     ValHitsCollection hits;
 
@@ -8,6 +8,10 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
     edm::DetSet< PixelClusterSimLink >::const_iterator clusterLink;
 
     for (DSViter = clusterLinks->begin(); DSViter != clusterLinks->end(); ++DSViter) {
+
+        // Get the geometry of the tracker
+        DetId detId(DSViter->detId());
+        const GeomDetUnit* geomDetUnit = tkGeom->idToDetUnit(detId);
 
         // Loop over cluster links
         for (clusterLink = DSViter->data.begin(); clusterLink != DSViter->data.end(); ++clusterLink) {
@@ -17,11 +21,18 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
             // Get the cluster
             edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > const& cluster = link.getCluster();
 
-            // Get the parameters
+            // Create the Hit
             ValHit newHit;
-            newHit.x = cluster->x();
-            newHit.y = cluster->y();
+
+            // Set the cluster position
+            MeasurementPoint mp(cluster->x(), cluster->y());
+            newHit.localPos = geomDetUnit->topology().localPosition(mp);
+            newHit.globalPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
+
+            // Set the error
             newHit.xx = newHit.xy = newHit.yy = -1;
+
+            // Add the simTracks and the reference
             newHit.simTracks = link.getSimTracks();
             newHit.cluster = link.getCluster();
 
@@ -35,7 +46,7 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
     return hits;
 }
 
-ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits) {
+ValHitsCollection ValHitsBuilder(const TrackerGeometry* tkGeom, edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits) {
 
     ValHitsCollection hits;
 
@@ -46,6 +57,10 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
 
     for (DSViter = recHits->begin(); DSViter != recHits->end(); ++DSViter) {
 
+        // Get the geometry of the tracker
+        DetId detId(DSViter->detId());
+        const GeomDetUnit* geomDetUnit = tkGeom->idToDetUnit(detId);
+
         // Get the cluster simlinks DetSet
         edm::DetSet< PixelClusterSimLink > clusters = (*clusterLinks)[DSViter->id()];
 
@@ -55,10 +70,16 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
             // Get the cluster
             edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > const& cluster = rechHitIter->cluster();
 
-            // Get the parameters
+            // Create the Hit
             ValHit newHit;
-            newHit.x = rechHitIter->localPosition().x();
-            newHit.y = rechHitIter->localPosition().y();
+
+            // Set the recHit position
+            newHit.localPos = rechHitIter->localPosition();
+
+            MeasurementPoint mp(rechHitIter->localPosition().x(), rechHitIter->localPosition().y());
+            newHit.globalPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
+
+            // Set the Error
             newHit.xx = rechHitIter->localPositionError().xx();
             newHit.xy = rechHitIter->localPositionError().xy();
             newHit.yy = rechHitIter->localPositionError().yy();
@@ -73,6 +94,8 @@ ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clust
 
                 // Compare the clusters
                 if (cluster == clusterFromLink) {
+
+                    // Add the simTracks and the reference
                     newHit.simTracks = link.getSimTracks();
                     newHit.cluster = link.getCluster();
 

@@ -7,6 +7,13 @@
 #include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/CommonDetUnit/interface/GeomDetUnit.h"
+#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
+#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
+#include "Geometry/TrackerGeometryBuilder/interface/RectangularPixelTopology.h"
+
 #include <vector>
 #include <map>
 
@@ -15,12 +22,16 @@ typedef std::vector< struct ValHit > ValHitsVector;
 typedef struct ValHit ValHit;
 
 struct ValHit {
-    double x, y, xx, xy, yy;
+    LocalPoint localPos;
+    GlobalPoint globalPos;
+    double xx, xy, yy;
     std::vector< unsigned int > simTracks;
     edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > cluster;
 };
 
-ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks);
-ValHitsCollection ValHitsBuilder(edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits);
+
+
+ValHitsCollection ValHitsBuilder(const TrackerGeometry* tkGeom, edm::DetSetVector< PixelClusterSimLink >* clusterLinks);
+ValHitsCollection ValHitsBuilder(const TrackerGeometry* tkGeom, edm::DetSetVector< PixelClusterSimLink >* clusterLinks, edmNew::DetSetVector< SiPixelRecHit >* recHits);
 
 #endif
