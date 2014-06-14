@@ -22,6 +22,7 @@ typedef std::vector< struct ValHit > ValHitsVector;
 typedef struct ValHit ValHit;
 
 struct ValHit {
+    double x, y;
     LocalPoint localPos;
     GlobalPoint globalPos;
     double xx, xy, yy;

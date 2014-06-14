@@ -4,8 +4,8 @@ all:
 	cmsRun Clusterizer/python/Clusterizer.py
 	cmsRun Digitizer/test/RunDigiValidation.py
 	cmsRun L1Trigger/test/RunL1TriggerValidation.py
-	cmsRun Clusterizer/test/RunClusterValidation.py
-	cmsRun Clusterizer/test/RunRecHitsValidation.py
+	cmsRun ValidaThor/python/RunClusterValidation.py
+	cmsRun ValidaThor/python/RunRecHitValidation.py
 
 generation:
 	cmsRun Generation/python/Generation.py _n $(n) _output $(output)
@@ -26,10 +26,10 @@ validation_l1trigger:
 	cmsRun L1Trigger/test/RunL1TriggerValidation.py _input $(input) _output $(output)
 
 validation_clusterizer:
-	cmsRun Clusterizer/test/RunClusterValidation.py _input $(input) _output $(output)
+	cmsRun ValidaThor/python/RunClusterValidation.py _input $(input) _output $(output)
 
 validation_rechits:
-	cmsRun Clusterizer/test/RunRecHitsValidation.py _input $(input) _output $(output)
+	cmsRun ValidaThor/python/RunRecHitValidation.py _input $(input) _output $(output)
 
 validation: validation_digitizer validation_clusterizer validation_l1trigger validation_rechits
 

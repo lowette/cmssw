@@ -76,7 +76,7 @@ process.MessageLogger = cms.Service('MessageLogger',
 )
 
 # Analyzer
-process.analysis = cms.EDAnalyzer('RunStepsGoValidaThor',
+process.analysis = cms.EDAnalyzer('ValidaThor',
     useRecHits = cms.bool(False)
 )
 

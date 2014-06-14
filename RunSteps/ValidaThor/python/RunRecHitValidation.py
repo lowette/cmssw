@@ -90,7 +90,7 @@ process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
 process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
 
 # Analyzer
-process.analysis = cms.EDAnalyzer('RunStepsGoValidaThor',
+process.analysis = cms.EDAnalyzer('ValidaThor',
     useRecHits = cms.bool(True)
 )
 

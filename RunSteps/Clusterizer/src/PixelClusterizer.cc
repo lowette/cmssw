@@ -10,17 +10,15 @@
 #include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
 #include "DataFormats/SiPixelDigi/interface/PixelDigiCollection.h"
 
-using namespace std;
-
 void PixelClusterizer::makeLinks(edm::OrphanHandle< edmNew::DetSetVector<SiPixelCluster> > & clusters, std::vector<edm::DetSet<PixelClusterSimLink> > & linksByDet) {
 
     // Go over all the detectors
-    for (edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter = clusters->begin(); DSViter != clusters->end(); ++DSViter) {
+    for (edmNew::DetSetVector< SiPixelCluster >::const_iterator DSViter = clusters->begin(); DSViter != clusters->end(); ++DSViter) {
         DetId detIdObject(DSViter->detId());
 
         edm::DetSet<PixelClusterSimLink> links(DSViter->detId());
 
-        for (edmNew::DetSet<SiPixelCluster>::const_iterator clustIt = DSViter->begin(); clustIt != DSViter->end(); clustIt++) {
+        for (edmNew::DetSet<SiPixelCluster>::const_iterator clustIt = DSViter->begin(); clustIt != DSViter->end(); ++clustIt) {
 
             std::map< SiPixelCluster, std::vector< unsigned int > >::iterator it = tmpSimLinks.find(*clustIt);
 
@@ -28,6 +26,7 @@ void PixelClusterizer::makeLinks(edm::OrphanHandle< edmNew::DetSetVector<SiPixel
                 std::vector< unsigned int > simTracks = it->second;
 
                 PixelClusterSimLink simLink;
+
                 simLink.setCluster(edmNew::makeRefTo(clusters, clustIt));
                 simLink.setSimTracks(simTracks);
                 links.data.push_back(simLink);

@@ -96,7 +96,7 @@ namespace cms {
         }
 
         // Add the data to the output
-        edm::OrphanHandle< edmNew::DetSetVector<SiPixelCluster> > clusterCollection = e.put(outputClusters);
+        edm::OrphanHandle< edmNew::DetSetVector< SiPixelCluster > > clusterCollection = e.put(outputClusters);
 
         // Same for links
 

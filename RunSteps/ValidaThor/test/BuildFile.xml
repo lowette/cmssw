@@ -19,6 +19,6 @@
 <use name="DataFormats/ParticleFlowCandidate"/>
 <use name="DataFormats/ParticleFlowReco"/>
 
-<library file="RunStepsGoValidaThor.cc ../src/*.cc" name="RunStepsGoValidaThor">
+<library file="ValidaThor.cc ../src/*.cc" name="ValidaThor">
 	<flags EDM_PLUGIN="1"/>
 </library>

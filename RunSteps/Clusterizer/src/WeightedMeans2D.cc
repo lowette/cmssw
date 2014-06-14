@@ -117,14 +117,21 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                 while (!acluster.empty()) {
 
                     // Get the current pixel we are looking at
-                    auto curInd = acluster.top();
+                    unsigned int curInd = acluster.top();
                     acluster.pop();
 
+
+                    unsigned int from_r = (acluster.x[curInd] - 1 < 0 ? 0 : acluster.x[curInd] - 1);
+                    unsigned int to_r = (acluster.x[curInd] + 1 >= nrows_ ? nrows_ - 1 : acluster.x[curInd] + 1);
+
                     // Look left and right
-                    for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
+                    for (unsigned int r = from_r; r <= to_r; ++r) {
+
+                        unsigned int from_c = (acluster.y[curInd] - 1 < 0 ? 0 : acluster.y[curInd] - 1);
+                        unsigned int to_c = (acluster.y[curInd] + 1 >= ncols_ ? ncols_ - 1 : acluster.y[curInd] + 1);
 
                         // Look bottom and top
-                        for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
+                        for (unsigned int c = from_c; c <= to_c; ++c) {
 
                             // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
                             if (maskedArray(r, c) == weight) {

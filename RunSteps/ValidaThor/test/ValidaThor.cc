@@ -39,8 +39,6 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "CommonTools/Utils/interface/TFileDirectory.h"
 
-#include "RunSteps/ValidaThor/interface/ValidaThor.h"
-
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -50,7 +48,151 @@
 #include <THStack.h>
 #include <TProfile.h>
 
-void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContainer* simHits_B, edm::PSimHitContainer* simHits_E, edm::SimTrackContainer* simTracks, edm::SimVertexContainer* simVertices, TrackerGeometry* tkGeom) {
+#include "RunSteps/ValidaThor/interface/ValHits.h"
+
+int verbose = 0;
+const int nTypes = 18;
+
+class ValidaThor : public edm::EDAnalyzer {
+
+    typedef std::vector< std::pair< PSimHit , std::vector< ValHit > > > V_HIT_CLUSTERS;
+    typedef std::map< int , V_HIT_CLUSTERS > M_TRK_HIT_CLUSTERS;
+
+public:
+    explicit ValidaThor(const edm::ParameterSet&);
+    ~ValidaThor();
+    void beginJob();
+    void analyze(const edm::Event&, const edm::EventSetup&);
+    void endJob();
+
+private:
+    void calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitContainer* simHits_B, edm::PSimHitContainer* simHits_E, edm::SimTrackContainer* simTracks, edm::SimVertexContainer* simVertices, TrackerGeometry* tkGeom);
+    void createLayerHistograms(unsigned int iLayer);
+    void createHistograms(unsigned int nLayer);
+    unsigned int getLayerNumber(const TrackerGeometry* tkgeom, unsigned int& detid);
+    unsigned int getLayerNumber(unsigned int& detid);
+
+
+    bool useRecHits_;
+
+    TH2F* trackerLayout_;
+    TH2F* trackerLayoutXY_;
+    TH2F* trackerLayoutXYBar_;
+    TH2F* trackerLayoutXYEC_;
+
+    struct ClusterHistos {
+        THStack* NumberOfClustersSource;
+        TH1F* NumberOfClusterPixel;
+        TH1F* NumberOfClusterStrip;
+
+        TH1F* NumberOfClustersLink;
+
+        TH1F* NumberOfMatchedHits[nTypes];
+        TH1F* NumberOfMatchedClusters[nTypes];
+        TH1F* hEfficiency[nTypes];
+        TH1F* h_dx_Truth;
+        TH1F* h_dy_Truth;
+
+        THStack* ClustersSizeSource;
+        TH1F* clusterSizePixel;
+        TH1F* clusterSizeStrip;
+
+        TH1F* clusterSize;
+        TH1F* clusterSizeX;
+        TH1F* clusterSizeY;
+
+        TH1F* clusterShapeX;
+        TH1F* clusterShapeY;
+        TH2F* localPosXY;
+        TH2F* globalPosXY;
+
+        TH2F* localPosXYPixel;
+        TH2F* localPosXYStrip;
+
+        TH1F* digiType;
+        TH2F* digiPosition;
+    };
+
+    std::map< unsigned int, ClusterHistos > layerHistoMap;
+};
+
+ValidaThor::ValidaThor(const edm::ParameterSet& iConfig) {
+    useRecHits_ = iConfig.getParameter< bool >("useRecHits");
+
+    std::cout << "------------------------------------------------------------" << std::endl
+              << "-- Running RunSteps ValidaThor v0.0" << std::endl
+              << "------------------------------------------------------------" << std::endl;
+
+    // Use RecHits
+    if (useRecHits_) std::cout << "INFO: Using RecHits" << std::endl;
+    // Use Clusters
+    else std::cout << "INFO: Using Clusters" << std::endl;
+}
+
+ValidaThor::~ValidaThor() { }
+
+void ValidaThor::beginJob() {
+    createHistograms(19);
+}
+
+void ValidaThor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+
+    // Get the clusters
+    edm::Handle< SiPixelClusterCollectionNew > clustersHandle;
+    iEvent.getByLabel("siPixelClusters", clustersHandle);
+    // const edmNew::DetSetVector< SiPixelCluster >& clusters = *clustersHandle;
+
+    // Get the cluster simlinks
+    edm::Handle< edm::DetSetVector< PixelClusterSimLink > > clusterLinksHandle;
+    iEvent.getByLabel("siPixelClusters", clusterLinksHandle);
+    const edm::DetSetVector< PixelClusterSimLink >& clusterLinks = *clusterLinksHandle;
+
+    // Get the Geometry
+    edm::ESHandle< TrackerGeometry > geomHandle;
+    iSetup.get< TrackerDigiGeometryRecord >().get(geomHandle);
+    const TrackerGeometry& tkGeom = *geomHandle;
+
+    // Make selection on RecHits or Clusters
+    ValHitsCollection hitsCollection;
+
+    //Get the RecHits
+    if (useRecHits_) {
+        edm::Handle< SiPixelRecHitCollection > recHitsHandle;
+        iEvent.getByLabel("siPixelRecHits", recHitsHandle);
+        const edmNew::DetSetVector< SiPixelRecHit >& recHits = *recHitsHandle;
+
+        hitsCollection = ValHitsBuilder((TrackerGeometry*) & tkGeom, (edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks, (edmNew::DetSetVector< SiPixelRecHit >*) & recHits);
+    }
+    // Use Clusters
+    else hitsCollection = ValHitsBuilder((TrackerGeometry*) & tkGeom, (edm::DetSetVector< PixelClusterSimLink >*) & clusterLinks);
+
+    // SimHit
+    edm::Handle< edm::PSimHitContainer > simHits_BHandle;
+    iEvent.getByLabel("g4SimHits", "TrackerHitsPixelBarrelLowTof", simHits_BHandle);
+    const edm::PSimHitContainer& simHits_B = *simHits_BHandle;
+
+    edm::Handle< edm::PSimHitContainer > simHits_EHandle;
+    iEvent.getByLabel("g4SimHits", "TrackerHitsPixelEndcapLowTof", simHits_EHandle);
+    const edm::PSimHitContainer& simHits_E = *simHits_EHandle;
+
+    // SimTrack
+    edm::Handle< edm::SimTrackContainer > simTracksHandle;
+    iEvent.getByLabel("g4SimHits", simTracksHandle);
+    const edm::SimTrackContainer& simTracks = *simTracksHandle;
+
+    // SimVertex
+    edm::Handle< edm::SimVertexContainer > simVerticesHandle;
+    iEvent.getByLabel("g4SimHits", simVerticesHandle);
+    const edm::SimVertexContainer& simVertices = *simVerticesHandle;
+
+    // Validation module
+    calculataThor((ValHitsCollection*) & hitsCollection, (edm::PSimHitContainer*) & simHits_B, (edm::PSimHitContainer*) & simHits_E, (edm::SimTrackContainer*) & simTracks, (edm::SimVertexContainer*) & simVertices, (TrackerGeometry*) & tkGeom);
+}
+
+void ValidaThor::endJob() { }
+
+
+void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitContainer* simHits_B, edm::PSimHitContainer* simHits_E, edm::SimTrackContainer* simTracks, edm::SimVertexContainer* simVertices, TrackerGeometry* tkGeom) {
 
     ////////////////////////////////
     // MAP SIM HITS TO SIM TRACKS //
@@ -63,11 +205,11 @@ void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContaine
     int nHits = 0;
     for (edm::PSimHitContainer::const_iterator iHit = simHits_B->begin(); iHit != simHits_B->end(); ++iHit) {
         map_hits[iHit->trackId()].push_back(make_pair(*iHit , matched_clusters));
-        nHits++ ;
+        nHits++;
     }
     for (edm::PSimHitContainer::const_iterator iHit = simHits_E->begin(); iHit != simHits_E->end(); ++iHit) {
         map_hits[iHit->trackId()].push_back(make_pair(*iHit , matched_clusters));
-        nHits++ ;
+        nHits++;
     }
 
     if (verbose > 1) std::cout << std::endl << "-- Number of SimHits in the event : " << nHits << std::endl;
@@ -185,7 +327,7 @@ void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContaine
     bool found_hits(false);
     bool fill_dtruth(false);
 
-    if(verbose > 1) std::cout << std::endl << "-- Enter loop over links" << std::endl;
+    if (verbose > 1) std::cout << std::endl << "-- Enter loop over links" << std::endl;
 
     // Loop over the Hits
     for (ValHitsCollection::const_iterator vhCollectionIter = hitsCollection->begin(); vhCollectionIter != hitsCollection->end(); ++vhCollectionIter) {
@@ -315,7 +457,7 @@ void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContaine
             for (int iM = 0; iM < nTypes; iM++) iPos->second.NumberOfMatchedHits[iM]->Fill(nMatchedHits[iM]);
 
             // Position resolution
-            if(fill_dtruth) {
+            if (fill_dtruth) {
                 iPos->second.h_dx_Truth->Fill(dx);
                 iPos->second.h_dy_Truth->Fill(dy);
             }
@@ -354,7 +496,7 @@ void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContaine
     std::map< unsigned int , std::vector< std::vector< int > > >::const_iterator iMapEffi;
     std::vector< int > init_counter;
 
-    for(int iM = 0; iM < 2; iM++) init_counter.push_back(0);
+    for (int iM = 0; iM < 2; iM++) init_counter.push_back(0);
 
     // Loop over the entries in the map of hits & clusters
     if (verbose > 1) std::cout << "- loop over map of hits & clusters (size=" << map_hits.size() << ")" << std::endl;
@@ -421,6 +563,7 @@ void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContaine
 
     }
 
+
     // Fill histograms from the map_effi
     if (verbose > 1) std::cout << "- fill [per layer] effi histo from effi map (size=" << map_effi.size() << ")" << std::endl;
 
@@ -437,6 +580,7 @@ void ValidaThor::analyze(ValHitsCollection* hitsCollection, edm::PSimHitContaine
             if (verbose > 1) std::cout << "--- type #"   << iT << " nTotalHits=" << nTotalHits << " nMatchHits=" << nMatchHits << " efficiency=" << efficiency<< std::endl;
         }
     }
+
 
     // Check if all event's SimHits are mapped
     if (countHit != nHits && verbose > 1) std::cout << "---- Missing hits in the efficiency computation : " << countHit << " != " << nHits << std::endl;
@@ -634,3 +778,5 @@ unsigned int ValidaThor::getLayerNumber(unsigned int & detid) {
     }
     return layer;
 }
+
+DEFINE_FWK_MODULE(ValidaThor);

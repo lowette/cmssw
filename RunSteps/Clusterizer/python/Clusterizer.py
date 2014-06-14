@@ -44,7 +44,8 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input file
 process.source = cms.Source('PoolSource',
-    fileNames = cms.untracked.vstring('file:' + input_file)
+    fileNames = cms.untracked.vstring('file:' + input_file),
+    eventsToSkip = cms.untracked.VEventRange('1:286','1:1399', '1:3214', '1:4367', '1:5089', '1:8061', '1:9591', '1:9770')
 )
 
 # Options
