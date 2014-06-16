@@ -111,6 +111,9 @@ private:
 
         TH1F* digiType;
         TH2F* digiPosition;
+
+        TH1F* dxCluRec;
+        TH1F* dyCluRec;
     };
 
     std::map< unsigned int, ClusterHistos > layerHistoMap;
@@ -256,6 +259,13 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
             iPos->second.clusterSizeY->Fill(cluster->sizeY());
 
             // Fill the histograms
+            MeasurementPoint mpClu(cluster->x(), cluster->y());
+            Local3DPoint localPosClu = geomDetUnit->topology().localPosition(mpClu);
+
+            iPos->second.dxCluRec->Fill(localPosClu.x() - hit.localPos.x());
+            iPos->second.dyCluRec->Fill(localPosClu.y() - hit.localPos.y());
+
+
             iPos->second.localPosXY->Fill(hit.localPos.x(), hit.localPos.y());
             iPos->second.globalPosXY->Fill(hit.globalPos.x(), hit.globalPos.y());
 
@@ -724,6 +734,14 @@ void ValidaThor::createLayerHistograms(unsigned int ival) {
     histoName.str("");
     histoName << "Digi_position_" << tag.c_str() <<  id;
     local_histos.digiPosition = td.make<TH2F>(histoName.str().c_str(), histoName.str().c_str(), 2000, 0., 0., 2000, 0., 0.);
+
+    histoName.str("");
+    histoName << "DeltaX_Cluster_RecHit_" << tag.c_str() <<  id;
+    local_histos.dxCluRec = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
+    histoName.str("");
+    histoName << "DeltaY_Cluster_RecHit_" << tag.c_str() <<  id;
+    local_histos.dyCluRec = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
+
 
     layerHistoMap.insert(std::make_pair(ival, local_histos));
     fs->file().cd("/");

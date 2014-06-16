@@ -41,8 +41,6 @@ process.load('RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi')
 process.load('RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff')
 process.load('RecoTracker.Configuration.RecoTrackerPhase2BE_cff')
 
-
-
 # CPE Parameters
 process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
 process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
