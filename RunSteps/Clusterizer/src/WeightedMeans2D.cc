@@ -168,7 +168,7 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
 
 void WeightedMeans2D::copy_to_buffer(DigiIterator begin, DigiIterator end) {
     // Copy the value of the Digis' ADC to the 2D matrix
-    for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc() / 255);
+    for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc());
 }
 
 void WeightedMeans2D::clear_buffer(DigiIterator begin, DigiIterator end) {
