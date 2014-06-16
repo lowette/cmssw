@@ -2,6 +2,8 @@
 import os, sys
 import FWCore.ParameterSet.Config as cms
 from Configuration.AlCa.GlobalTag import GlobalTag
+from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D
+import RunSteps.Digitizer.Configuration as digiconf
 
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
@@ -37,6 +39,20 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi')
 process.load('RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff')
+process.load('RecoTracker.Configuration.RecoTrackerPhase2BE_cff')
+
+
+
+# CPE Parameters
+process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
+process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
+process.PixelCPEGenericESProducer.LoadTemplatesFromDB = cms.bool(False)
+process.PixelCPEGenericESProducer.TruncatePixelCharge = cms.bool(False)
+process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
+process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
+
+process.load('Configuration.StandardSequences.Digi_cff')
+process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
@@ -69,7 +85,7 @@ process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
 )
 
 process.FEVTDEBUGoutput.outputCommands.extend([
-  'keep *_siPixelRecHits_*_*'
+    'keep *_siPixelRecHits_*_*'
 ])
 
 # DEBUG
@@ -81,18 +97,15 @@ process.MessageLogger = cms.Service('MessageLogger',
 	)
 )
 
-# CPE Parameters
-process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
-process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
-process.PixelCPEGenericESProducer.LoadTemplatesFromDB = cms.bool(False)
-process.PixelCPEGenericESProducer.TruncatePixelCharge = cms.bool(False)
-process.PixelCPEGenericESProducer.IrradiationBiasCorrection = cms.bool(False)
-process.PixelCPEGenericESProducer.DoCosmics = cms.bool(False)
+process = cust_phase2_BE5D(process)
 
 # Analyzer
 process.analysis = cms.EDAnalyzer('ValidaThor',
+    digiconf.runStepsDigitizer_cfi,
     useRecHits = cms.bool(True)
 )
+
+process.analysis.LorentzAngle_DB = process.mix.digitizers.pixel.LorentzAngle_DB
 
 process.clusterizer_step = cms.Path(cms.Sequence(process.siPixelRecHits*process.analysis))
 

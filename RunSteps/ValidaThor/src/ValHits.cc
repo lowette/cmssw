@@ -75,7 +75,9 @@ ValHitsCollection ValHitsBuilder(const TrackerGeometry* tkGeom, edm::DetSetVecto
 
             // Set the recHit position
             newHit.localPos = rechHitIter->localPosition();
-            newHit.globalPos = geomDetUnit->surface().toGlobal(newHit.localPos);
+
+            MeasurementPoint mp(rechHitIter->localPosition().x(), rechHitIter->localPosition().y());
+            newHit.globalPos = geomDetUnit->surface().toGlobal(geomDetUnit->topology().localPosition(mp));
 
             // Set the Error
             newHit.xx = rechHitIter->localPositionError().xx();
