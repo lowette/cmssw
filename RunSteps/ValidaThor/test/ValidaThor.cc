@@ -52,11 +52,14 @@
 
 int verbose = 0;
 const int nTypes = 18;
+const int nPS=3;
+
+using namespace std;
 
 class ValidaThor : public edm::EDAnalyzer {
 
-    typedef std::vector< std::pair< PSimHit , std::vector< ValHit > > > V_HIT_CLUSTERS;
-    typedef std::map< int , V_HIT_CLUSTERS > M_TRK_HIT_CLUSTERS;
+    typedef vector< pair< PSimHit , vector< ValHit > > > V_HIT_CLUSTERS;
+    typedef map< int , V_HIT_CLUSTERS > M_TRK_HIT_CLUSTERS;
 
 public:
     explicit ValidaThor(const edm::ParameterSet&);
@@ -87,11 +90,11 @@ private:
 
         TH1F* NumberOfClustersLink;
 
-        TH1F* NumberOfMatchedHits[nTypes];
-        TH1F* NumberOfMatchedClusters[nTypes];
-        TH1F* hEfficiency[nTypes];
-        TH1F* h_dx_Truth;
-        TH1F* h_dy_Truth;
+        TH1F* NumberOfMatchedHits[nPS][nTypes];
+        TH1F* NumberOfMatchedClusters[nPS][nTypes];
+        TH1F* hEfficiency[nPS][nTypes];
+        TH1F* h_dx_Truth[nPS];
+        TH1F* h_dy_Truth[nPS];
 
         THStack* ClustersSizeSource;
         TH1F* clusterSizePixel;
@@ -116,20 +119,29 @@ private:
         TH1F* dyCluRec;
     };
 
-    std::map< unsigned int, ClusterHistos > layerHistoMap;
+    map< unsigned int, ClusterHistos > layerHistoMap;
+
+    string name_PS[nPS] = {"AllMod", "PixelMod", "StripMod"};
+
+    string name_types[nTypes] = {"Undefined","Unknown","Primary","Hadronic",
+                 "Decay","Compton","Annihilation","EIoni",
+                 "HIoni","MuIoni","Photon","MuPairProd",
+                 "Conversions","EBrem","SynchrotronRadiation",
+                 "MuBrem","MuNucl","AllTypes"};
+
 };
 
 ValidaThor::ValidaThor(const edm::ParameterSet& iConfig) {
     useRecHits_ = iConfig.getParameter< bool >("useRecHits");
 
-    std::cout << "------------------------------------------------------------" << std::endl
-              << "-- Running RunSteps ValidaThor v0.0" << std::endl
-              << "------------------------------------------------------------" << std::endl;
+    cout << "------------------------------------------------------------" << endl
+              << "-- Running RunSteps ValidaThor v0.0" << endl
+              << "------------------------------------------------------------" << endl;
 
     // Use RecHits
-    if (useRecHits_) std::cout << "INFO: Using RecHits" << std::endl;
+    if (useRecHits_) cout << "INFO: Using RecHits" << endl;
     // Use Clusters
-    else std::cout << "INFO: Using Clusters" << std::endl;
+    else cout << "INFO: Using Clusters" << endl;
 }
 
 ValidaThor::~ValidaThor() { }
@@ -200,7 +212,7 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
     ////////////////////////////////
     // MAP SIM HITS TO SIM TRACKS //
     ////////////////////////////////
-    std::vector< ValHit > matched_clusters;
+    vector< ValHit > matched_clusters;
     V_HIT_CLUSTERS matched_hits;
     M_TRK_HIT_CLUSTERS map_hits;
 
@@ -215,7 +227,7 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
         nHits++;
     }
 
-    if (verbose > 1) std::cout << std::endl << "-- Number of SimHits in the event : " << nHits << std::endl;
+    if (verbose > 1) cout << endl << "-- Number of SimHits in the event : " << nHits << endl;
 
     //////////////////////////////////
     // LOOP OVER CLUSTER COLLECTION //
@@ -242,7 +254,7 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
         if (!geomDetUnit) break;
 
         // Create histograms for the layer if they do not yet exist
-        std::map< unsigned int, ClusterHistos >::iterator iPos = layerHistoMap.find(layer);
+        map< unsigned int, ClusterHistos >::iterator iPos = layerHistoMap.find(layer);
         if (iPos == layerHistoMap.end()) {
             createLayerHistograms(layer);
             iPos = layerHistoMap.find(layer);
@@ -286,10 +298,10 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
             }
 
             // Get the pixels that form the Cluster
-            const std::vector< SiPixelCluster::Pixel >& pixelsVec = cluster->pixels();
+            const vector< SiPixelCluster::Pixel >& pixelsVec = cluster->pixels();
 
             // Loop over the pixels
-            for (std::vector< SiPixelCluster::Pixel >::const_iterator pixelIt = pixelsVec.begin(); pixelIt != pixelsVec.end(); ++pixelIt) {
+            for (vector< SiPixelCluster::Pixel >::const_iterator pixelIt = pixelsVec.begin(); pixelIt != pixelsVec.end(); ++pixelIt) {
                 SiPixelCluster::Pixel PDigi = (SiPixelCluster::Pixel) *pixelIt;
 
                 iPos->second.digiPosition->Fill(PDigi.x, PDigi.y);
@@ -314,7 +326,7 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
     // LOOP OVER CLUSTER LINKS //
     /////////////////////////////
 
-    std::vector< unsigned int > simTrackID;
+    vector< unsigned int > simTrackID;
 
     // cluster and hit informations
     unsigned int trkID(-1);
@@ -337,7 +349,7 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
     bool found_hits(false);
     bool fill_dtruth(false);
 
-    if (verbose > 1) std::cout << std::endl << "-- Enter loop over links" << std::endl;
+    if (verbose > 1) cout << endl << "-- Enter loop over links" << endl;
 
     // Loop over the Hits
     for (ValHitsCollection::const_iterator vhCollectionIter = hitsCollection->begin(); vhCollectionIter != hitsCollection->end(); ++vhCollectionIter) {
@@ -355,18 +367,20 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
 
         // Get the geometry of the tracker
         const GeomDetUnit* geomDetUnit = tkGeom->idToDetUnit(detId);
+	const PixelGeomDetUnit* theGeomDet = dynamic_cast<const PixelGeomDetUnit*>(geomDetUnit);
+	const PixelTopology & topol = theGeomDet->specificTopology();
 
         if (!geomDetUnit) break;
 
         // Create histograms for the layer if they do not yet exist
-        std::map< unsigned int, ClusterHistos >::iterator iPos = layerHistoMap.find(layer);
+        map< unsigned int, ClusterHistos >::iterator iPos = layerHistoMap.find(layer);
         if (iPos == layerHistoMap.end()) {
             createLayerHistograms(layer);
             iPos = layerHistoMap.find(layer);
         }
 
         // Loop over the links in the detector unit
-        if (verbose>1) std::cout << std::endl << std::endl << "--- DetId=" << rawid << std::endl;
+        if (verbose>1) cout << endl << endl << "--- DetId=" << rawid << endl;
 
         for (ValHitsVector::const_iterator vhVectorIter = hitsVector.begin(); vhVectorIter != hitsVector.end(); ++vhVectorIter) {
 
@@ -384,20 +398,20 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
             // Cluster informations
             edm::Ref< edmNew::DetSetVector< SiPixelCluster >, SiPixelCluster > const& cluster = hit.cluster;
 
-            if (verbose > 1) std::cout << std::endl << "---- Cluster size="  << cluster->size() << " | " << sizeLink << " SimTracks: ids=(" ;
+            if (verbose > 1) cout << endl << "---- Cluster size="  << cluster->size() << " | " << sizeLink << " SimTracks: ids=(" ;
 
             for (unsigned int i = 0; i < sizeLink; i++) {
                 if (verbose > 1) {
-                    std::cout << simTrackID[i];
-                    if (i < sizeLink - 1) std::cout << ",";
+                    cout << simTrackID[i];
+                    if (i < sizeLink - 1) cout << ",";
                 }
                 if (i == 0) trkID = simTrackID[i];
                 else if (simTrackID[i] != trkID) combinatoric = true;
             }
 
             if (verbose > 1) {
-                if (combinatoric) std::cout << ") COMBINATORIC !!! ";
-                std::cout << ")" << std::endl << "     cluster local position = (" << hit.localPos.x() << " , " << hit.localPos.y() << " , " << "n/a"    << ")" << "   layer=" << layer << std::endl;
+                if (combinatoric) cout << ") COMBINATORIC !!! ";
+                cout << ")" << endl << "     cluster local position = (" << hit.localPos.x() << " , " << hit.localPos.y() << " , " << "n/a"    << ")" << "   layer=" << layer << endl;
             }
 
             // Get matched SimHits from the map
@@ -406,16 +420,16 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
                 matched_hits = map_hits[trkID];
 
                 if (verbose > 1) {
-                    std::cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
-                    if (matched_hits.size() != 0) std::cout << " ids(" ;
+                    cout << "     number of hits matched to the SimTrack = " << matched_hits.size() ;
+                    if (matched_hits.size() != 0) cout << " ids(" ;
 
                     // printout list of SimHits matched to the SimTrack
                     for (unsigned int iH = 0; iH < matched_hits.size(); ++iH) {
-                        std::cout << matched_hits[iH].first.detUnitId();
-                        if (iH < matched_hits.size() - 1) std::cout << ",";
-                        else std::cout << ")";
+                        cout << matched_hits[iH].first.detUnitId();
+                        if (iH < matched_hits.size() - 1) cout << ",";
+                        else cout << ")";
                     }
-                    std::cout << std::endl;
+                    cout << endl;
                 }
 
                 found_hits = false;
@@ -451,26 +465,49 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
                         fill_dtruth = true; // toggle filling of the histo only when a type-2 hit is found
                     }
 
-                    if (verbose > 1) std::cout << "----- SimHit #" << iH << " type="    << simh_type
+                    if (verbose > 1) cout << "----- SimHit #" << iH << " type="    << simh_type
                         //<< " s_id="    << simh_detid
                         << " s_lay="   << simh_layer << " c_lay="   << layer << " s("   << x_hit    << " , " << y_hit    << " , " << z_hit    << ")"
                         //<< " c_g(" << gPos.x() << " , " << gPos.y() << " , " << gPos.z() << ")"
-                        << std::endl;
+                        << endl;
 
                 } // end loop over matched SimHits
 
-                if (!found_hits && verbose > 1) std::cout << "----- FOUND NO MATCHED HITS" << std::endl;
+                if (!found_hits && verbose > 1) cout << "----- FOUND NO MATCHED HITS" << endl;
 
             } // endif !combinatoric
 
             // Number of matched hits (per type)
-            for (int iM = 0; iM < nTypes; iM++) iPos->second.NumberOfMatchedHits[iM]->Fill(nMatchedHits[iM]);
+	    for(int iM=0 ; iM<nTypes ; iM++) {
+	      iPos->second.NumberOfMatchedHits[0][iM]-> Fill(nMatchedHits[iM]);
+	      if(verbose>1) cout << "------ type #" << iM << " " << name_types[nTypes] << " : " ;
+	      if(topol.ncolumns() == 32)    {
+		if(verbose>1) cout << "module pixel : nMatchedHits=" << nMatchedHits[iM] << endl;
+		iPos->second.NumberOfMatchedHits[1][iM]-> Fill(nMatchedHits[iM]);
+	      }
+	      else if (topol.ncolumns()==2) {
+		if(verbose>1) cout << "module strip : nMatchedHits=" << nMatchedHits[iM] << endl;
+		iPos->second.NumberOfMatchedHits[2][iM]-> Fill(nMatchedHits[iM]);
+	      }
+	      else {
+		if(verbose>1) cout << "module unknown : nMatchedHits=" << nMatchedHits[iM] << endl;	  
+	      }
+	    }
 
             // Position resolution
             if (fill_dtruth) {
-                iPos->second.h_dx_Truth->Fill(dx);
-                iPos->second.h_dy_Truth->Fill(dy);
-            }
+	      iPos->second.h_dx_Truth[0]->Fill(dx);
+	      iPos->second.h_dy_Truth[0]->Fill(dy);
+	      if(topol.ncolumns() == 32)    {
+		iPos->second.h_dx_Truth[1]->Fill(dx);
+		iPos->second.h_dy_Truth[1]->Fill(dy);
+	      }
+	      else if (topol.ncolumns()==2) {
+		iPos->second.h_dx_Truth[2]->Fill(dx);
+		iPos->second.h_dy_Truth[2]->Fill(dy);
+	      }
+	    }
+
         } // end loop over links within a single DetID
 
         iPos->second.NumberOfClustersLink-> Fill(nLinks);
@@ -482,7 +519,7 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
     // COMPUTE CLUSTERIZER EFFICIENCY //
     ////////////////////////////////////
 
-    if (verbose > 1) std::cout << "- Enter efficiency computation" << std::endl;
+    if (verbose > 1) cout << "- Enter efficiency computation" << endl;
 
     // Iterate over the map of hits & clusters
     M_TRK_HIT_CLUSTERS::const_iterator iMapHits;
@@ -501,19 +538,19 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
     unsigned int theHit_type(0);
 
     // Prepare the map of counters for efficiency
-    std::map< unsigned int, ClusterHistos >::iterator iPos;
-    std::map< unsigned int , std::vector< std::vector< int > > > map_effi;
-    std::map< unsigned int , std::vector< std::vector< int > > >::const_iterator iMapEffi;
-    std::vector< int > init_counter;
+    map< unsigned int, ClusterHistos >::iterator iPos;
+    map< unsigned int , vector< vector< int > > > map_effi;
+    map< unsigned int , vector< vector< int > > >::const_iterator iMapEffi;
+    vector< int > init_counter;
 
     for (int iM = 0; iM < 2; iM++) init_counter.push_back(0);
 
     // Loop over the entries in the map of hits & clusters
-    if (verbose > 1) std::cout << "- loop over map of hits & clusters (size=" << map_hits.size() << ")" << std::endl;
+    if (verbose > 1) cout << "- loop over map of hits & clusters (size=" << map_hits.size() << ")" << endl;
 
     for (iMapHits = map_hits.begin(); iMapHits != map_hits.end(); iMapHits++) {
 
-        if (verbose > 1) std::cout << "-- SimTrack ID=" << iMapHits->first << std::endl;
+        if (verbose > 1) cout << "-- SimTrack ID=" << iMapHits->first << endl;
         nTrackHits = (iMapHits->second).size();
         countHit += nTrackHits;
 
@@ -521,46 +558,61 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
         for (int iH = 0; iH < nTrackHits; iH++) {
 
             // Current SimHit
-            if (verbose > 1) std::cout << "--- SimHit #" << iH ;
+            if (verbose > 1) cout << "--- SimHit #" << iH ;
             PSimHit theHit(((iMapHits->second)[iH]).first);
-            theHit_id = theHit.detUnitId();
+            theHit_id    = theHit.detUnitId();
             theHit_layer = getLayerNumber(theHit_id);
-            theHit_type = theHit.processType();
-            if (verbose > 1) std::cout << " DetId=" << theHit_id << " Layer=" << theHit_layer << " Type="  << theHit_type << std::endl;
+            theHit_type  = theHit.processType();
+
+	    const GeomDetUnit* geomDetUnit = tkGeom->idToDetUnit(theHit_id);
+	    const PixelGeomDetUnit* theGeomDet = dynamic_cast<const PixelGeomDetUnit*>(geomDetUnit);
+	    const PixelTopology & topol = theGeomDet->specificTopology();
+
+	    if(verbose>1) cout << " DetId=" << theHit_id
+			       << " Layer=" << theHit_layer 
+			       << " Type="  << theHit_type
+			       << " Topol nCol=" << topol.ncolumns()
+			       << endl;
 
             // Check that the layer number makes sense
             if (theHit_layer == 0) {
-                if (verbose > 1) std::cout << "---- !! layer=0 !!" << std::endl;
+                if (verbose > 1) cout << "---- !! layer=0 !!" << endl;
                 continue;
             }
 
             // Clusters matched to the SimHit
-            if (verbose > 2) std::cout << "--- Getting corresponding clusters" << std::endl;
+            if (verbose > 2) cout << "--- Getting corresponding clusters" << endl;
             matched_clusters = ((iMapHits->second)[iH]).second;
             nMatchedClusters = matched_clusters.size();
 
             // Find layer in map of histograms
-            if (verbose > 2) std::cout << "--- Find layer=" << theHit_layer << " in map of histograms" << std::endl;
+            if (verbose > 2) cout << "--- Find layer=" << theHit_layer << " in map of histograms" << endl;
 
             iPos = layerHistoMap.find(theHit_layer);
             if (iPos == layerHistoMap.end()) {
-                if (verbose > 2) std::cout << "---- add layer in the map" << std::endl;
+                if (verbose > 2) cout << "---- add layer in the map" << endl;
                 createLayerHistograms(theHit_layer);
                 iPos = layerHistoMap.find(theHit_layer);
             }
 
             // Fill Histograms
-            (iPos->second.NumberOfMatchedClusters[17])->Fill(nMatchedClusters);
+	    (iPos->second.NumberOfMatchedClusters[0][17])->Fill( nMatchedClusters );
+	    if (topol.ncolumns() == 32)     (iPos->second.NumberOfMatchedClusters[1][17])->Fill( nMatchedClusters ); // ND
+	    else if (topol.ncolumns() == 2) (iPos->second.NumberOfMatchedClusters[2][17])->Fill( nMatchedClusters ); // ND 
 
-            if (theHit_type < 17) (iPos->second.NumberOfMatchedClusters[theHit_type])->Fill(nMatchedClusters);
+	    if(theHit_type<17) {
+	      (iPos->second.NumberOfMatchedClusters[0][theHit_type])->Fill( nMatchedClusters );
+	      if (topol.ncolumns() == 32)     (iPos->second.NumberOfMatchedClusters[1][theHit_type])->Fill( nMatchedClusters );
+	      else if (topol.ncolumns() == 2) (iPos->second.NumberOfMatchedClusters[2][theHit_type])->Fill( nMatchedClusters );
+	    }
 
-            if (nMatchedClusters == 0 && verbose > 1) std::cout << "---- No Cluster Matched" << std::endl;
-            else if (verbose > 1) std::cout << "---- Yes Cluster Matched = " << nMatchedClusters << std::endl;
+            if (nMatchedClusters == 0 && verbose > 1) cout << "---- No Cluster Matched" << endl;
+            else if (verbose > 1) cout << "---- Yes Cluster Matched = " << nMatchedClusters << endl;
 
             if (map_effi.find(theHit_layer) == map_effi.end()) {
                 for (int iT = 0; iT < nTypes; iT++) {
                     map_effi[theHit_layer].push_back(init_counter);
-                    if (verbose > 2) std::cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << std::endl;
+                    if (verbose > 2) cout << "----- type #" << iT << " layer=" << theHit_layer << " map size=" << map_effi.size() << endl;
                 }
             }
 
@@ -575,37 +627,47 @@ void ValidaThor::calculataThor(ValHitsCollection* hitsCollection, edm::PSimHitCo
 
 
     // Fill histograms from the map_effi
-    if (verbose > 1) std::cout << "- fill [per layer] effi histo from effi map (size=" << map_effi.size() << ")" << std::endl;
+    if (verbose > 1) cout << "- fill [per layer] effi histo from effi map (size=" << map_effi.size() << ")" << endl;
 
     for (iMapEffi = map_effi.begin(); iMapEffi != map_effi.end(); iMapEffi++) {
 
         iPos = layerHistoMap.find(iMapEffi->first);
-        if (verbose > 1) std::cout << "-- layer=" << iMapEffi->first << std::endl;
+        if (verbose > 1) cout << "-- layer=" << iMapEffi->first << endl;
 
         for (int iT = 0; iT < nTypes; iT++) {
             nTotalHits = iMapEffi->second[iT][0];
             nMatchHits = iMapEffi->second[iT][1];
             efficiency = nTotalHits != 0 ? float(nMatchHits) / float(nTotalHits) : -1;
-            if (efficiency >= 0) (iPos->second.hEfficiency[iT])->Fill(efficiency);
-            if (verbose > 1) std::cout << "--- type #"   << iT << " nTotalHits=" << nTotalHits << " nMatchHits=" << nMatchHits << " efficiency=" << efficiency<< std::endl;
+
+	    if(efficiency>=0) {
+	      (iPos->second.hEfficiency[0][iT])->Fill( efficiency );
+	      //if(topol.ncolumns() == 32)    (iPos->second.hEfficiency[1][iT])->Fill( efficiency ); // ND
+	      //else if (topol.ncolumns()==2) (iPos->second.hEfficiency[2][iT])->Fill( efficiency ); // ND
+	    }
+
+	    if(verbose>1) cout << "--- type #"   << iT 
+			       << " nTotalHits=" << nTotalHits 
+			       << " nMatchHits=" << nMatchHits 
+			       << " efficiency=" << efficiency
+			       << endl;
         }
     }
 
 
     // Check if all event's SimHits are mapped
-    if (countHit != nHits && verbose > 1) std::cout << "---- Missing hits in the efficiency computation : " << countHit << " != " << nHits << std::endl;
+    if (countHit != nHits && verbose > 1) cout << "---- Missing hits in the efficiency computation : " << countHit << " != " << nHits << endl;
 
-    if (verbose > 999) std::cout << nTotalHits << nMatchHits << efficiency << std::endl;
+    if (verbose > 999) cout << nTotalHits << nMatchHits << efficiency << endl;
 }
 
 // Create the histograms
 void ValidaThor::createLayerHistograms(unsigned int ival) {
-    std::ostringstream fname1, fname2;
+    ostringstream fname1, fname2;
 
     edm::Service<TFileService> fs;
     fs->file().cd("/");
 
-    std::string tag;
+    string tag;
     unsigned int id;
     if (ival < 100) {
         id = ival;
@@ -616,7 +678,7 @@ void ValidaThor::createLayerHistograms(unsigned int ival) {
     else {
         int side = ival / 100;
         id = ival - side*100;
-        std::cout << " Creating histograms for Disc " << id << " with " << ival << std::endl;
+        cout << " Creating histograms for Disc " << id << " with " << ival << endl;
         fname1 << "EndCap_Side_" << side;
         fname2 << "Disc_" << id;
         tag = "_disc_";
@@ -626,7 +688,7 @@ void ValidaThor::createLayerHistograms(unsigned int ival) {
 
     ClusterHistos local_histos;
 
-    std::ostringstream histoName;
+    ostringstream histoName;
 
     histoName.str("");
     histoName << "Number_of_Clusters_Pixel" << tag.c_str() <<  id;
@@ -650,34 +712,31 @@ void ValidaThor::createLayerHistograms(unsigned int ival) {
     local_histos.NumberOfClustersLink = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
 
     // Truth Matching
-    std::string name_types[nTypes] = {"Undefined","Unknown","Primary","Hadronic",
-                 "Decay","Compton","Annihilation","EIoni",
-                 "HIoni","MuIoni","Photon","MuPairProd",
-                 "Conversions","EBrem","SynchrotronRadiation",
-                 "MuBrem","MuNucl","AllTypes"};
+    for(int iPS=0 ; iPS<nPS ; iPS++) {
+    
+      for(int iM=0 ; iM<nTypes ; iM++) {
+	histoName.str("");
+	histoName << "NumberOfMatchedHits_" << name_PS[iPS] << "_" << name_types[iM] << tag.c_str() <<  id;
+	local_histos.NumberOfMatchedHits[iPS][iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
 
-    for(int iM=0 ; iM<nTypes ; iM++) {
-      histoName.str("");
-      histoName << "NumberOfMatchedHits_" << name_types[iM] << tag.c_str() <<  id;
-      local_histos.NumberOfMatchedHits[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+	histoName.str("");
+	histoName << "NumberOfMatchedClusters_" << name_PS[iPS] << "_" << name_types[iM] << tag.c_str() <<  id;
+	local_histos.NumberOfMatchedClusters[iPS][iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+
+	histoName.str("");
+	histoName << "Efficiency_" << name_PS[iPS] << "_" << name_types[iM] << tag.c_str() <<  id;
+	local_histos.hEfficiency[iPS][iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 110, 0., 1.1);
+      }
 
       histoName.str("");
-      histoName << "NumberOfMatchedClusters_" << name_types[iM] << tag.c_str() <<  id;
-      local_histos.NumberOfMatchedClusters[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 21, 0., 20.);
+      histoName << "DeltaX_simhit_cluster" << "_" << name_PS[iPS] << tag.c_str()  <<  id;
+      local_histos.h_dx_Truth[iPS] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
 
       histoName.str("");
-      histoName << "Efficiency_" << name_types[iM] << tag.c_str() <<  id;
-      local_histos.hEfficiency[iM] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 110, 0., 1.1);
+      histoName << "DeltaY_simhit_cluster" << "_" << name_PS[iPS] << tag.c_str()  <<  id;
+      local_histos.h_dy_Truth[iPS] = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
+
     }
-
-    histoName.str("");
-    histoName << "DeltaX_simhit_cluster" << tag.c_str() <<  id;
-    local_histos.h_dx_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
-
-    histoName.str("");
-    histoName << "DeltaY_simhit_cluster" << tag.c_str() <<  id;
-    local_histos.h_dy_Truth = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
-
 
     // Cluster topology
 
@@ -743,7 +802,7 @@ void ValidaThor::createLayerHistograms(unsigned int ival) {
     local_histos.dyCluRec = td.make<TH1F>(histoName.str().c_str(), histoName.str().c_str(), 1000, 0., 0.);
 
 
-    layerHistoMap.insert(std::make_pair(ival, local_histos));
+    layerHistoMap.insert(make_pair(ival, local_histos));
     fs->file().cd("/");
 }
 
@@ -761,18 +820,18 @@ void ValidaThor::createHistograms(unsigned int nLayer) {
 unsigned int ValidaThor::getLayerNumber(const TrackerGeometry* tkgeom, unsigned int& detid) {
     unsigned int layer = 999;
     DetId theDetId(detid);
-    if (theDetId.subdetId() != 1) std::cout << ">>> Method1 : Det id " << theDetId.det() << " Subdet Id " << theDetId.subdetId() << std::endl;
+    if (theDetId.subdetId() != 1) cout << ">>> Method1 : Det id " << theDetId.det() << " Subdet Id " << theDetId.subdetId() << endl;
     const PixelGeomDetUnit * theGeomDet = dynamic_cast<const PixelGeomDetUnit*> (tkgeom->idToDet(theDetId));
 
     const GeomDetUnit* it = tkgeom->idToDetUnit(DetId(theDetId));
-    if (!it) std::cout << ">>> rawdetid " << detid << " GeomDetUnit " << it << " PixelGeomDetUnit " << theGeomDet << " DetId " << theDetId.det() << " Subdet Id " << theDetId.subdetId() << std::endl;
+    if (!it) cout << ">>> rawdetid " << detid << " GeomDetUnit " << it << " PixelGeomDetUnit " << theGeomDet << " DetId " << theDetId.det() << " Subdet Id " << theDetId.subdetId() << endl;
     if (it && it->type().isTracker()) {
         if (it->type().isBarrel()) {
             PXBDetId pb_detId = PXBDetId(detid);
             layer = pb_detId.layer();
         }
         else if (it->type().isEndcap()) {
-            std::cout << " IAM HERE >>>>>>>>>>>>>>>>>>>>>>>>>>> " << std::endl;
+            cout << " IAM HERE >>>>>>>>>>>>>>>>>>>>>>>>>>> " << endl;
             PXFDetId pf_detId = PXFDetId(detid);
             layer = 100*pf_detId.side() + pf_detId.disk();
         }
@@ -792,7 +851,7 @@ unsigned int ValidaThor::getLayerNumber(unsigned int & detid) {
             PXFDetId pf_detId = PXFDetId(detid);
             layer = 100 * pf_detId.side() + pf_detId.disk();
         }
-        else std::cout << ">>> Invalid subdetId() = " << theDetId.subdetId() << std::endl;
+        else cout << ">>> Invalid subdetId() = " << theDetId.subdetId() << endl;
     }
     return layer;
 }
