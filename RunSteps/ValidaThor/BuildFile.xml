@@ -1,0 +1,36 @@
+<use name="DataFormats/Common"/>
+<use name="FWCore/ParameterSet"/>
+<use name="DataFormats/SiPixelDetId"/>
+<use name="DataFormats/SiPixelCluster"/>
+<use name="SimGeneral/MixingModule"/>
+<use name="MagneticField/Records"/>
+<use name="MagneticField/Engine"/>
+<use name="FWCore/Framework"/>
+<use name="DataFormats/SiPixelDigi"/>
+<use name="SimDataFormats/TrackingHit"/>
+<use name="SimDataFormats/TrackerDigiSimLink"/>
+<use name="CondFormats/SiPixelObjects"/>
+<use name="Geometry/TrackerGeometryBuilder"/>
+<use name="SimGeneral/NoiseGenerators"/>
+<use name="SimTracker/Common"/>
+<use name="CalibTracker/SiPixelESProducers"/>
+<use name="gsl"/>
+<use name="clhep"/>
+<use name="root"/>
+<!-- <use name="rootflx"/> -->
+<use name="FWCore/PluginManager"/>
+<use name="clhep"/>
+<use name="boost"/>
+<use name="root"/>
+<use name="DataFormats/L1GlobalTrigger"/>
+<use name="CondFormats/L1TObjects"/>
+<use name="L1Trigger/GlobalTriggerAnalyzer"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="Geometry/Records"/>
+<use name="DataFormats/DetId"/>
+<use name="RecoLocalTracker/SiPixelClusterizer"/>
+<use name="DataFormats/TrackerRecHit2D"/> 
+<export>
+    <lib name="1"/>
+</export>
+
