@@ -124,11 +124,11 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                     unsigned int from_r = (acluster.x[curInd] - 1 < 0 ? 0 : acluster.x[curInd] - 1);
                     unsigned int to_r = (acluster.x[curInd] + 1 >= nrows_ ? nrows_ - 1 : acluster.x[curInd] + 1);
 
+                    unsigned int from_c = (acluster.y[curInd] - 1 < 0 ? 0 : acluster.y[curInd] - 1);
+                    unsigned int to_c = (acluster.y[curInd] + 1 >= ncols_ ? ncols_ - 1 : acluster.y[curInd] + 1);
+
                     // Look left and right
                     for (unsigned int r = from_r; r <= to_r; ++r) {
-
-                        unsigned int from_c = (acluster.y[curInd] - 1 < 0 ? 0 : acluster.y[curInd] - 1);
-                        unsigned int to_c = (acluster.y[curInd] + 1 >= ncols_ ? ncols_ - 1 : acluster.y[curInd] + 1);
 
                         // Look bottom and top
                         for (unsigned int c = from_c; c <= to_c; ++c) {
@@ -144,7 +144,7 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                                 maskedArray.set(newpix, 0);
 
                                 // Add the simtrack of the Digi to the link
-                                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+                                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, c)));
                             }
                         }
                     }

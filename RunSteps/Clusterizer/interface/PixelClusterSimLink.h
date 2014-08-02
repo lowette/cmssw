@@ -6,11 +6,18 @@
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/Common/interface/Ref.h"
 
+#include <vector>
+#include <algorithm>
+
 class PixelClusterSimLink {
 
 public:
     PixelClusterSimLink() { };
-    void setSimTracks(std::vector< unsigned int > simTrack) { simTracks_ = simTrack; };
+    void setSimTracks(std::vector< unsigned int > simTrack) {
+        simTracks_ = simTrack; 
+        std::sort(simTracks_.begin(), simTracks_.end() );
+        simTracks_.erase(std::unique(simTracks_.begin(), simTracks_.end()), simTracks_.end());
+    };
     void setCluster(edm::Ref<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster>  cluster) { cluster_ = cluster; };
 
     std::vector< unsigned int > getSimTracks() { return simTracks_; };

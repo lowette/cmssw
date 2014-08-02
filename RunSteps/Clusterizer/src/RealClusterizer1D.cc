@@ -1,4 +1,4 @@
-#include "RunSteps/Clusterizer/interface/AdjacentHits.h"
+#include "RunSteps/Clusterizer/interface/RealClusterizer1D.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterizer.h"
 #include "RunSteps/Clusterizer/interface/SiPixelArrayBuffer.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
@@ -21,7 +21,7 @@
 
 using namespace std;
 
-AdjacentHits::AdjacentHits(edm::ParameterSet const& conf) {
+RealClusterizer1D::RealClusterizer1D(edm::ParameterSet const& conf) {
     conf_ = conf;
     nrows_ = 0;
     ncols_ = 0;
@@ -32,21 +32,23 @@ AdjacentHits::AdjacentHits(edm::ParameterSet const& conf) {
 }
 
 // Change the size of the 2D matrix for this detector unit
-void AdjacentHits::setup(const PixelGeomDetUnit* pixDet) {
+void RealClusterizer1D::setup(const PixelGeomDetUnit* pixDet) {
     const PixelTopology & topol = pixDet->specificTopology();
     nrows_ = topol.nrows();
     ncols_ = topol.ncolumns();
-    if (nrows_ > hitArray.rows() || ncols_ > hitArray.columns()) hitArray.setSize(nrows_, ncols_);
+    if (nrows_ > hitArray.rows() || ncols_ > hitArray.columns()) {
+        hitArray.setSize(nrows_, ncols_);
+    }
 }
 
 // Go over the Digis and create clusters
-void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters) {
+void RealClusterizer1D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters) {
 
-    // Get the det Id
-    detid_ = pixelDigis.detId();
+    // Get the det ID
+	detid_ = pixelDigis.detId();
 
-    // Fill the 2D matrix with the ADC values
-    copy_to_buffer(pixelDigis.begin(), pixelDigis.end());
+	// Fill the 2D matrix with the ADC values
+  	copy_to_buffer(pixelDigis.begin(), pixelDigis.end());
 
     // Loop over the Digis
     for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
@@ -82,25 +84,24 @@ void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, 
                     auto curInd = acluster.top();
                     acluster.pop();
 
+                    unsigned int from_r = (acluster.x[curInd] - 1 < 0 ? 0 : acluster.x[curInd] - 1);
+                    unsigned int to_r = (acluster.x[curInd] + 1 >= nrows_ ? nrows_ - 1 : acluster.x[curInd] + 1);
+
                     // Look left and right
-                    for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
+                    for (auto r = from_r; r <= to_r; ++r) {
 
-                      // Look bottom and top
-                        for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
+                        // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
+                        if (hitArray(r, col)) {
 
-                            // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
-                            if (hitArray(r, c)) {
+                            // Add it to the cluster
+                            SiPixelCluster::PixelPos newpix(r, col);
+                            if (!acluster.add(newpix, 255)) break;
 
-                                // Add it to the cluster
-                                SiPixelCluster::PixelPos newpix(r, c);
-                                if (!acluster.add(newpix, 255)) break;
+                            // And change its value
+                            hitArray.set(newpix, 0);
 
-                                // And change its value
-                                hitArray.set(newpix, 0);
-
-                                // Add the simtrack of the Digi to the link
-                                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, c)));
-                            }
+                            // Add the simtrack of the Digi to the link
+                            simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, col)));
                         }
                     }
                 }
@@ -118,16 +119,15 @@ void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, 
     }
 
     // Reset the matrix
-    clear_buffer(pixelDigis.begin(), pixelDigis.end());
+	clear_buffer(pixelDigis.begin(), pixelDigis.end());
 }
 
-void AdjacentHits::copy_to_buffer(DigiIterator begin, DigiIterator end) {
+void RealClusterizer1D::copy_to_buffer(DigiIterator begin, DigiIterator end) {
     // Copy the value of the Digis' ADC to the 2D matrix
     for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc());
 }
 
-void AdjacentHits::clear_buffer(DigiIterator begin, DigiIterator end) {
+void RealClusterizer1D::clear_buffer(DigiIterator begin, DigiIterator end) {
     // Resets the matrix
     for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), 0);
 }
-

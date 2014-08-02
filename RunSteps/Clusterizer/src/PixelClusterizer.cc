@@ -10,15 +10,22 @@
 #include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
 #include "DataFormats/SiPixelDigi/interface/PixelDigiCollection.h"
 
-void PixelClusterizer::makeLinks(edm::OrphanHandle< edmNew::DetSetVector<SiPixelCluster> > & clusters, std::vector<edm::DetSet<PixelClusterSimLink> > & linksByDet) {
+#include <iostream>
 
+void PixelClusterizer::makeLinks(edm::OrphanHandle< edmNew::DetSetVector<SiPixelCluster> > & clusters, std::vector<edm::DetSet<PixelClusterSimLink> > & linksByDet) {
+    
     // Go over all the detectors
     for (edmNew::DetSetVector< SiPixelCluster >::const_iterator DSViter = clusters->begin(); DSViter != clusters->end(); ++DSViter) {
+	
+	unsigned int nclu = 0;
+        
         DetId detIdObject(DSViter->detId());
 
         edm::DetSet<PixelClusterSimLink> links(DSViter->detId());
 
         for (edmNew::DetSet<SiPixelCluster>::const_iterator clustIt = DSViter->begin(); clustIt != DSViter->end(); ++clustIt) {
+	    
+	    if (nclu++ > 10) continue;
 
             std::map< SiPixelCluster, std::vector< unsigned int > >::iterator it = tmpSimLinks.find(*clustIt);
 

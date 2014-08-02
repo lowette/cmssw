@@ -51,7 +51,8 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
     return 2;
   }
 
-  TString nameF_o = pathOut+"/"+suffix+"/SummaryPlots/"+suffix+"Summary.root";
+  //TString nameF_o = pathOut+"/"+suffix+"/SummaryPlots/"+suffix+"Summary.root";
+  TString nameF_o = "sumarry.root";
   TFile* fout = new TFile(nameF_o, "RECREATE");
   if(fout->IsZombie()) {
     cout << "ERROR !!! OUTPUT FILE " << nameF_o << " IS ZOMBIE !!!" << endl;
