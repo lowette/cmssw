@@ -21,11 +21,11 @@
 
 using namespace std;
 
-WeightedMeans2D::WeightedMeans2D(edm::ParameterSet const& conf) :
-    conf_(conf),
-    nrows_(0),
-    ncols_(0),
-    detid_(0) {
+WeightedMeans2D::WeightedMeans2D(edm::ParameterSet const& conf) {
+    conf_ = conf;
+    nrows_ = 0;
+    ncols_ = 0;
+    detid_ = 0;
 
     // Create a 2D matrix for this detector
     hitArray.setSize(nrows_, ncols_);
@@ -47,7 +47,7 @@ void WeightedMeans2D::setup(const PixelGeomDetUnit* pixDet) {
 }
 
 // Go over the Digis and create clusters
-void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, std::vector<SiPixelCluster> & clusters, std::vector<PixelClusterSimLink> & links) {
+void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters) {
 
     // Get the det ID
 	detid_ = pixelDigis.detId();
@@ -93,10 +93,10 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                 // Try to form a cluster
 
                 // Create an entry for the pixelClusterLink
-                PixelClusterSimLink link;
+                std::vector< unsigned int > simTracks;
 
                 // Add the simtrack of the Digi to the link
-                link.addSimTrack(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
 
                 // Get the weight of the pixel we are trying to form a cluster with
                 int weight = maskedArray(row, col);
@@ -117,14 +117,21 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                 while (!acluster.empty()) {
 
                     // Get the current pixel we are looking at
-                    auto curInd = acluster.top();
+                    unsigned int curInd = acluster.top();
                     acluster.pop();
 
+
+                    unsigned int from_r = (acluster.x[curInd] - 1 < 0 ? 0 : acluster.x[curInd] - 1);
+                    unsigned int to_r = (acluster.x[curInd] + 1 >= nrows_ ? nrows_ - 1 : acluster.x[curInd] + 1);
+
                     // Look left and right
-                    for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
+                    for (unsigned int r = from_r; r <= to_r; ++r) {
+
+                        unsigned int from_c = (acluster.y[curInd] - 1 < 0 ? 0 : acluster.y[curInd] - 1);
+                        unsigned int to_c = (acluster.y[curInd] + 1 >= ncols_ ? ncols_ - 1 : acluster.y[curInd] + 1);
 
                         // Look bottom and top
-                        for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
+                        for (unsigned int c = from_c; c <= to_c; ++c) {
 
                             // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
                             if (maskedArray(r, c) == weight) {
@@ -137,7 +144,7 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                                 maskedArray.set(newpix, 0);
 
                                 // Add the simtrack of the Digi to the link
-                                link.addSimTrack(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+                                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
                             }
                         }
                     }
@@ -146,12 +153,11 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
                 // Form a "real" CMSSW cluster
                 SiPixelCluster cluster(acluster.isize, acluster.adc, acluster.x, acluster.y, acluster.xmin, acluster.ymin);
 
-                // Set the cluster of the link
-                link.setCluster(cluster);
+                // Add link
+                tmpSimLinks.insert(std::pair< SiPixelCluster, std::vector< unsigned int > >(cluster, simTracks));
 
                 // Add the cluster and the link to the list
                 clusters.push_back(cluster);
-                links.push_back(link);
             }
         }
     }
@@ -162,7 +168,7 @@ void WeightedMeans2D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigi
 
 void WeightedMeans2D::copy_to_buffer(DigiIterator begin, DigiIterator end) {
     // Copy the value of the Digis' ADC to the 2D matrix
-    for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc() / 255);
+    for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc());
 }
 
 void WeightedMeans2D::clear_buffer(DigiIterator begin, DigiIterator end) {
@@ -172,21 +178,4 @@ void WeightedMeans2D::clear_buffer(DigiIterator begin, DigiIterator end) {
         weightArray.set(di->row(), di->column(), 0);
         maskedArray.set(di->row(), di->column(), 0);
     }
-}
-
-unsigned int WeightedMeans2D::getSimTrackId(const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, int channel) {
-    edm::DetSetVector<PixelDigiSimLink>::const_iterator isearch = pixelSimLinks->find(detid_);
-
-    unsigned int simTrkId(0);
-    if (isearch == pixelSimLinks->end()) return simTrkId;
-
-    edm::DetSet<PixelDigiSimLink> link_detset = (*pixelSimLinks)[detid_];
-    int iSimLink = 0;
-    for (edm::DetSet<PixelDigiSimLink>::const_iterator it = link_detset.data.begin(); it != link_detset.data.end(); it++,iSimLink++) {
-        if (channel == (int) it->channel()) {
-            simTrkId = it->SimTrackId();
-            break;
-        }
-    }
-    return simTrkId;
 }

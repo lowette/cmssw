@@ -18,7 +18,7 @@ for i in range(2, len(sys.argv)):
 
 # Greetings
 print '------------------------------------------------------------'
-print '-- Running the ClusterValidation step with the following arguments:'
+print '-- Running the RunStepsClusterValidaThor step with the following arguments:'
 print '-- Input file: ' + input_file
 print '-- Output file: ' + output_file
 print '------------------------------------------------------------'
@@ -54,6 +54,18 @@ process.TFileService = cms.Service('TFileService',
     fileName = cms.string('file:' + output_file)
 )
 
+# Output
+process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
+    splitLevel = cms.untracked.int32(0),
+    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
+    outputCommands = process.FEVTDEBUGEventContent.outputCommands,
+    fileName = cms.untracked.string('file:' + output_file),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(''),
+        dataTier = cms.untracked.string('GEM-SIM-DIGI-CLU')
+    )
+)
+
 # DEBUG
 process.MessageLogger = cms.Service('MessageLogger',
 	debugModules = cms.untracked.vstring('siPixelClusters'),
@@ -64,9 +76,13 @@ process.MessageLogger = cms.Service('MessageLogger',
 )
 
 # Analyzer
-process.analysis = cms.EDAnalyzer('RunStepsClusterValidation',
-    src = cms.InputTag('siPixelClusters')
+process.analysis = cms.EDAnalyzer('ValidaThor',
+    useRecHits = cms.bool(False)
 )
 
+process.analysis_step = cms.Path(cms.Sequence(process.analysis))
+
+process.FEVTDEBUGoutput_step = cms.EndPath(process.FEVTDEBUGoutput)
+
 # Processes to run
-process.p = cms.Path(process.analysis)
+process.schedule = cms.Schedule(process.analysis_step)

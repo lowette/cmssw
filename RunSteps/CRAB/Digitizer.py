@@ -1,28 +1,7 @@
 # Imports
-import os, sys
 import FWCore.ParameterSet.Config as cms
 from Configuration.AlCa.GlobalTag import GlobalTag
 from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D
-
-# Default parameters
-input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'
-output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/OLD_DIGI.root'
-
-# Look for updates in the parameters using the program's input
-for i in range(2, len(sys.argv)):
-    if (sys.argv[i] == '_output' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
-        output_file = sys.argv[i+1]
-        i += 1
-    elif (sys.argv[i] == '_input' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
-        input_file = sys.argv[i+1]
-        i += 1
-
-# Greetings
-print '------------------------------------------------------------'
-print '-- Running the Old Digitizer step with the following arguments:'
-print '-- Input file: ' + input_file
-print '-- Output file: ' + output_file
-print '------------------------------------------------------------'
 
 # Create a new CMS process
 process = cms.Process('DIGI')
@@ -31,7 +10,7 @@ process = cms.Process('DIGI')
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('RunSteps.Digitizer.OldConfiguration')
+process.load('CRAB.Configuration')
 process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('Configuration.StandardSequences.Digi_cff')
@@ -49,7 +28,8 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input file
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:' + input_file)
+   fileNames = cms.untracked.vstring('/store/relval/CMSSW_6_2_0_SLHC7/RelValFourMuPt1_200_UPG2023_BE5D/GEN-SIM/DES19_62_V8_UPG2023-v2/00000/EC4C06C3-2890-E311-BD11-003048FEB966.root')
+   #fileNames = cms.untracked.vstring('/RelValFourMuPt1_200_UPG2023_BE5D/CMSSW_6_2_0_SLHC7-DES19_62_V8_UPG2023-v2/GEN-SIM')/RelValFourMuPt1_200_UPG2023_BE5D/CMSSW_6_2_0_SLHC7-DES19_62_V8_UPG2023-v2/GEN-SIM')
 )
 
 # Options
@@ -70,9 +50,9 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     outputCommands = process.FEVTDEBUGEventContent.outputCommands,
-    fileName = cms.untracked.string('file:' + output_file),
-    dataset = cms.untracked.PSet(
-        filterName = cms.untracked.string(''),
+    fileName = cms.untracked.string('DigiPU.root'),
+    dataset = cms.untracked.PSet(        
+	filterName = cms.untracked.string(''),
         dataTier = cms.untracked.string('GEN-SIM-DIGI-RAW')
     )
 )

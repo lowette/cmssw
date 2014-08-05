@@ -107,38 +107,38 @@ theDigitizers = cms.PSet(
 )
 
 # Mixing module NO PU
-mix = cms.EDProducer("MixingModule",
-    digitizers = cms.PSet(theDigitizers),
-    LabelPlayback = cms.string(''),
-    maxBunch = cms.int32(3),
-    minBunch = cms.int32(-5),
-    bunchspace = cms.int32(25),
-    mixProdStep1 = cms.bool(False),
-    mixProdStep2 = cms.bool(False),
-    playback = cms.untracked.bool(False),
-    useCurrentProcessOnly = cms.bool(False),
-    mixObjects = cms.PSet(theMixObjects)
-)
+#mix = cms.EDProducer("MixingModule",
+#    digitizers = cms.PSet(theDigitizers),
+#    LabelPlayback = cms.string(''),
+#    maxBunch = cms.int32(3),
+#    minBunch = cms.int32(-5),    
+#    bunchspace = cms.int32(25),
+#    mixProdStep1 = cms.bool(False),
+#    mixProdStep2 = cms.bool(False),
+#    playback = cms.untracked.bool(False),
+#    useCurrentProcessOnly = cms.bool(False),
+#    mixObjects = cms.PSet(theMixObjects)
+#)
 
 # Mixing PU
-# mix = cms.EDProducer("MixingModule",
-#     digitizers = cms.PSet(theDigitizers),
-#     LabelPlayback = cms.string(''),
-#     maxBunch = cms.int32(3),
-#     minBunch = cms.int32(-5), ## in terms of 25 ns
-#     bunchspace = cms.int32(25), ## ns
-#     mixProdStep1 = cms.bool(False),
-#     mixProdStep2 = cms.bool(False),
-#     playback = cms.untracked.bool(False),
-#     useCurrentProcessOnly = cms.bool(False),
-#     input = cms.SecSource("PoolSource",
-#     nbPileupEvents = cms.PSet(
-#         sigmaInel = cms.double(80.0),
-#         Lumi = cms.double(10.0)
-#     ),
-#     type = cms.string('poisson'),
-#     sequential = cms.untracked.bool(False),
-#     fileNames = cms.untracked.vstring('/store/relval/CMSSW_6_2_0_SLHC7/RelValMinBias_TuneZ2star_UPG2023_14_BE5D/GEN-SIM/DES19_62_V8_UPG2023-v2/00000/16BAEE16-4190-E311-AC81-0025B32445DC.root')
-#     ),
-#     mixObjects = cms.PSet(theMixObjects)
-# )
+mix = cms.EDProducer("MixingModule",
+     digitizers = cms.PSet(theDigitizers),
+     LabelPlayback = cms.string(''),
+     maxBunch = cms.int32(3),
+     minBunch = cms.int32(-5), ## in terms of 25 ns
+     bunchspace = cms.int32(25), ## ns
+     mixProdStep1 = cms.bool(False),
+     mixProdStep2 = cms.bool(False),
+     playback = cms.untracked.bool(False),
+     useCurrentProcessOnly = cms.bool(False),
+     input = cms.SecSource("PoolSource",
+     nbPileupEvents = cms.PSet(
+         sigmaInel = cms.double(80.0),         
+         Lumi = cms.double(10.0)
+     ),
+     type = cms.string('poisson'),
+     sequential = cms.untracked.bool(False),
+     fileNames = cms.untracked.vstring('/store/relval/CMSSW_6_2_0_SLHC7/RelValMinBias_TuneZ2star_UPG2023_14_BE5D/GEN-SIM/DES19_62_V8_UPG2023-v2/00000/16BAEE16-4190-E311-AC81-0025B32445DC.root', '/store/relval/CMSSW_6_2_0_SLHC7/RelValMinBias_TuneZ2star_UPG2023_14_BE5D/GEN-SIM/DES19_62_V8_UPG2023-v2/00000/3252F123-3C90-E311-8750-002590494E2E.root')
+     ),
+     mixObjects = cms.PSet(theMixObjects)
+)

@@ -8,3 +8,6 @@ siPixelClusters = cms.EDProducer('RunStepsClusterizer',
     algorithm = cms.string('WeightedMeans2D'), # WeightedMeans2D or AdjacentHits
     clusterSimLink = cms.bool(True)
 )
+
+
+

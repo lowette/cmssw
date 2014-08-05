@@ -13,6 +13,12 @@
 <use name="Geometry/Records"/>
 <use name="DataFormats/DetId"/>
 <use name="RecoLocalTracker/SiPixelClusterizer"/>
-<library file="RunStepsClusterValidation.cc" name="RunStepsClusterValidation">
+<use name="DataFormats/TrackerRecHit2D"/>
+<use name="DataFormats/SiPixelDetId"/>
+<use name="DataFormats/SiPixelCluster"/>
+<use name="DataFormats/ParticleFlowCandidate"/>
+<use name="DataFormats/ParticleFlowReco"/>
+
+<library file="ValidaThor.cc ../src/*.cc" name="ValidaThor">
 	<flags EDM_PLUGIN="1"/>
 </library>
