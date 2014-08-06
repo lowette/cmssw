@@ -7,6 +7,7 @@ from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
 output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
+myalgo = cms.string('WeightedMeans2D')
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
@@ -16,12 +17,16 @@ for i in range(2, len(sys.argv)):
     elif (sys.argv[i] == '_input' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
         input_file = sys.argv[i+1]
         i += 1
+    elif (sys.argv[i] == '_algo' and len(sys.argv) > i+1 and sys.argv[i+1][0] != '_'):
+        myalgo = sys.argv[i+1]
+        i += 1
 
 # Greetings
 print '------------------------------------------------------------'
 print '-- Running the Clusterizer step with the following arguments:'
-print '-- Input file: ' + input_file
-print '-- Output file: ' + output_file
+print '-- Input file  : ' + input_file
+print '-- Output file : ' + output_file
+print '-- Algo        : ' + myalgo
 print '------------------------------------------------------------'
 
 # Create a new CMS process
@@ -74,6 +79,7 @@ process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
 )
 
 # Steps
+process.siPixelClusters.algorithm = myalgo
 process.clusterizer_step = cms.Path(process.siPixelClusters);
 
 process.endjob_step = cms.EndPath(process.endOfProcess)

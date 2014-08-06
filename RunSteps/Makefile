@@ -17,7 +17,7 @@ old_digitizer:
 	cmsRun Digitizer/python/OldDigitizer.py _input $(input) _output $(output)
 
 clusterizer:
-	cmsRun Clusterizer/python/Clusterizer.py _input $(input) _output $(output)
+	cmsRun Clusterizer/python/Clusterizer.py _input $(input) _output $(output) _algo $(algo)
 
 validation_digitizer:
 	cmsRun Digitizer/test/RunDigiValidation.py _input $(input) _output $(output)
@@ -38,21 +38,21 @@ configure:
 	scram b -j 16
 
 help:
-	@echo "+--------------------------------------------------------+"
-	@echo "|                        RunSteps                        |"
-	@echo "+--------------------------------------------------------+"
-	@echo "| List of available commands:                            |"
-	@echo "+--------------------------------------------------------+"
-	@echo "| make all n=<int>                                       |"
-	@echo "| make generation n=<int> output=<path>                  |"
-	@echo "| make digitizer input=<path> output=<path>              |"
-	@echo "| make old_digitizer input=<path> output=<path>          |"
-	@echo "| make clusterizer input=<path> output=<path>            |"
-	@echo "| make validation_digitizer input=<path> output=<path>   |"
-	@echo "| make validation_l1trigger input=<path> output=<path>   |"
-	@echo "| make validation_clusterizer input=<path> output=<path> |"
-	@echo "| make validation_rechits input=<path> output=<path>     |"
-	@echo "| make validation                                        |"
-	@echo "| make configure                                         |"
-	@echo "| make help                                              |"
-	@echo "+--------------------------------------------------------+"
+	@echo "+---------------------------------------------------------+"
+	@echo "|                        RunSteps                         |"
+	@echo "+---------------------------------------------------------+"
+	@echo "| List of available commands:                             |"
+	@echo "+---------------------------------------------------------+"
+	@echo "| make all n=<int>                                        |"
+	@echo "| make generation n=<int> output=<path>                   |"
+	@echo "| make digitizer input=<path> output=<path>               |"
+	@echo "| make old_digitizer input=<path> output=<path>           |"
+	@echo "| make clusterizer input=<path> output=<path> algo=<algo> |"
+	@echo "| make validation_digitizer input=<path> output=<path>    |"
+	@echo "| make validation_l1trigger input=<path> output=<path>    |"
+	@echo "| make validation_clusterizer input=<path> output=<path>  |"
+	@echo "| make validation_rechits input=<path> output=<path>      |"
+	@echo "| make validation                                         |"
+	@echo "| make configure                                          |"
+	@echo "| make help                                               |"
+	@echo "+---------------------------------------------------------+"
