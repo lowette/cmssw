@@ -1,6 +1,6 @@
 <lcgdict>
-    <class name="PixelClusterSimLink" ClassVersion="10">
-        <version ClassVersion="10" checksum="608388076"/>
+    <class name="PixelClusterSimLink" ClassVersion="11">
+        <version ClassVersion="11" checksum="608388076"/>
     </class>
     <class name="edm::DetSet<PixelClusterSimLink>"/>
     <class name="std::vector<PixelClusterSimLink>"/>
