@@ -58,5 +58,6 @@ unsigned int PixelClusterizer::getSimTrackId(const edm::Handle< edm::DetSetVecto
             break;
         }
     }
+    std::cout << "Found simtrack id = " << simTrkId << std::endl;
     return simTrkId;
 }
