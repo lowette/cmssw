@@ -424,7 +424,7 @@ vector<TString> getHistoNames(TString suffix0, TString reco, TString suffix)
 
   vector<TString> myNames;
 
-  const int nPS=3;
+  const UInt_t nPS=3;
   TString name_PS[nPS] = {"_AllMod", "_PixelMod", "_StripMod"};
 
   UInt_t nPS_loop=3;
@@ -466,7 +466,7 @@ vector<TString> getHistoNames(TString suffix0, TString reco, TString suffix)
 	  
     //else if(iH==1)      
     
-    if(iH<=2)
+    if(iH<=2*nPS_loop)
       for(UInt_t iS=0 ; iS<nSuffix2 ; iS++)
 	myNames.push_back(nameHistos[iH]+"_"+suffix2[iS]);
 
