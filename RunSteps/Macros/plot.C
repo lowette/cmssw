@@ -91,16 +91,27 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 			  "RecHit Response in x [cm]", "RecHit Resolution in x [cm]",
 			  "RecHit Response in y [cm]", "RecHit Resolution in y [cm]"};
 
-  vector<double> values[nVar][nErr][nPart][nFit];
+  const UInt_t nPS=3;
+  TString name_PS[nPS] = {"_AllMod", "_PixelMod", "_StripMod"};
+
+  UInt_t nPS_L=3;
+  if(suffix.Contains("Digi")) {
+    nPS_L=1;
+    for(UInt_t iPS=0 ; iPS<nPS ; iPS++)
+      name_PS[iPS] = "";  
+  }
+
+  vector<double> values[nVar][nErr][nPart][nFit][nPS_L];
   
   for(UInt_t iV=0 ; iV<nVar ; iV++)
     for(UInt_t iE=0 ; iE<nErr ; iE++)
       for(UInt_t iP=0 ; iP<nPart ; iP++)
 	for(UInt_t iF=0 ; iF<nFit ; iF++)
 	  for(UInt_t iL=0 ; iL<nLayers[iP] ; iL++)
-	    values[iV][iE][iP][iF].push_back(0);
+	    for(UInt_t iPS=0 ; iPS<nPS_L ; iPS++)
+	      values[iV][iE][iP][iF][iPS].push_back(0);
 
-  TGraphErrors g_effi[nVar][nPart][nFit];
+  TGraphErrors g_effi[nVar][nPart][nFit][nPS_L];
 
   // Names of Layers/Discs
   if(verbose>1) cout << "- names of layers/discs" << endl;
@@ -168,13 +179,14 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
   if(verbose>1) cout << "- loop over input histograms" << endl;
 
   double tempMax=0;
-  double g_max[nVar][nPart][nFit];
+  double g_max[nVar][nPart][nFit][nPS_L];
 
   for(UInt_t iP=0 ; iP<nPart ; iP++) {
 
     for(UInt_t iV=0 ; iV<nVar ; iV++) 
       for(UInt_t iF=0 ; iF<nFit ; iF++) 
-	g_max[iV][iP][iF]=0;
+	for(UInt_t iPS=0 ; iPS<nPS_L ; iPS++)
+	  g_max[iV][iP][iF][iPS]=0;
 
     for(UInt_t iL=0 ; iL<nLayers[iP] ; iL++) {
       
@@ -200,6 +212,11 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 	  cout << "ERROR : no such plot named '" << nameHisto << "'" << endl;
 	  continue;
 	}
+
+	UInt_t idxPS=0;
+	if(nameHisto.Contains("AllMod"))   idxPS=0;
+	if(nameHisto.Contains("PixelMod")) idxPS=1;
+	if(nameHisto.Contains("StripMod")) idxPS=2;
 
 	// fit the plots
 	if( (nameHisto.Contains("Efficiency") && nameHisto.Contains("Primary")) 
@@ -236,62 +253,62 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 	if( nameHisto.Contains("Efficiency") && nameHisto.Contains("Primary") ) {
 	  if(verbose>2) cout << "--- enter Efficiency Primary" << endl;
 
-	  values[0][0][iP][0][iL] = mean;
-	  values[0][1][iP][0][iL] = err_mean;
-	  values[0][0][iP][1][iL] = fMean;
-	  values[0][1][iP][1][iL] = err_fMean;
+	  values[0][0][iP][0][iL][idxPS] = mean;
+	  values[0][1][iP][0][iL][idxPS] = err_mean;
+	  values[0][0][iP][1][iL][idxPS] = fMean;
+	  values[0][1][iP][1][iL][idxPS] = err_fMean;
 	}
 	  
 	if(nameHisto.Contains("DeltaX")) {
 	  if(nameHisto.Contains("simhit")) {
 	    if(verbose>2) cout << "--- enter DeltaX" << endl;
 	    
-	    values[1][0][iP][0][iL] = mean;
-	    values[1][1][iP][0][iL] = err_mean;
-	    values[2][0][iP][0][iL] = rms;
-	    values[2][1][iP][0][iL] = err_rms;
+	    values[1][0][iP][0][iL][idxPS] = mean;
+	    values[1][1][iP][0][iL][idxPS] = err_mean;
+	    values[2][0][iP][0][iL][idxPS] = rms;
+	    values[2][1][iP][0][iL][idxPS] = err_rms;
 	    
-	    values[1][0][iP][1][iL] = fMean;
-	    values[1][1][iP][1][iL] = err_fMean;
-	    values[2][0][iP][1][iL] = fSigma;
-	    values[2][1][iP][1][iL] = err_fSigma;
+	    values[1][0][iP][1][iL][idxPS] = fMean;
+	    values[1][1][iP][1][iL][idxPS] = err_fMean;
+	    values[2][0][iP][1][iL][idxPS] = fSigma;
+	    values[2][1][iP][1][iL][idxPS] = err_fSigma;
 	  }
 	  else if(nameHisto.Contains("RecHit")) {
-	    values[5][0][iP][0][iL] = mean;
-	    values[5][1][iP][0][iL] = err_mean;
-	    values[6][0][iP][0][iL] = rms;
-	    values[6][1][iP][0][iL] = err_rms;
+	    values[5][0][iP][0][iL][idxPS] = mean;
+	    values[5][1][iP][0][iL][idxPS] = err_mean;
+	    values[6][0][iP][0][iL][idxPS] = rms;
+	    values[6][1][iP][0][iL][idxPS] = err_rms;
 	    
-	    values[5][0][iP][1][iL] = fMean;
-	    values[5][1][iP][1][iL] = err_fMean;
-	    values[6][0][iP][1][iL] = fSigma;
-	    values[6][1][iP][1][iL] = err_fSigma;
+	    values[5][0][iP][1][iL][idxPS] = fMean;
+	    values[5][1][iP][1][iL][idxPS] = err_fMean;
+	    values[6][0][iP][1][iL][idxPS] = fSigma;
+	    values[6][1][iP][1][iL][idxPS] = err_fSigma;
 	  }
 	}
 	if(nameHisto.Contains("DeltaY")) {
 	  if(nameHisto.Contains("simhit")) {
 	    if(verbose>2) cout << "--- enter DeltaY" << endl;
 	    
-	    values[3][0][iP][0][iL] = mean;
-	    values[3][1][iP][0][iL] = err_mean;
-	    values[4][0][iP][0][iL] = rms;
-	    values[4][1][iP][0][iL] = err_rms;
+	    values[3][0][iP][0][iL][idxPS] = mean;
+	    values[3][1][iP][0][iL][idxPS] = err_mean;
+	    values[4][0][iP][0][iL][idxPS] = rms;
+	    values[4][1][iP][0][iL][idxPS] = err_rms;
 	    
-	    values[3][0][iP][1][iL] = fMean;
-	    values[3][1][iP][1][iL] = err_fMean;
-	    values[4][0][iP][1][iL] = fSigma;
-	    values[4][1][iP][1][iL] = err_fSigma;
+	    values[3][0][iP][1][iL][idxPS] = fMean;
+	    values[3][1][iP][1][iL][idxPS] = err_fMean;
+	    values[4][0][iP][1][iL][idxPS] = fSigma;
+	    values[4][1][iP][1][iL][idxPS] = err_fSigma;
 	  }
 	  else if(nameHisto.Contains("RecHit")) {
-	    values[7][0][iP][0][iL] = mean;
-	    values[7][1][iP][0][iL] = err_mean;
-	    values[8][0][iP][0][iL] = rms;
-	    values[8][1][iP][0][iL] = err_rms;
+	    values[7][0][iP][0][iL][idxPS] = mean;
+	    values[7][1][iP][0][iL][idxPS] = err_mean;
+	    values[8][0][iP][0][iL][idxPS] = rms;
+	    values[8][1][iP][0][iL][idxPS] = err_rms;
 	    
-	    values[7][0][iP][1][iL] = fMean;
-	    values[7][1][iP][1][iL] = err_fMean;
-	    values[8][0][iP][1][iL] = fSigma;
-	    values[8][1][iP][1][iL] = err_fSigma;
+	    values[7][0][iP][1][iL][idxPS] = fMean;
+	    values[7][1][iP][1][iL][idxPS] = err_fMean;
+	    values[8][0][iP][1][iL][idxPS] = fSigma;
+	    values[8][1][iP][1][iL][idxPS] = err_fSigma;
 	  }
 	}
 	
@@ -320,16 +337,18 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
     for(UInt_t iP=0 ; iP<nPart ; iP++) {
       for(UInt_t iL=0 ; iL<nLayers[iP] ; iL++) {
 	for(UInt_t iV=0 ; iV<nVar ; iV++) {
+	  for(UInt_t iPS=0 ; iPS<nPS_L ; iPS++) {
 	  
-	  tempMax = values[iV][0][iP][iF][iL];
+	    tempMax = values[iV][0][iP][iF][iL][iPS];
 	  
-	  if(verbose>2)
-	    cout << "--- "    << g_name[iV] 
-		 << " "       << namePart[iP] 
-		 << " layer " << iL 
-		 << " : val=" << tempMax << endl;
+	    if(verbose>2)
+	      cout << "--- "    << g_name[iV] 
+		   << " "       << namePart[iP] 
+		   << " layer " << iL 
+		   << " : val=" << tempMax << endl;
 	  
-	  if( tempMax > g_max[iV][iP][iF] ) g_max[iV][iP][iF] = tempMax;
+	    if( tempMax > g_max[iV][iP][iF][iPS] ) g_max[iV][iP][iF][iPS] = tempMax;
+	  }
 	}
       }
     }
@@ -337,36 +356,38 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 
   if(verbose>1) cout << "Build the graphs" << endl;
 
-  double g_maximum[nVar][nFit];
+  double g_maximum[nVar][nFit][nPS_L];
 
-  for(UInt_t iF=0 ; iF<nFit ; iF++) {
-    for(UInt_t iV=0 ; iV<nVar ; iV++) {
+  for(UInt_t iPS=0 ; iPS<nPS_L ; iPS++) {
+    for(UInt_t iF=0 ; iF<nFit ; iF++) {
+      for(UInt_t iV=0 ; iV<nVar ; iV++) {
 
-      g_maximum[iV][iF]=0;
+	g_maximum[iV][iF][iPS]=0;
 
-      for(UInt_t iP=0 ; iP<nPart ; iP++) {
+	for(UInt_t iP=0 ; iP<nPart ; iP++) {
 
-	if(verbose>1) cout << "iF=" << iF << " iV=" << iV << " iP=" << iP << endl;
+	  if(verbose>1) cout << "iF=" << iF << " iV=" << iV << " iP=" << iP << endl;
 
-	// make arrays on the fly to fill TGraphErrors constructor arguments
-	double g_x[nLayers[iP]], g_y[nLayers[iP]], g_err_x[nLayers[iP]], g_err_y[nLayers[iP]];
-	for(UInt_t iL=0 ; iL<nLayers[iP] ; iL++) {
-	  g_x[iL]     = idxLayers[0][iP][iL];
-	  g_err_x[iL] = idxLayers[1][iP][iL];
-	  g_y[iL]     = values[iV][0][iP][iF][iL]; 
-	  g_err_y[iL] = values[iV][1][iP][iF][iL]; 
+	  // make arrays on the fly to fill TGraphErrors constructor arguments
+	  double g_x[nLayers[iP]], g_y[nLayers[iP]], g_err_x[nLayers[iP]], g_err_y[nLayers[iP]];
+	  for(UInt_t iL=0 ; iL<nLayers[iP] ; iL++) {
+	    g_x[iL]     = idxLayers[0][iP][iL];
+	    g_err_x[iL] = idxLayers[1][iP][iL];
+	    g_y[iL]     = values[iV][0][iP][iF][iL][iPS]; 
+	    g_err_y[iL] = values[iV][1][iP][iF][iL][iPS]; 
+	  }
+	
+	  // effi, respX,resolX,err_respX,err_resolX, respY,resolY,err_respY,err_resolY;
+	  g_effi[iV][iP][iF][iPS] = TGraphErrors(    nLayers[iP]-iStartLay[iP] , 
+						     (iStartLay[iP]+g_x),
+						     (iStartLay[iP]+g_y),
+						     (iStartLay[iP]+g_err_x),
+						     (iStartLay[iP]+g_err_y)
+						     );
+	
+	  if( g_max[iV][iP][iF][iPS]>g_maximum[iV][iF][iPS] ) g_maximum[iV][iF][iPS] = g_max[iV][iP][iF][iPS];
+	
 	}
-	
-	// effi, respX,resolX,err_respX,err_resolX, respY,resolY,err_respY,err_resolY;
-	g_effi[iV][iP][iF] = TGraphErrors(    nLayers[iP]-iStartLay[iP] , 
-					      (iStartLay[iP]+g_x),
-					      (iStartLay[iP]+g_y),
-					      (iStartLay[iP]+g_err_x),
-					      (iStartLay[iP]+g_err_y)
-					      );
-	
-	if( g_max[iV][iP][iF]>g_maximum[iV][iF] ) g_maximum[iV][iF] = g_max[iV][iP][iF];
-	
       }
     }
   }
@@ -378,34 +399,39 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 
   for(UInt_t iV=0 ; iV<nVar ; iV++) {
 
-    for(UInt_t iP=0 ; iP<nPart ; iP++) {
+    for(UInt_t iPS=0 ; iPS<nPS_L ; iPS++) {
 
-      for(UInt_t iF=0 ; iF<nFit ; iF++) {
+      for(UInt_t iP=0 ; iP<nPart ; iP++) {
 
-	TCanvas c_graph("cg","cg",10,10,800,600);
+	for(UInt_t iF=0 ; iF<nFit ; iF++) {
+
+	  TCanvas c_graph("cg","cg",10,10,800,600);
       
-	if(verbose>2) cout << "--- " << g_name[iV] 
-			   << " "    << namePart[iP] 
-			   << " maxima : global=" << g_maximum[iV][iF] 
-			   << " local=" << g_max[iV][iP][iF]
-			   << endl;
+	  if(verbose>2) cout << "--- " << g_name[iV] 
+			     << " "    << namePart[iP] 
+			     << " maxima : global=" << g_maximum[iV][iF][iPS]
+			     << " local=" << g_max[iV][iP][iF][iPS]
+			     << endl;
+	  
+	  //if(iV>0) g_effi[iV][iP][iF].SetMaximum( 1.05*g_maximum[iV] );
+	  if(iV>0) g_effi[iV][iP][iF][iPS].SetMaximum( 1.05*g_max[iV][iP][iF][iPS] );
 
-	//if(iV>0) g_effi[iV][iP][iF].SetMaximum( 1.05*g_maximum[iV] );
-	if(iV>0) g_effi[iV][iP][iF].SetMaximum( 1.05*g_max[iV][iP][iF] );
+	  //g_effi[iV][iP][iF].SetMarkerStyle( kOpenSquare );      
+	  //g_effi[iV][iP][iF].SetMarkerSize( 2 );      
+	  //g_effi[iV][iP][iF].SetMarkerColor( kAzure-9 );      
+	  g_effi[iV][iP][iF][iPS].SetTitle( suffix+" "+g_name[iV]+" "+namePart[iP] );
+	  g_effi[iV][iP][iF][iPS].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
+	  g_effi[iV][iP][iF][iPS].GetYaxis()->SetTitle( g_titleY[iV] );
 
-	//g_effi[iV][iP][iF].SetMarkerStyle( kOpenSquare );      
-	//g_effi[iV][iP][iF].SetMarkerSize( 2 );      
-	//g_effi[iV][iP][iF].SetMarkerColor( kAzure-9 );      
-	g_effi[iV][iP][iF].SetTitle( suffix+" "+g_name[iV]+" "+namePart[iP] );
-	g_effi[iV][iP][iF].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
-	g_effi[iV][iP][iF].GetYaxis()->SetTitle( g_titleY[iV] );
+	  if(verbose>2) cout << "--- graph mean = " << g_effi[iV][iP][iF][iPS].GetMean() << endl;
 
-	if(verbose>2) cout << "--- graph mean = " << g_effi[iV][iP][iF].GetMean() << endl;
+	  g_effi[iV][iP][iF][iPS].Draw("AP");
+	  g_effi[iV][iP][iF][iPS].Write( "g_"+suffix+"_"+g_name[iV]+"_"+name_PS[iPS]+"_"+namePart[iP]+"_"+nameFit[iF] );
 
-	g_effi[iV][iP][iF].Draw("AP");
-	g_effi[iV][iP][iF].Write( "g_"+suffix+"_"+g_name[iV]+"_"+namePart[iP]+"_"+nameFit[iF] );
-
-	c_graph.Print(pathOut+"/"+suffix+"/SummaryPlots/"+g_name[iV]+"_"+suffix+"_"+namePart[iP]+"_"+nameFit[iF]+".pdf");
+	  c_graph.Print(pathOut+"/"+suffix+"/SummaryPlots/"+
+			g_name[iV]+"_"+suffix+"_"+name_PS[iPS]+"_"+namePart[iP]+"_"+nameFit[iF]
+			+".pdf");
+	}
       }
     }
   }
