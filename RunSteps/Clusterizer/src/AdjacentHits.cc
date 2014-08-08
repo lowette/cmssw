@@ -79,14 +79,20 @@ void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, 
                 while (!acluster.empty()) {
 
                     // Get the current pixel we are looking at
-                    auto curInd = acluster.top();
+                    unsigned int curInd = acluster.top();
                     acluster.pop();
 
-                    // Look left and right
-                    for (auto r = acluster.x[curInd] - 1; r <= acluster.x[curInd] + 1; ++r) {
+                   unsigned int from_r =  acluster.x[curInd] - 1;
+                   unsigned int to_r = acluster.x[curInd] + 1;
+
+                   unsigned int from_c = acluster.y[curInd] - 1;
+                   unsigned int to_c = acluster.y[curInd] + 1;
+                   
+                     // Look left and right
+                    for (unsigned int r = from_r; r <= to_r; ++r) {
 
                       // Look bottom and top
-                        for (auto c = acluster.y[curInd] - 1; c <= acluster.y[curInd] + 1; ++c) {
+                        for (unsigned int c = from_c; c <= to_c; ++c) {
 
                             // If the pixel is hit and has the same weight as the first pixel (probably from the same cluster)
                             if (hitArray(r, c)) {

@@ -62,16 +62,16 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   // Parts of Tracker
   if(verbose>1) cout << "- parts of tracker" << endl;
   
-  const u_int nPart=3;
-  const u_int nLayers[nPart]={10,8,8};
-  const u_int iStartLay[nPart]={4,3,3};  // to plot values outside pixels
+  const unsigned int nPart=3;
+  const unsigned int nLayers[nPart]={10,8,8};
+  const unsigned int iStartLay[nPart]={4,3,3};  // to plot values outside pixels
   TString namePart[nPart]={"Barrel", "EndCap_Side_1", "EndCap_Side_2"};
 
   // Efficiencies, Responses, Resolutions
   if(verbose>1) cout << "- values" << endl;
 
-  const u_int nVar=5; // effi,respX,resolX,respY,resolY (nErr=nominal/error)
-  const u_int nErr=2; // nominal/error
+  const unsigned int nVar=5; // effi,respX,resolX,respY,resolY (nErr=nominal/error)
+  const unsigned int nErr=2; // nominal/error
 
   TString g_name[  nVar]={"Efficiency", "ResponseX", "ResolutionX", "ResponseY", "ResolutionY"};
   TString g_titleY[nVar]={"Efficiency", "Response in x [cm]", "Resolution in x [cm]",
@@ -79,10 +79,10 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 
   vector<double> values[nVar][nErr][nPart];
   
-  for(u_int iV=0 ; iV<nVar ; iV++)
-    for(u_int iE=0 ; iE<nErr ; iE++)
-      for(u_int iP=0 ; iP<nPart ; iP++)
-	for(u_int iL=0 ; iL<nLayers[iP] ; iL++)
+  for(unsigned int iV=0 ; iV<nVar ; iV++)
+    for(unsigned int iE=0 ; iE<nErr ; iE++)
+      for(unsigned int iP=0 ; iP<nPart ; iP++)
+	for(unsigned int iL=0 ; iL<nLayers[iP] ; iL++)
 	  values[iV][iE][iP].push_back(0);
 
   TGraphErrors g_effi[nVar][nPart];
@@ -90,7 +90,7 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   // Names of Layers/Discs
   if(verbose>1) cout << "- names of layers/discs" << endl;
 
-  const u_int nCase=2;
+  const unsigned int nCase=2;
   TString nameTypeLayer[nPart][nCase] = { {"Layer","layer"} , {"Disc","disc"} , {"Disc","disc"} };
   vector<TString> nameLayer[nPart][nCase];
   
@@ -101,18 +101,18 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   double idxTE2[nErr][nLayers[2]];
 
   // Loop over TB, TE1, TE2
-  for(u_int iP=0 ; iP<nPart ; iP++) {
+  for(unsigned int iP=0 ; iP<nPart ; iP++) {
 
     // Put the array-pointer into the global vector
-    for(u_int iE=0 ; iE<nErr ; iE++) {
+    for(unsigned int iE=0 ; iE<nErr ; iE++) {
       idxLayers[iE].push_back( idxTB[ iE] );
       idxLayers[iE].push_back( idxTE1[iE] );
       idxLayers[iE].push_back( idxTE2[iE] );
     }
 
     // Loop over all layers in part #iP, define their names with/without case
-    for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
-      for(u_int iC=0 ; iC<nCase ; iC++) {
+    for(unsigned int iL=0 ; iL<nLayers[iP] ; iL++) {
+      for(unsigned int iC=0 ; iC<nCase ; iC++) {
 	nameLayer[iP][iC].push_back( nameTypeLayer[iP][iC]+"_"+TString(Form( "%d" , iL+1 )) );
       }
 
@@ -144,11 +144,11 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   double tempMax=0;
   double g_max[nVar][nPart];
 
-  for(u_int iP=0 ; iP<nPart ; iP++) {
+  for(unsigned int iP=0 ; iP<nPart ; iP++) {
 
-    for(u_int iV=0 ; iV<nVar ; iV++) g_max[iV][iP]=0;
+    for(unsigned int iV=0 ; iV<nVar ; iV++) g_max[iV][iP]=0;
 
-    for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
+    for(unsigned int iL=0 ; iL<nLayers[iP] ; iL++) {
 
       nameDir   = "analysis/"+namePart[iP]+"/"+nameLayer[iP][0][iL] ;
       if(verbose>2) cout << "-- nameDir=" << nameDir << endl;
@@ -161,7 +161,7 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 
       if(verbose>2) cout << "-- loop over histograms (myNames.size()=" << myNames.size() << ")" << endl;
 
-      for(u_int iH=0 ; iH<myNames.size() ; iH++) {
+      for(unsigned int iH=0 ; iH<myNames.size() ; iH++) {
 
 	nameHisto = myNames[iH]+"_"+nameLayer[iP][1][iL];
 	if(verbose>2) cout << "--- histo : " << nameHisto << endl;
@@ -217,9 +217,9 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
   if(verbose>1) cout << "- build first the graphs and find maxima" << endl;
 
   // Determine maxima per variable and part of the Tracker
-  for(u_int iP=0 ; iP<nPart ; iP++) {
-    for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
-	for(u_int iV=0 ; iV<nVar ; iV++) {
+  for(unsigned int iP=0 ; iP<nPart ; iP++) {
+    for(unsigned int iL=0 ; iL<nLayers[iP] ; iL++) {
+	for(unsigned int iV=0 ; iV<nVar ; iV++) {
 	  
 	  tempMax = values[iV][0][iP][iL];
 
@@ -236,15 +236,15 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 
   double g_maximum[nVar];
 
-  for(u_int iV=0 ; iV<nVar ; iV++) {
+  for(unsigned int iV=0 ; iV<nVar ; iV++) {
 
     g_maximum[iV]=0;
 
-    for(u_int iP=0 ; iP<nPart ; iP++) {
+    for(unsigned int iP=0 ; iP<nPart ; iP++) {
 
       // make arrays on the fly to fill TGraphErrors constructor arguments
       double g_x[nLayers[iP]], g_y[nLayers[iP]], g_err_x[nLayers[iP]], g_err_y[nLayers[iP]];
-      for(u_int iL=0 ; iL<nLayers[iP] ; iL++) {
+      for(unsigned int iL=0 ; iL<nLayers[iP] ; iL++) {
 	g_x[iL]     = idxLayers[0][iP][iL];
 	g_err_x[iL] = idxLayers[1][iP][iL];
 	g_y[iL]     = values[iV][0][iP][iL];
@@ -270,9 +270,9 @@ int plot(TString level="Digis", TString path="../Output/", TString pathOut="../P
 
   fout->cd();
 
-  for(u_int iV=0 ; iV<nVar ; iV++) {
+  for(unsigned int iV=0 ; iV<nVar ; iV++) {
 
-    for(u_int iP=0 ; iP<nPart ; iP++) {
+    for(unsigned int iP=0 ; iP<nPart ; iP++) {
 
       TCanvas c_graph("cg","cg",10,10,800,600);
       
@@ -314,12 +314,12 @@ vector<TString> getHistoNames(TString suffix, TString reco)
 {
   vector<TString> myNames;
 
-  const u_int nH=5;
+  const unsigned int nH=5;
   TString nameHistos[nH]={"NumberOfMatchedHits", "NumberOfMatched"+suffix, "Efficiency", 
 			  "DeltaX_simhit_"+reco, "DeltaY_simhit_"+reco};
 
-  //const u_int nSuffix1=4;
-  const u_int nSuffix2=18;
+  //const unsigned int nSuffix1=4;
+  const unsigned int nSuffix2=18;
   //TString suffix1[nSuffix1] = {"AllType", "Primary", "Secondary", "Type2"};
   TString suffix2[nSuffix2] = {"Undefined","Unknown","Primary","Hadronic",
 			       "Decay","Compton","Annihilation","EIoni",
@@ -327,16 +327,16 @@ vector<TString> getHistoNames(TString suffix, TString reco)
 			       "Conversions","EBrem","SynchrotronRadiation",
 			       "MuBrem","MuNucl","AllTypes"};
 
-  for(u_int iH=0 ; iH<nH ; iH++) {
+  for(unsigned int iH=0 ; iH<nH ; iH++) {
     
     //if(iH==0)      
-    //for(u_int iS=0 ; iS<nSuffix1 ; iS++)
+    //for(unsigned int iS=0 ; iS<nSuffix1 ; iS++)
     //myNames.push_back(nameHistos[iH]+"_"+suffix1[iS]);
 	  
     //else if(iH==1)      
     
     if(iH<=2)
-      for(u_int iS=0 ; iS<nSuffix2 ; iS++)
+      for(unsigned int iS=0 ; iS<nSuffix2 ; iS++)
 	myNames.push_back(nameHistos[iH]+"_"+suffix2[iS]);
 
     else
