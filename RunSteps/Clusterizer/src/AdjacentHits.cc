@@ -61,7 +61,8 @@ void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, 
                 std::vector< unsigned int > simTracks;
 
                 // Add the simtrack of the Digi to the link
-                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+                unsigned int simTrackId = getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col));
+                if (simTrackId) simTracks.push_back(simTrackId);
 
                 // Set the value of this pixel to 0 as it is used to form a Digi
                 hitArray.set(row, col, 0);
@@ -105,7 +106,8 @@ void AdjacentHits::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, 
                                 hitArray.set(newpix, 0);
 
                                 // Add the simtrack of the Digi to the link
-                                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, c)));
+                                unsigned int simTrackId2 = getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, c));
+                                if (simTrackId2) simTracks.push_back(simTrackId2);
                             }
                         }
                     }

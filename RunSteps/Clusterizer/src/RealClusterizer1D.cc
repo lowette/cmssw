@@ -29,11 +29,6 @@ RealClusterizer1D::RealClusterizer1D(edm::ParameterSet const& conf) {
 
     // Create a 2D matrix for this detector
     hitArray.setSize(nrows_, ncols_);
-
-    // Create a 2D matrix for the weight of the pixels
-    weightArray.setSize(nrows_, ncols_);
-
-    maskedArray.setSize(nrows_, ncols_);
 }
 
 // Change the size of the 2D matrix for this detector unit
@@ -41,57 +36,24 @@ void RealClusterizer1D::setup(const PixelGeomDetUnit* pixDet) {
     const PixelTopology & topol = pixDet->specificTopology();
     nrows_ = topol.nrows();
     ncols_ = topol.ncolumns();
-    if (nrows_ > hitArray.rows() || ncols_ > hitArray.columns()) {
-        hitArray.setSize(nrows_, ncols_);
-        weightArray.setSize(nrows_, ncols_);
-        maskedArray.setSize(nrows_, ncols_);
-    }
+    if (nrows_ > hitArray.rows() || ncols_ > hitArray.columns()) hitArray.setSize(nrows_, ncols_);
 }
 
 // Go over the Digis and create clusters
 void RealClusterizer1D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters) {
 
     // Get the det ID
-	detid_ = pixelDigis.detId();
+    detid_ = pixelDigis.detId();
 
-	// Fill the 2D matrix with the ADC values
-  	copy_to_buffer(pixelDigis.begin(), pixelDigis.end());
-
-
-    // Compute the weight
-    for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
-        for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
-            int weight = 6 * hitArray(row, col)
-                       + 3 * (hitArray(row + 1, col) + hitArray(row - 1, col) + hitArray(row, col + 1) + hitArray(row, col + 1))
-                       + 1 * (hitArray(row + 1, col + 1) + hitArray(row - 1, col + 1) + hitArray(row - 1, col - 1) + hitArray(row + 1, col - 1));
-            weightArray.set(row, col, weight);
-            maskedArray.set(row, col, weight);
-        }
-    }
-
-    // Apply a second mask
-    for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
-        for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
-            int weight = weightArray(row, col);
-
-            if (weightArray(row - 1, col) < weight) maskedArray.set(row - 1, col, 0);
-            if (weightArray(row + 1, col) < weight) maskedArray.set(row + 1, col, 0);
-            if (weightArray(row, col - 1) < weight) maskedArray.set(row, col - 1, 0);
-            if (weightArray(row, col + 1) < weight) maskedArray.set(row, col + 1, 0);
-            if (weightArray(row - 1, col - 1) < weight) maskedArray.set(row - 1, col - 1, 0);
-            if (weightArray(row - 1, col + 1) < weight) maskedArray.set(row - 1, col + 1, 0);
-            if (weightArray(row + 1, col - 1) < weight) maskedArray.set(row + 1, col - 1, 0);
-            if (weightArray(row + 1, col + 1) < weight) maskedArray.set(row + 1, col + 1, 0);
-        }
-    }
-
+    // Fill the 2D matrix with the ADC values
+    copy_to_buffer(pixelDigis.begin(), pixelDigis.end());
 
     // Loop over the Digis
     for (unsigned int row = 0; row < (unsigned int) nrows_; ++row) {
         for (unsigned int col = 0; col < (unsigned int)  ncols_; ++col) {
 
             // If the Digi is active
-            if (maskedArray(row, col)) {
+            if (hitArray(row, col)) {
 
                 // Try to form a cluster
 
@@ -99,10 +61,11 @@ void RealClusterizer1D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDi
                 std::vector< unsigned int > simTracks;
 
                 // Add the simtrack of the Digi to the link
-                simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)));
+                unsigned int simTrackId = getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(row, col)); 
+                if (simTrackId) simTracks.push_back(simTrackId);
 
                 // Set the value of this pixel to 0 as it is used to form a Digi
-                maskedArray.set(row, col, 0);
+                hitArray.set(row, col, 0);
 
                 // Create a temporary cluster (this allows to them easily form a "real" cluster with CMSSW data format)
                 AccretionCluster acluster;
@@ -127,17 +90,18 @@ void RealClusterizer1D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDi
                     for (unsigned int r = from_r; r <= to_r; ++r) {
 
                         // Look bottom and top
-                        if (maskedArray(r, col)) {
+                        if (hitArray(r, col)) {
 
                             // Add it to the cluster
                             SiPixelCluster::PixelPos newpix(r, col);
                             if (!acluster.add(newpix, 255)) break;
 
                             // And change its value
-                            maskedArray.set(newpix, 0);
+                            hitArray.set(newpix, 0);
 
                             // Add the simtrack of the Digi to the link
-                            simTracks.push_back(getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, col)));
+                            unsigned int simTrackId2 = getSimTrackId(pixelSimLinks, PixelDigi::pixelToChannel(r, col));
+			    if (simTrackId2) simTracks.push_back(simTrackId2);
                         }
                     }
                 }
@@ -160,18 +124,10 @@ void RealClusterizer1D::clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDi
 
 void RealClusterizer1D::copy_to_buffer(DigiIterator begin, DigiIterator end) {
     // Copy the value of the Digis' ADC to the 2D matrix
-    for (DigiIterator di = begin; di != end; ++di) {
-        hitArray.set(di->row(), di->column(), di->adc());
-        weightArray.set(di->row(), di->column(), di->adc());
-        maskedArray.set(di->row(), di->column(), di->adc());
-    }
+    for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), di->adc());
 }
 
 void RealClusterizer1D::clear_buffer(DigiIterator begin, DigiIterator end) {
     // Resets the matrix
-    for (DigiIterator di = begin; di != end; ++di) {
-        hitArray.set(di->row(), di->column(), 0);
-        weightArray.set(di->row(), di->column(), 0);
-        maskedArray.set(di->row(), di->column(), 0);
-    }
+    for (DigiIterator di = begin; di != end; ++di) hitArray.set(di->row(), di->column(), 0);
 }

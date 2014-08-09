@@ -34,9 +34,6 @@ public:
     void clusterizeDetUnit(const edm::DetSet<PixelDigi> & pixelDigis, const edm::Handle< edm::DetSetVector< PixelDigiSimLink > > & pixelSimLinks, edmNew::DetSetVector<SiPixelCluster>::FastFiller & clusters);
 
 private:
-    SiPixelArrayBuffer weightArray;
-    SiPixelArrayBuffer maskedArray;
-
     void copy_to_buffer(DigiIterator begin, DigiIterator end);
     void clear_buffer(DigiIterator begin, DigiIterator end);
 
