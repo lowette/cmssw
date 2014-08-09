@@ -7,6 +7,7 @@ from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5
 # Default parameters
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
 output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/CLUSTER.root'
+myalgo = cms.string('WeightedMeans2D')
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
@@ -16,12 +17,16 @@ for i in range(2, len(sys.argv)):
     elif (sys.argv[i] == '_input' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
         input_file = sys.argv[i+1]
         i += 1
+    elif (sys.argv[i] == '_algo' and len(sys.argv) > i+1 and sys.argv[i+1][0] != '_'):
+        myalgo = sys.argv[i+1]
+        i += 1
 
 # Greetings
 print '------------------------------------------------------------'
 print '-- Running the Clusterizer step with the following arguments:'
-print '-- Input file: ' + input_file
-print '-- Output file: ' + output_file
+print '-- Input file  : ' + input_file
+print '-- Output file : ' + output_file
+print '-- Algo        : ' + myalgo
 print '------------------------------------------------------------'
 
 # Create a new CMS process
@@ -44,9 +49,9 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input file
 process.source = cms.Source('PoolSource',
-    fileNames = cms.untracked.vstring('file:' + input_file),
-	#eventsToSkip = cms.untracked.VEventRange('1:1-1:125', '1:23', '1:105', '1:125')
-    #eventsToSkip = cms.untracked.VEventRange('1:286','1:1399', '1:3214', '1:4367', '1:5089', '1:8061', '1:9591', '1:9770')
+                            fileNames = cms.untracked.vstring('file:' + input_file),
+                            #eventsToSkip = cms.untracked.VEventRange('1:286','1:1399', '1:3214', '1:4367', '1:5089', '1:8061', '1:9591', '1:9770')
+                            eventsToSkip = cms.untracked.VEventRange('1:2049', '1:2740','1:2741','1:2996','1:3013','1:3017','1:4105','1:4233','1:5797','1:6412'),
 )
 
 # Options
@@ -75,6 +80,7 @@ process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',
 )
 
 # Steps
+process.siPixelClusters.algorithm = myalgo
 process.clusterizer_step = cms.Path(process.siPixelClusters);
 
 process.endjob_step = cms.EndPath(process.endOfProcess)
