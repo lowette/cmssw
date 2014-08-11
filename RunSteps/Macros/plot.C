@@ -316,7 +316,7 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 
 	//histos.push_back( *hTemp );
 	TCanvas c("c","c",5,30,800,600);
-	if(doDraw) {
+	if( doDraw && hTemp->GetEntries()>0 ) {
 	  hTemp->Draw();
 	  c.Print(pathOut+"/"+suffix+"/"+myNames[iH]+"_"+namePart[iP]+"_"+nameLayer[iP][1][iL]+".pdf");
 	  if(iH>2) c.Print(pathOut+"/"+suffix+"/"+myNames[iH]+"_"+namePart[iP]+"_"+nameLayer[iP][1][iL]+".png");
@@ -366,16 +366,20 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 
 	for(UInt_t iP=0 ; iP<nPart ; iP++) {
 
-	  if(verbose>1) cout << "iF=" << iF << " iV=" << iV << " iP=" << iP << endl;
+	  if(verbose>1) cout << "iPS=" << iPS << " iF=" << iF << " iV=" << iV << " iP=" << iP << endl;
+
+	  if(verbose>2) cout << "----- make arrays" << endl;
 
 	  // make arrays on the fly to fill TGraphErrors constructor arguments
 	  double g_x[nLayers[iP]], g_y[nLayers[iP]], g_err_x[nLayers[iP]], g_err_y[nLayers[iP]];
 	  for(UInt_t iL=0 ; iL<nLayers[iP] ; iL++) {
 	    g_x[iL]     = idxLayers[0][iP][iL];
 	    g_err_x[iL] = idxLayers[1][iP][iL];
-	    g_y[iL]     = values[iV][0][iP][iF][iL][iPS]; 
-	    g_err_y[iL] = values[iV][1][iP][iF][iL][iPS]; 
+	    g_y[iL]     = values[iV][0][iP][iF][iPS][iL]; 
+	    g_err_y[iL] = values[iV][1][iP][iF][iPS][iL]; 
 	  }
+
+	  if(verbose>2) cout << "----- build TGraphError" << endl;
 	
 	  // effi, respX,resolX,err_respX,err_resolX, respY,resolY,err_respY,err_resolY;
 	  g_effi[iV][iP][iF][iPS] = TGraphErrors(    nLayers[iP]-iStartLay[iP] , 
@@ -384,13 +388,19 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 						     (iStartLay[iP]+g_err_x),
 						     (iStartLay[iP]+g_err_y)
 						     );
+
+	  if(verbose>2) cout << "----- compute maximum" << endl;
 	
 	  if( g_max[iV][iP][iF][iPS]>g_maximum[iV][iF][iPS] ) g_maximum[iV][iF][iPS] = g_max[iV][iP][iF][iPS];
-	
+
 	}
+	if(verbose>2) cout << "---- end loop over nPart" << endl;
       }
+      if(verbose>2) cout << "--- end loop over variables" << endl;
     }
+    if(verbose>2) cout << "-- end loop over nFit" << endl;
   }
+  if(verbose>2) cout << "- end loop over nPS" << endl;
 
   // Draw graphs : effi(TB,TE1,TE2), response(TB,TE1,TE2), resolution(TB,TE1,TE2)
   if(verbose>1) cout << "- draw graphs" << endl;
