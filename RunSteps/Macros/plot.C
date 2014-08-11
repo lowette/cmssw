@@ -253,62 +253,62 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 	if( nameHisto.Contains("Efficiency") && nameHisto.Contains("Primary") ) {
 	  if(verbose>2) cout << "--- enter Efficiency Primary" << endl;
 
-	  values[0][0][iP][0][iL][idxPS] = mean;
-	  values[0][1][iP][0][iL][idxPS] = err_mean;
-	  values[0][0][iP][1][iL][idxPS] = fMean;
-	  values[0][1][iP][1][iL][idxPS] = err_fMean;
+	  values[0][0][iP][0][idxPS][iL] = mean;
+	  values[0][1][iP][0][idxPS][iL] = err_mean;
+	  values[0][0][iP][1][idxPS][iL] = fMean;
+	  values[0][1][iP][1][idxPS][iL] = err_fMean;
 	}
 	  
 	if(nameHisto.Contains("DeltaX")) {
 	  if(nameHisto.Contains("simhit")) {
 	    if(verbose>2) cout << "--- enter DeltaX" << endl;
 	    
-	    values[1][0][iP][0][iL][idxPS] = mean;
-	    values[1][1][iP][0][iL][idxPS] = err_mean;
-	    values[2][0][iP][0][iL][idxPS] = rms;
-	    values[2][1][iP][0][iL][idxPS] = err_rms;
+	    values[1][0][iP][0][idxPS][iL] = mean;
+	    values[1][1][iP][0][idxPS][iL] = err_mean;
+	    values[2][0][iP][0][idxPS][iL] = rms;
+	    values[2][1][iP][0][idxPS][iL] = err_rms;
 	    
-	    values[1][0][iP][1][iL][idxPS] = fMean;
-	    values[1][1][iP][1][iL][idxPS] = err_fMean;
-	    values[2][0][iP][1][iL][idxPS] = fSigma;
-	    values[2][1][iP][1][iL][idxPS] = err_fSigma;
+	    values[1][0][iP][1][idxPS][iL] = fMean;
+	    values[1][1][iP][1][idxPS][iL] = err_fMean;
+	    values[2][0][iP][1][idxPS][iL] = fSigma;
+	    values[2][1][iP][1][idxPS][iL] = err_fSigma;
 	  }
 	  else if(nameHisto.Contains("RecHit")) {
-	    values[5][0][iP][0][iL][idxPS] = mean;
-	    values[5][1][iP][0][iL][idxPS] = err_mean;
-	    values[6][0][iP][0][iL][idxPS] = rms;
-	    values[6][1][iP][0][iL][idxPS] = err_rms;
+	    values[5][0][iP][0][idxPS][iL] = mean;
+	    values[5][1][iP][0][idxPS][iL] = err_mean;
+	    values[6][0][iP][0][idxPS][iL] = rms;
+	    values[6][1][iP][0][idxPS][iL] = err_rms;
 	    
-	    values[5][0][iP][1][iL][idxPS] = fMean;
-	    values[5][1][iP][1][iL][idxPS] = err_fMean;
-	    values[6][0][iP][1][iL][idxPS] = fSigma;
-	    values[6][1][iP][1][iL][idxPS] = err_fSigma;
+	    values[5][0][iP][1][idxPS][iL] = fMean;
+	    values[5][1][iP][1][idxPS][iL] = err_fMean;
+	    values[6][0][iP][1][idxPS][iL] = fSigma;
+	    values[6][1][iP][1][idxPS][iL] = err_fSigma;
 	  }
 	}
 	if(nameHisto.Contains("DeltaY")) {
 	  if(nameHisto.Contains("simhit")) {
 	    if(verbose>2) cout << "--- enter DeltaY" << endl;
 	    
-	    values[3][0][iP][0][iL][idxPS] = mean;
-	    values[3][1][iP][0][iL][idxPS] = err_mean;
-	    values[4][0][iP][0][iL][idxPS] = rms;
-	    values[4][1][iP][0][iL][idxPS] = err_rms;
+	    values[3][0][iP][0][idxPS][iL] = mean;
+	    values[3][1][iP][0][idxPS][iL] = err_mean;
+	    values[4][0][iP][0][idxPS][iL] = rms;
+	    values[4][1][iP][0][idxPS][iL] = err_rms;
 	    
-	    values[3][0][iP][1][iL][idxPS] = fMean;
-	    values[3][1][iP][1][iL][idxPS] = err_fMean;
-	    values[4][0][iP][1][iL][idxPS] = fSigma;
-	    values[4][1][iP][1][iL][idxPS] = err_fSigma;
+	    values[3][0][iP][1][idxPS][iL] = fMean;
+	    values[3][1][iP][1][idxPS][iL] = err_fMean;
+	    values[4][0][iP][1][idxPS][iL] = fSigma;
+	    values[4][1][iP][1][idxPS][iL] = err_fSigma;
 	  }
 	  else if(nameHisto.Contains("RecHit")) {
-	    values[7][0][iP][0][iL][idxPS] = mean;
-	    values[7][1][iP][0][iL][idxPS] = err_mean;
-	    values[8][0][iP][0][iL][idxPS] = rms;
-	    values[8][1][iP][0][iL][idxPS] = err_rms;
+	    values[7][0][iP][0][idxPS][iL] = mean;
+	    values[7][1][iP][0][idxPS][iL] = err_mean;
+	    values[8][0][iP][0][idxPS][iL] = rms;
+	    values[8][1][iP][0][idxPS][iL] = err_rms;
 	    
-	    values[7][0][iP][1][iL][idxPS] = fMean;
-	    values[7][1][iP][1][iL][idxPS] = err_fMean;
-	    values[8][0][iP][1][iL][idxPS] = fSigma;
-	    values[8][1][iP][1][iL][idxPS] = err_fSigma;
+	    values[7][0][iP][1][idxPS][iL] = fMean;
+	    values[7][1][iP][1][idxPS][iL] = err_fMean;
+	    values[8][0][iP][1][idxPS][iL] = fSigma;
+	    values[8][1][iP][1][idxPS][iL] = err_fSigma;
 	  }
 	}
 	
@@ -339,7 +339,7 @@ int plot(TString level="Digis", TString file="../Output/DigiValidation_Phase2.ro
 	for(UInt_t iV=0 ; iV<nVar ; iV++) {
 	  for(UInt_t iPS=0 ; iPS<nPS_L ; iPS++) {
 	  
-	    tempMax = values[iV][0][iP][iF][iL][iPS];
+	    tempMax = values[iV][0][iP][iF][iPS][iL];
 	  
 	    if(verbose>2)
 	      cout << "--- "    << g_name[iV] 
