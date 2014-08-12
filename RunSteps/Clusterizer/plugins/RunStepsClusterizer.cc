@@ -2,6 +2,7 @@
 #include "RunSteps/Clusterizer/interface/PixelClusterizer.h"
 #include "RunSteps/Clusterizer/interface/WeightedMeans2D.h"
 #include "RunSteps/Clusterizer/interface/AdjacentHits.h"
+#include "RunSteps/Clusterizer/interface/RealClusterizer1D.h"
 #include "RunSteps/Clusterizer/interface/PixelClusterSimLink.h"
 
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
@@ -47,6 +48,10 @@ namespace cms {
             std::cout << "Using the AdjacentHits algorithm" << std::endl;
             clusterizer_ = new AdjacentHits(conf);
         }
+        else if (algorithm_.compare("RealClusterizer1D") == 0) {
+            std::cout << "Using the RealClusterizer1D algorithm" << std::endl;
+            clusterizer_ = new RealClusterizer1D(conf);
+        }
         else {
             std::cout << "Using the default algorithm" << std::endl;
             clusterizer_ = new AdjacentHits(conf);
@@ -60,6 +65,7 @@ namespace cms {
     }
 
     void RunStepsClusterizer::produce(edm::Event & e, const edm::EventSetup & eventSetup) {
+
         // Get the Digis
         edm::Handle< edm::DetSetVector<PixelDigi> >  digis;
         e.getByLabel(src_, digis);
@@ -75,7 +81,7 @@ namespace cms {
         // Global container for the clusters of each detector
         std::auto_ptr<SiPixelClusterCollectionNew> outputClusters( new SiPixelClusterCollectionNew() );
 
-	   // Go over all the detectors
+        // Go over all the detectors
         for (edm::DetSetVector<PixelDigi>::const_iterator DSViter = digis->begin(); DSViter != digis->end(); ++DSViter) {
             DetId detIdObject(DSViter->detId());
             const GeomDetUnit* geoUnit = geom->idToDetUnit(detIdObject);
@@ -94,7 +100,7 @@ namespace cms {
 
             if (clusters.empty()) clusters.abort();
         }
-
+        
         // Add the data to the output
         edm::OrphanHandle< edmNew::DetSetVector< SiPixelCluster > > clusterCollection = e.put(outputClusters);
 
