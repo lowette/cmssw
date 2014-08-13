@@ -26,16 +26,24 @@ int compare()
   
   gStyle->SetTitleSize(0.05, "XYZ");
 
-  const int nT=2;
-  const int nD=2;
-  const int nC=2;
-  const int nP=3;
-  const int nV=5;
-  const int nCase=2;
+  const UInt_t nT=2;
+  const UInt_t nD=2;
+  const UInt_t nC=2;
+  const UInt_t nP=3;
+  const UInt_t nV=5;
+  const UInt_t nCase=2;
+  const UInt_t nPS=3;
 
   TFile* file[ nT][nD][nC];
-  TGraph graph[nV][nP][nT][nD][nC];
+  TGraph graph[nV][nP][nT][nD][nC][nPS];
   TGraph* gTemp=0;
+  
+  // Module type
+  vector<TString> namePS[nT];
+  namePS[0].push_back("");
+  namePS[1].push_back("_AllMod");
+  namePS[1].push_back("_PixelMod");
+  namePS[1].push_back("_StripMod");
 
   TString type[ nT]={"Digis","Clusters"};
   TString algoD[nD]={"DigiRun1","DigiPhase2"};
@@ -60,17 +68,18 @@ int compare()
 
   // Graph maxima
   double tempMax=0, tempMin=0;
-  double g_max[nV][nP][nT], g_min[nV][nP][nT];
-  for(int iV=0 ; iV<nV ; iV++)
-    for(int iP=0 ; iP<nP ; iP++)
-      for(int iT=0 ; iT<nT ; iT++) {
-	g_max[iV][iP][iT]=0;
-	g_min[iV][iP][iT]=9999999999;
+  double g_max[nV][nP][nT][nPS], g_min[nV][nP][nT][nPS];
+  for(UInt_t iV=0 ; iV<nV ; iV++)
+    for(UInt_t iP=0 ; iP<nP ; iP++)
+      for(UInt_t iT=0 ; iT<nT ; iT++)
+	for(UInt_t iPS=0 ; iPS<namePS[iT].size() ; iPS++) {
+	  g_max[iV][iP][iT][iPS]=0;
+	  g_min[iV][iP][iT][iPS]=9999999999;
       }
 
-  for(int iT=0 ; iT<nT ; iT++) {
-    for(int iD=0 ; iD<nD ; iD++) {
-      for(int iC=0 ; iC<nC ; iC++) {
+  for(UInt_t iT=0 ; iT<nT ; iT++) {
+    for(UInt_t iD=0 ; iD<nD ; iD++) {
+      for(UInt_t iC=0 ; iC<nC ; iC++) {
 
 	filename = path+"/"+algoD[iD]+"_"+algoC[iC]+"/"+type[iT]+"/SummaryPlots/"+type[iT]+"Summary.root" ;
 
@@ -82,26 +91,28 @@ int compare()
 	}
 
 	// Get all kinds of graphs from file (iT,iD,iC)
-	for(int iV=0 ; iV<nV ; iV++) {
-	  for(int iP=0 ; iP<nP ; iP++) {
+	for(UInt_t iV=0 ; iV<nV ; iV++) {
+	  for(UInt_t iP=0 ; iP<nP ; iP++) {
+	    for(UInt_t iPS=0 ; iPS<namePS[iT].size() ; iPS++) {
 
-	    file[ iT][iD][iC]->GetObject( "g_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP] , gTemp );
-	    graph[iV][iP][iT][iD][iC] = (*gTemp);
+	      file[ iT][iD][iC]->GetObject( "g_"+type[iT]+"_"+g_name[iV]+"_"+namePS[iT][iPS]+"_"+namePart[iP] , gTemp );
+	      graph[iV][iP][iT][iD][iC][iPS] = (*gTemp);
 
-	    tempMax = getMaximum( graph[iV][iP][iT][iD][iC] , g_xmin[iP] , g_xmax[iP]);
-	    tempMin = getMinimum( graph[iV][iP][iT][iD][iC] , g_xmin[iP] , g_xmax[iP] );
+	      tempMax = getMaximum( graph[iV][iP][iT][iD][iC][iPS] , g_xmin[iP] , g_xmax[iP]);
+	      tempMin = getMinimum( graph[iV][iP][iT][iD][iC][iPS] , g_xmin[iP] , g_xmax[iP] );
 
-	    if(tempMax > g_max[iV][iP][iT]) g_max[iV][iP][iT] = tempMax;
-	    if(tempMin < g_min[iV][iP][iT]) g_min[iV][iP][iT] = tempMin;
+	      if(tempMax > g_max[iV][iP][iT][iPS]) g_max[iV][iP][iT][iPS] = tempMax;
+	      if(tempMin < g_min[iV][iP][iT][iPS]) g_min[iV][iP][iT][iPS] = tempMin;
 
-	    if(verbose>1)// && tempMax==0) 
-	      cout << algoD[iD]+"_"+algoC[iC]
-		   << " : GRAPH = "  << "g_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP] 
-		   << " ; MAX = " << tempMax << endl;
+	      if(verbose>1)// && tempMax==0) 
+		cout << algoD[iD]+"_"+algoC[iC]
+		     << " : GRAPH = "  << "g_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP] 
+		     << " ; MAX = " << tempMax << endl;
 
-	    if(verbose>1)// && tempMin==0) 
-	      cout << " ; MIN = " << tempMin << endl;
+	      if(verbose>1)// && tempMin==0) 
+		cout << " ; MIN = " << tempMin << endl;
 
+	    }
 	  }
 	}
 	// got the graphs from file (iT,iD,iC)
@@ -110,77 +121,79 @@ int compare()
   }  
 
   // Produce the summary plots for digis, then for clusters
-  for(int iT=0 ; iT<nT ; iT++) {
+  for(UInt_t iT=0 ; iT<nT ; iT++) {
 
     // Loop over all kinds of plot (iV,iP)=(variable,part of the tracker)
-    for(int iV=0 ; iV<nV ; iV++) {
-      for(int iP=0 ; iP<nP ; iP++) {
+    for(UInt_t iV=0 ; iV<nV ; iV++) {
+      for(UInt_t iP=0 ; iP<nP ; iP++) {
+	for(UInt_t iPS=0 ; iPS<namePS[iT].size() ; iPS++) {
 
-	TCanvas c_graph("cg","cg",10,10,800,600);
+	  TCanvas c_graph("cg","cg",10,10,800,600);
 
-	TLegend leg(0.80 , 0.75 , 0.975 , 0.95);
-	leg.SetMargin(0.15);
-	leg.SetLineColor(1);
-	leg.SetTextColor(1);
-	leg.SetTextFont(42);
-	leg.SetTextSize(0.03);
-	leg.SetShadowColor(kWhite);
-	leg.SetFillColor(kWhite);
+	  TLegend leg(0.80 , 0.75 , 0.975 , 0.95);
+	  leg.SetMargin(0.15);
+	  leg.SetLineColor(1);
+	  leg.SetTextColor(1);
+	  leg.SetTextFont(42);
+	  leg.SetTextSize(0.03);
+	  leg.SetShadowColor(kWhite);
+	  leg.SetFillColor(kWhite);
 
-	// Loop over all digitizers and clusterizers to compare on the same plot
-	for(int iD=0 ; iD<nD ; iD++) {
-	  for(int iC=0 ; iC<nC ; iC++) {
+	  // Loop over all digitizers and clusterizers to compare on the same plot
+	  for(UInt_t iD=0 ; iD<nD ; iD++) {
+	    for(UInt_t iC=0 ; iC<nC ; iC++) {
 
-	    if(iV>0) {
-	      graph[iV][iP][iT][iD][iC].SetMaximum( 1.05*g_max[iV][iP][iT] );
-	      graph[iV][iP][iT][iD][iC].SetMinimum( g_min[iV][iP][iT] );
-	    }
+	      if(iV>0) {
+		graph[iV][iP][iT][iD][iC][iPS].SetMaximum( 1.05*g_max[iV][iP][iT][iPS] );
+		graph[iV][iP][iT][iD][iC][iPS].SetMinimum( g_min[iV][iP][iT][iPS] );
+	      }
 
-	    if(verbose>1) cout << "PLOT : "   << type[iT]+" "+g_name[iV]+" "+namePart[iP] 
-			       << " ; MAX : " << 1.05*g_max[iV][iP][iT]          
-			       << endl;
+	      if(verbose>1) cout << "PLOT : "   << type[iT]+" "+g_name[iV]+" "+namePart[iP] 
+				 << " ; MAX : " << 1.05*g_max[iV][iP][iT][iPS]          
+				 << endl;
 	    
-	    // Labels
-	    graph[iV][iP][iT][iD][iC].SetTitle( type[iT]+" "+g_name[iV]+" "+namePart[iP] );
-	    graph[iV][iP][iT][iD][iC].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
-	    graph[iV][iP][iT][iD][iC].GetYaxis()->SetTitle( g_titleY[iV] );
+	      // Labels
+	      graph[iV][iP][iT][iD][iC][iPS].SetTitle( type[iT]+" "+g_name[iV]+" "+namePart[iP] );
+	      graph[iV][iP][iT][iD][iC][iPS].GetXaxis()->SetTitle( nameTypeLayer[iP][0] );
+	      graph[iV][iP][iT][iD][iC][iPS].GetYaxis()->SetTitle( g_titleY[iV] );
 
-	    // Style
-	    int linestyle;
-	    if(iC==0) linestyle=7;
-	    else      linestyle=6;
-	    graph[iV][iP][iT][iD][iC].SetLineStyle(linestyle);
-	    graph[iV][iP][iT][iD][iC].SetLineColor(mycolor[iD][iC]);
-	    graph[iV][iP][iT][iD][iC].SetMarkerColor(mycolor[iD][iC]);
-	    graph[iV][iP][iT][iD][iC].SetMarkerStyle(mystyle[iD][iC]);
-	    graph[iV][iP][iT][iD][iC].SetMarkerSize(1.2);
+	      // Style
+	      int linestyle;
+	      if(iC==0) linestyle=7;
+	      else      linestyle=6;
+	      graph[iV][iP][iT][iD][iC][iPS].SetLineStyle(linestyle);
+	      graph[iV][iP][iT][iD][iC][iPS].SetLineColor(mycolor[iD][iC]);
+	      graph[iV][iP][iT][iD][iC][iPS].SetMarkerColor(mycolor[iD][iC]);
+	      graph[iV][iP][iT][iD][iC][iPS].SetMarkerStyle(mystyle[iD][iC]);
+	      graph[iV][iP][iT][iD][iC][iPS].SetMarkerSize(1.2);
 
-	    // Plot
-	    if(iD==0 && iC==0) graph[iV][iP][iT][iD][iC].Draw("APL");
-	    else               graph[iV][iP][iT][iD][iC].Draw("PLSAME");
+	      // Plot
+	      if(iD==0 && iC==0) graph[iV][iP][iT][iD][iC][iPS].Draw("APL");
+	      else               graph[iV][iP][iT][iD][iC][iPS].Draw("PLSAME");
 
-	    // Legend
-	    leg.AddEntry( &(graph[iV][iP][iT][iD][iC]) , algoD_r[iD]+" "+algoC_r[iC] , "P");
+	      // Legend
+	      leg.AddEntry( &(graph[iV][iP][iT][iD][iC][iPS]) , algoD_r[iD]+" "+algoC_r[iC] , "P");
 
+	    }
 	  }
-	}
 
-	// Plot the summary plot for type iT, variable iV, tracker part iP
-	leg.Draw();
-	c_graph.Print(path+"/ComparisonPlots/graph_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP]+".pdf");
+	  // Plot the summary plot for type iT, variable iV, tracker part iP
+	  leg.Draw();
+	  c_graph.Print(path+"/ComparisonPlots/graph_"+type[iT]+"_"+g_name[iV]+"_"+namePart[iP]+namePS[iT][iPS]+".pdf");
 	
-      }
-    }
-  }
+	} // end loop over iPS module types
+      } // end loop over iP parts
+    } // end loop over iV variables
+  } // end loop over object type
   
   // Close all input files
   /*
-  for(int iT=0 ; iT<nT ; iT++)
-    for(int iD=0 ; iD<nD ; iD++)
-      for(int iC=0 ; iC<nC ; iC++)
+  for(UInt_t iT=0 ; iT<nT ; iT++)
+    for(UInt_t iD=0 ; iD<nD ; iD++)
+      for(UInt_t iC=0 ; iC<nC ; iC++)
 	file[iT][iD][iC]->Close();
   */
-
+  
   return 0;
 }
 
