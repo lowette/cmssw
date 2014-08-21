@@ -10,6 +10,9 @@ all:
 generation:
 	cmsRun Generation/python/Generation.py _n $(n) _output $(output)
 
+new_digitizer:
+	cmsRun Digitizer/python/NewDigitizer.py _n $(n) _input $(input) _output $(output)
+
 digitizer:
 	cmsRun Digitizer/python/Digitizer.py _n $(n) _input $(input) _output $(output)
 
