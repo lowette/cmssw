@@ -17,7 +17,7 @@ old_digitizer:
 	cmsRun Digitizer/python/OldDigitizer.py _input $(input) _output $(output)
 
 clusterizer:
-	cmsRun Clusterizer/python/Clusterizer.py _input $(input) _output $(output) _algo $(algo)
+	cmsRun Clusterizer/python/Clusterizer.py _n $(n) _input $(input) _output $(output) _algo $(algo)
 
 validation_digitizer:
 	cmsRun Digitizer/test/RunDigiValidation.py _input $(input) _output $(output)
