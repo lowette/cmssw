@@ -5,12 +5,16 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_phase2_BE5D
 
 # Default parameters
+n = -1
 input_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/GEN_SIM.root'
 output_file = os.path.dirname(os.path.realpath(sys.argv[1])) + '/../../Output/DIGI.root'
 
 # Look for updates in the parameters using the program's input
 for i in range(2, len(sys.argv)):
-    if (sys.argv[i] == '_output' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
+    if (sys.argv[i] == '_n' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
+        n = int(sys.argv[i+1])         
+        i += 1
+    elif (sys.argv[i] == '_output' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
         output_file = sys.argv[i+1]
         i += 1
     elif (sys.argv[i] == '_input' and len(sys.argv) > i + 1 and sys.argv[i+1][0] != '_'):
@@ -20,6 +24,7 @@ for i in range(2, len(sys.argv)):
 # Greetings
 print '------------------------------------------------------------'
 print '-- Running the Digitizer step with the following arguments:'
+print '-- Number of events: ' + str(n) 
 print '-- Input file: ' + input_file
 print '-- Output file: ' + output_file
 print '------------------------------------------------------------'
@@ -44,14 +49,26 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 # Number of events (-1 = all)
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(n)
 )
 
-# Input file
-process.source = cms.Source("PoolSource",
-   fileNames = cms.untracked.vstring('file:' + input_file)
-    # fileNames = cms.untracked.vstring('/store/relval/CMSSW_6_2_0_SLHC7/RelValFourMuPt1_200_UPG2023_BE5D/GEN-SIM/DES19_62_V8_UPG2023-v2/00000/EC4C06C3-2890-E311-BD11-003048FEB966.root')
-)
+########################################################
+##################### Input files ######################
+########################################################
+
+## standard choice:input_file parameter is a name of file
+myfileNames = cms.untracked.vstring('file:'+input_file)
+
+## input_file is a tag to call a whole set of input files
+from RunSteps.Digitizer.files_tti_zmm_cfi import *
+
+if input_file=="tti_zmm":
+    myfileNames = tti_zmm
+
+## define the source
+process.source = cms.Source("PoolSource",fileNames = myfileNames)
+
+########################################################
 
 # Options
 process.options = cms.untracked.PSet()
