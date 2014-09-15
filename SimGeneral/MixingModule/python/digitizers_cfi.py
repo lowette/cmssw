@@ -8,10 +8,12 @@ from SimGeneral.MixingModule.ecalDigitizer_cfi import *
 from SimGeneral.MixingModule.hcalDigitizer_cfi import *
 from SimGeneral.MixingModule.castorDigitizer_cfi import *
 from SimGeneral.MixingModule.trackingTruthProducerSelection_cfi import *
+from SimTracker.SiPhase2Digitizer.phase2TrackerDigitizer_cfi import *
 
 theDigitizers = cms.PSet(
   pixel = cms.PSet(
-    pixelDigitizer
+    phase2TrackerDigitizer
+    #pixelDigitizer
   ),
   strip = cms.PSet(
     stripDigitizer
@@ -29,7 +31,8 @@ theDigitizers = cms.PSet(
 
 theDigitizersValid = cms.PSet(
   pixel = cms.PSet(
-    pixelDigitizer
+    phase2TrackerDigitizer
+    #pixelDigitizer
   ),
   strip = cms.PSet(
     stripDigitizer
