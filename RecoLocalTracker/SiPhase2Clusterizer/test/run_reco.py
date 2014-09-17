@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.20 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: SingleElectronPt10_cfi --conditions auto:upgradePLS3 -n 10 --eventcontent FEVTDEBUGHLT -s RECO --datatier RECO --customise SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023Muon --geometry Extended2023Muon,Extended2023MuonReco --magField 38T_PostLS1 --python SingleElectron_Extended2023Muon.py --no_exec --fileout file:reco.root --filein file:digi_fuck.root
+# with command line options: SingleElectronPt10_cfi --conditions auto:upgradePLS3 -n 10 --eventcontent FEVTDEBUGHLT -s RECO --datatier RECO --customise SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023Muon --geometry Extended2023Muon,Extended2023MuonReco --magField 38T_PostLS1 --python SingleElectron_Extended2023Muon.py --no_exec --fileout file:reco.root --filein file:digi.root
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('RECO')
