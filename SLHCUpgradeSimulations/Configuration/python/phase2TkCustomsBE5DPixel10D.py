@@ -84,9 +84,9 @@ def customise_Reco(process,pileup):
         if hasattr(process, b):
             getattr(process, b).outputCommands.append('keep *_siPhase2Clusters_*_*')
 
-    #change rechits input
+    #change inputs
     process.siPixelRecHits.src = cms.InputTag("siPhase2Clusters")
-
+    process.clusterSummaryProducer.pixelClusters = cms.InputTag("siPhase2Clusters")
 
 
 
