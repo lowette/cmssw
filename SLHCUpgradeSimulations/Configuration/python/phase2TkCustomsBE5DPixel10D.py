@@ -71,6 +71,23 @@ def customise_RawToDigi(process):
 
 def customise_Reco(process,pileup):
 
+    #customize the RecoLocalTracker
+
+    #swutch to new clusterizer 
+    process.load('RecoLocalTracker.SiPhase2Clusterizer.phase2clusterizer_cfi')
+    process.pixeltrackerlocalreco.replace(process.siPixelClusters, process.siPhase2Clusters)
+
+    #keep new clusters
+    alist = ['RAWSIM','FEVTDEBUG','FEVTDEBUGHLT','GENRAW','RAWSIMHLT','FEVT']
+    for a in alist:
+        b = a + 'output'
+        if hasattr(process, b):
+            getattr(process, b).outputCommands.append('keep *_siPhase2Clusters_*_*')
+
+    #change rechits input
+    process.siPixelRecHits.src = cms.InputTag("siPhase2Clusters")
+
+
 
 
     #use with latest pixel geometry

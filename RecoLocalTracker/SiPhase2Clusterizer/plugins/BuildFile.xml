@@ -1,0 +1,6 @@
+<use name="RecoLocalTracker/SiPhase2Clusterizer"/>
+<use name="CalibTracker/SiPixelESProducers"/>
+<use name="DataFormats/TrackerRecHit2D"/>
+<library file="*.cc" name="SiPhase2Clusterizer">
+	<flags EDM_PLUGIN="1"/>
+</library>
