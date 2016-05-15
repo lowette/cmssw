@@ -41,8 +41,6 @@ Phase2StripCPEESProducer::Phase2StripCPEESProducer(const edm::ParameterSet & p) 
 
   std::string name = p.getParameter<std::string>("ComponentType");
 
-std::cout << "### SL Constructing CPE... " << name << std::endl;
-
   enumMap_[std::string("Phase2StripCPETrivial")]   = TRIVIAL;
   enumMap_[std::string("Phase2StripCPEGeometric")] = GEOMETRIC;
   if (enumMap_.find(name) == enumMap_.end())
@@ -52,14 +50,10 @@ std::cout << "### SL Constructing CPE... " << name << std::endl;
   pset_ = p;
   setWhatProduced(this, name);
 
-std::cout << "### SL Constructing CPE done." << std::endl;
-
 }
 
 
 boost::shared_ptr<ClusterParameterEstimator<Phase2TrackerCluster1D> > Phase2StripCPEESProducer::produce(const TkStripCPERecord & iRecord) {
-
-std::cout << "### SL Producing CPE..." << std::endl;
 
   switch(cpeNum_) {
     case TRIVIAL:
@@ -70,8 +64,6 @@ std::cout << "### SL Producing CPE..." << std::endl;
       break;
   }
   return cpe_;
-
-std::cout << "### SL Producing CPE done." << std::endl;
 
 }
 
