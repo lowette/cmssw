@@ -152,10 +152,10 @@ void Phase2TrackerRecHitsValidation::analyze(const edm::Event& event, const edm:
              * Cluster related variables
              */
 
-            //LocalPoint localPosClu = rechitIt->localPosition();
-            LocalPoint localPosClu(1, 2, 3);
-            //Global3DPoint globalPosClu = geomDetUnit->surface().toGlobal(localPosClu);
-            Global3DPoint globalPosClu(0, 0, 0); 
+            LocalPoint localPosClu = rechitIt->localPosition();
+            //LocalPoint localPosClu(1, 2, 3);
+            Global3DPoint globalPosClu = geomDetUnit->surface().toGlobal(localPosClu);
+            //Global3DPoint globalPosClu(0, 0, 0); 
 
             // Fill the position histograms
             trackerLayout_->Fill(globalPosClu.z(), globalPosClu.perp());
