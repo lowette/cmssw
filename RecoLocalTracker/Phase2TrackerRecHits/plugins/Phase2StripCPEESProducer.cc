@@ -46,7 +46,7 @@ Phase2StripCPEESProducer::Phase2StripCPEESProducer(const edm::ParameterSet & p) 
     throw cms::Exception("Unknown StripCPE type") << name;
 
   cpeNum_ = enumMap_[name];
-  pset_ = p;
+  pset_ = p.getParameter<edm::ParameterSet>("parameters");
   setWhatProduced(this, name);
 }
 
