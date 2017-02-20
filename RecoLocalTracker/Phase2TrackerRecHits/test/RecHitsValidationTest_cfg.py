@@ -46,7 +46,8 @@ process.analysis = cms.EDAnalyzer('Phase2TrackerRecHitsValidation',
     links = cms.InputTag("simSiPixelDigis", "Tracker"),
     simhitsbarrel = cms.InputTag("g4SimHits", "TrackerHitsPixelBarrelLowTof"),
     simhitsendcap = cms.InputTag("g4SimHits", "TrackerHitsPixelEndcapLowTof"),
-    simtracks = cms.InputTag("g4SimHits")
+    simtracks = cms.InputTag("g4SimHits"),
+    ECasRings = cms.bool(True)
 )
 
 # Processes to run
