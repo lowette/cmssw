@@ -603,6 +603,60 @@ std::cout << clsstr.c_str() << std::endl;
     local_histos.otherSimHits= td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 10, 0., 10.);
 
     /*
+     * Delta positions with SimHits
+     */
+
+    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Mixed" << tag.c_str() <<  id;
+    local_histos.deltaXRecHitsSimHits[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
+
+    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Pixel" << tag.c_str() <<  id;
+    local_histos.deltaXRecHitsSimHits[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
+
+    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Strip" << tag.c_str() <<  id;
+    local_histos.deltaXRecHitsSimHits[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
+
+    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Mixed" << tag.c_str() <<  id;
+    local_histos.deltaYRecHitsSimHits[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
+
+    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Pixel" << tag.c_str() <<  id;
+    local_histos.deltaYRecHitsSimHits[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.2, 0.2);
+
+    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Strip" << tag.c_str() <<  id;
+    local_histos.deltaYRecHitsSimHits[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
+
+    /*
+     * Delta position with simHits for primary tracks only
+     */
+
+    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Mixed_P" << tag.c_str() <<  id;
+    local_histos.deltaXRecHitsSimHits_P[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
+
+    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Pixel_P" << tag.c_str() <<  id;
+    local_histos.deltaXRecHitsSimHits_P[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
+
+    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Strip_P" << tag.c_str() <<  id;
+    local_histos.deltaXRecHitsSimHits_P[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
+
+    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Mixed_P" << tag.c_str() <<  id;
+    local_histos.deltaYRecHitsSimHits_P[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
+
+    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Pixel_P" << tag.c_str() <<  id;
+    local_histos.deltaYRecHitsSimHits_P[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.2, 0.2);
+
+    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Strip_P" << tag.c_str() <<  id;
+    local_histos.deltaYRecHitsSimHits_P[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
+
+    /*
+     * Information on the Digis per cluster
+     */
+
+    histoName.str(""); histoName << "Primary_Digis" << tag.c_str() <<  id;
+    local_histos.primarySimHits= td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 10, 0., 10.);
+
+    histoName.str(""); histoName << "Other_Digis" << tag.c_str() <<  id;
+    local_histos.otherSimHits= td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 10, 0., 10.);
+
+    /*
      * End
      */
 
