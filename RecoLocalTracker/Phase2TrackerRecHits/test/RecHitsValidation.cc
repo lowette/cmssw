@@ -48,6 +48,8 @@ struct RecHitHistos {
     TH1D* numberRecHitsPixel;
     TH1D* numberRecHitsStrip;
 
+    TH1D* clusterSize[3];
+
     TH2D* globalPosXY[3][5];
     TH2D* localPosXY[3][5];
 
@@ -222,6 +224,9 @@ void Phase2TrackerRecHitsValidation::analyze(const edm::Event& event, const edm:
      */
 
 
+    // Number of rechits
+    unsigned int nRecHitsPixel(0), nRecHitsStrip(0);
+
     // Loop over modules
     for (Phase2TrackerRecHit1DCollectionNew::const_iterator DSViter = rechits->begin(); DSViter != rechits->end(); ++DSViter) {
 
@@ -251,13 +256,10 @@ void Phase2TrackerRecHitsValidation::analyze(const edm::Event& event, const edm:
 
         // Get the geomdet
         const GeomDetUnit* geomDetUnit(tkGeom->idToDetUnit(detId));
-        if (!geomDetUnit) break;
+        if (!geomDetUnit) continue;
         // Create histograms for the layer if they do not yet exist
         std::map< unsigned int, RecHitHistos >::iterator histogramLayer(histograms_.find(layer));
         if (histogramLayer == histograms_.end()) histogramLayer = createLayerHistograms(layer);
-
-        // Number of rechits
-        unsigned int nRecHitsPixel(0), nRecHitsStrip(0);
 
         // Loop over the rechits in the detector unit
         for (edmNew::DetSet< Phase2TrackerRecHit1D >::const_iterator rechitIt = DSViter->begin(); rechitIt != DSViter->end(); ++rechitIt) {
@@ -266,11 +268,14 @@ void Phase2TrackerRecHitsValidation::analyze(const edm::Event& event, const edm:
              * Rechit related variables
              */
 
+	    unsigned int nch = rechitIt->cluster()->size();
+            // fill the cluster size histogram
+            histogramLayer->second.clusterSize[det]->Fill(nch);
+	    if (nch>4) nch=4; // collapse 4 or more strips to 4
+
             LocalPoint localPosClu = rechitIt->localPosition();
             Global3DPoint globalPosClu = geomDetUnit->surface().toGlobal(localPosClu);
 	    float eta = globalPosClu.eta();
-	    unsigned int nch = rechitIt->cluster()->size();
-	    if (nch>4) nch=4; // collapse 4 or more strips to 4
 
             // Fill the position histograms
             trackerLayout_->Fill(globalPosClu.z(), globalPosClu.perp());
@@ -392,11 +397,14 @@ void Phase2TrackerRecHitsValidation::analyze(const edm::Event& event, const edm:
 
         }
 
-        // fill the rechit count histos
-        if (nRecHitsPixel) histogramLayer->second.numberRecHitsPixel->Fill(nRecHitsPixel);
-        if (nRecHitsStrip) histogramLayer->second.numberRecHitsStrip->Fill(nRecHitsStrip);
+      // WARNING! This is broken ; it shohuld be filled at the end of the loop
+      // but also per layer, so one should think on how to do this best.
+      // fill the rechit count histos
+      if (nRecHitsPixel) histogramLayer->second.numberRecHitsPixel->Fill(nRecHitsPixel);
+      if (nRecHitsStrip) histogramLayer->second.numberRecHitsStrip->Fill(nRecHitsStrip);
 
     }
+
 }
 
 
@@ -456,6 +464,11 @@ std::map< unsigned int, RecHitHistos >::iterator Phase2TrackerRecHitsValidation:
     local_histos.numberRecHitsMixed->Add(local_histos.numberRecHitsPixel);
     local_histos.numberRecHitsMixed->Add(local_histos.numberRecHitsStrip);
 
+    histoName.str(""); histoName << "Cluster_Size_Pixel" << tag.c_str() <<  id;
+    local_histos.clusterSize[1] = td.make< TH1D >(histoName.str().c_str(), histoName.str().c_str(), 20, 0, 20);
+    histoName.str(""); histoName << "Cluster_Size_Strip" << tag.c_str() <<  id;
+    local_histos.clusterSize[2] = td.make< TH1D >(histoName.str().c_str(), histoName.str().c_str(), 20, 0, 20);
+
     /*
      * Local and Global positions
      */
@@ -463,8 +476,6 @@ std::map< unsigned int, RecHitHistos >::iterator Phase2TrackerRecHitsValidation:
     for (int cls = 0; cls < 5; ++cls) {
       std::string clsstr = "";
       if (cls>0) clsstr = "_ClS_" + std::to_string(cls);
-
-std::cout << clsstr.c_str() << std::endl;
 
       histoName.str(""); histoName << "Local_Position_XY_Pixel" << tag.c_str() <<  id << clsstr.c_str();
       local_histos.localPosXY[1][cls] = td.make< TH2D >(histoName.str().c_str(), histoName.str().c_str(), 2000, 0., 0., 2000, 0., 0.);
@@ -591,60 +602,6 @@ std::cout << clsstr.c_str() << std::endl;
       local_histos.pullY_eta_P[2][cls] = td.make< TH2F >(histoName.str().c_str(), histoName.str().c_str(), 50, -2.5, 2.5, 100, -3., 3.);
 
     }
-
-    /*
-     * Information on the Digis per cluster
-     */
-
-    histoName.str(""); histoName << "Primary_Digis" << tag.c_str() <<  id;
-    local_histos.primarySimHits= td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 10, 0., 10.);
-
-    histoName.str(""); histoName << "Other_Digis" << tag.c_str() <<  id;
-    local_histos.otherSimHits= td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 10, 0., 10.);
-
-    /*
-     * Delta positions with SimHits
-     */
-
-    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Mixed" << tag.c_str() <<  id;
-    local_histos.deltaXRecHitsSimHits[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
-
-    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Pixel" << tag.c_str() <<  id;
-    local_histos.deltaXRecHitsSimHits[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
-
-    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Strip" << tag.c_str() <<  id;
-    local_histos.deltaXRecHitsSimHits[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
-
-    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Mixed" << tag.c_str() <<  id;
-    local_histos.deltaYRecHitsSimHits[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
-
-    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Pixel" << tag.c_str() <<  id;
-    local_histos.deltaYRecHitsSimHits[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.2, 0.2);
-
-    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Strip" << tag.c_str() <<  id;
-    local_histos.deltaYRecHitsSimHits[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
-
-    /*
-     * Delta position with simHits for primary tracks only
-     */
-
-    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Mixed_P" << tag.c_str() <<  id;
-    local_histos.deltaXRecHitsSimHits_P[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
-
-    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Pixel_P" << tag.c_str() <<  id;
-    local_histos.deltaXRecHitsSimHits_P[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
-
-    histoName.str(""); histoName << "Delta_X_RecHit_SimHits_Strip_P" << tag.c_str() <<  id;
-    local_histos.deltaXRecHitsSimHits_P[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.02, 0.02);
-
-    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Mixed_P" << tag.c_str() <<  id;
-    local_histos.deltaYRecHitsSimHits_P[0] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
-
-    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Pixel_P" << tag.c_str() <<  id;
-    local_histos.deltaYRecHitsSimHits_P[1] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, -0.2, 0.2);
-
-    histoName.str(""); histoName << "Delta_Y_RecHit_SimHits_Strip_P" << tag.c_str() <<  id;
-    local_histos.deltaYRecHitsSimHits_P[2] = td.make< TH1F >(histoName.str().c_str(), histoName.str().c_str(), 100, 0., 0.);
 
     /*
      * Information on the Digis per cluster
