@@ -3,27 +3,32 @@
 #include "TH1F.h"
 #include "TCanvas.h"
 #include "TLegend.h"
+#include "TText.h"
 
 
 void rechitresiduals() {
 
   TFile * f = TFile::Open("rechits_validation.root");
 
-  TH1F * h1p = (TH1F *) f->FindObjectAny("Number_RecHits_Pixel_layer_1");
-  TH1F * h2p = (TH1F *) f->FindObjectAny("Number_RecHits_Pixel_layer_2");
-  TH1F * h3p = (TH1F *) f->FindObjectAny("Number_RecHits_Pixel_layer_3");
+  TH1F * h1p = (TH1F *) f->FindObjectAny("Cluster_Size_Pixel_layer_1");
+  TH1F * h2p = (TH1F *) f->FindObjectAny("Cluster_Size_Pixel_layer_2");
+  TH1F * h3p = (TH1F *) f->FindObjectAny("Cluster_Size_Pixel_layer_3");
   h1p->Add(h2p);
   h1p->Add(h3p);
-  TH1F * h1s = (TH1F *) f->FindObjectAny("Number_RecHits_Strip_layer_1");
-  TH1F * h2s = (TH1F *) f->FindObjectAny("Number_RecHits_Strip_layer_2");
-  TH1F * h3s = (TH1F *) f->FindObjectAny("Number_RecHits_Strip_layer_3");
+  TH1F * h1s = (TH1F *) f->FindObjectAny("Cluster_Size_Strip_layer_1");
+  TH1F * h2s = (TH1F *) f->FindObjectAny("Cluster_Size_Strip_layer_2");
+  TH1F * h3s = (TH1F *) f->FindObjectAny("Cluster_Size_Strip_layer_3");
   h1s->Add(h2s);
   h1s->Add(h3s);
-  TH1F * h4s = (TH1F *) f->FindObjectAny("Number_RecHits_Strip_layer_4");
-  TH1F * h5s = (TH1F *) f->FindObjectAny("Number_RecHits_Strip_layer_5");
-  TH1F * h6s = (TH1F *) f->FindObjectAny("Number_RecHits_Strip_layer_6");
+  TH1F * h4s = (TH1F *) f->FindObjectAny("Cluster_Size_Strip_layer_4");
+  TH1F * h5s = (TH1F *) f->FindObjectAny("Cluster_Size_Strip_layer_5");
+  TH1F * h6s = (TH1F *) f->FindObjectAny("Cluster_Size_Strip_layer_6");
   h4s->Add(h5s);
   h4s->Add(h6s);
+
+  h1p->GetXaxis()->SetRange(1,10);
+  h1s->GetXaxis()->SetRange(1,10);
+  h4s->GetXaxis()->SetRange(1,10);
 
   TCanvas * c0 = new TCanvas();
   TH1 * hn1 = h1p->DrawNormalized();
@@ -40,20 +45,32 @@ void rechitresiduals() {
   h1s->SetLineStyle(2);
   h4s->SetLineStyle(3);
 
-  TLegend * l0 = new TLegend(0.65,0.72,0.91,0.91);
-  l0->SetBorderSize(0);
-  l0->SetFillStyle(0);
-  l0->AddEntry(h1p,"Long pixels","L");
-  l0->AddEntry(h1s,"PS strips","L");
-  l0->AddEntry(h4s,"2S strips","L");
-  l0->Draw();
-
   h1p->DrawNormalized("same");
   h1s->DrawNormalized("same");
   h4s->DrawNormalized("same");
 
+  TLegend * l0 = new TLegend(0.63,0.72,0.91,0.91);
+  l0->SetBorderSize(0);
+  l0->SetFillStyle(0);
+  l0->AddEntry(h1p,"Macro-pixels","L");
+  l0->AddEntry(h1s,"PS strips","L");
+  l0->AddEntry(h4s,"2S strips","L");
+  l0->Draw();
+
+  TText * t1 = new TText(.18,.96,"CMS");
+  TText * t2 = new TText(.26,.96,"Phase2 Simulation");
+  t1->SetNDC();
+  t2->SetNDC();
+  t1->SetTextFont(62);
+  t2->SetTextFont(52);
+  t1->SetTextSize(0.035);
+  t2->SetTextSize(0.033);
+  t1->Draw();
+  t2->Draw();
+
   c0->SetLogy();
   c0->SaveAs("clustersize_p_vs_s_vs_2s.png");
+  c0->SaveAs("clustersize_p_vs_s_vs_2s.pdf");
 
   h1p = (TH1F *) f->FindObjectAny("Delta_X_Pixel_layer_1");
   h2p = (TH1F *) f->FindObjectAny("Delta_X_Pixel_layer_2");
@@ -86,14 +103,6 @@ void rechitresiduals() {
   h1s->SetLineStyle(2);
   h4s->SetLineStyle(3);
 
-  TLegend * l1 = new TLegend(0.65,0.72,0.91,0.91);
-  l1->SetBorderSize(0);
-  l1->SetFillStyle(0);
-  l1->AddEntry(h1p,"Long pixels","L");
-  l1->AddEntry(h1s,"PS strips","L");
-  l1->AddEntry(h4s,"2S strips","L");
-  l1->Draw();
-
   h1p->DrawNormalized("same");
   h1p->Fit("gaus","N","",-0.006,0.006);
   h1s->DrawNormalized("same");
@@ -101,7 +110,19 @@ void rechitresiduals() {
   h4s->DrawNormalized("same");
   h4s->Fit("gaus","N","",-0.006,0.006);
 
+  TLegend * l1 = new TLegend(0.63,0.72,0.91,0.91);
+  l1->SetBorderSize(0);
+  l1->SetFillStyle(0);
+  l1->AddEntry(h1p,"Macro-pixels","L");
+  l1->AddEntry(h1s,"PS strips","L");
+  l1->AddEntry(h4s,"2S strips","L");
+  l1->Draw();
+
+  t1->Draw();
+  t2->Draw();
+
   c1->SaveAs("rechitresiduals_p_vs_s_vs_2s.png");
+  c1->SaveAs("rechitresiduals_p_vs_s_vs_2s.pdf");
 
   TH1F * h1p1 = (TH1F *) f->FindObjectAny("Pull_X_Pixel_layer_1_ClS_1"); h1p1->Rebin();
   TH1F * h2p1 = (TH1F *) f->FindObjectAny("Pull_X_Pixel_layer_2_ClS_1"); h2p1->Rebin();
@@ -193,15 +214,6 @@ void rechitresiduals() {
   h1p3->SetLineStyle(3);
   h1p4->SetLineStyle(4);
 
-  TLegend * l2 = new TLegend(0.6,0.67,0.98,0.91);
-  l2->SetBorderSize(0);
-  l2->SetFillStyle(0);
-  l2->AddEntry(h1p1,"Cluster size 1","L");
-  l2->AddEntry(h1p2,"Cluster size 2","L");
-  l2->AddEntry(h1p3,"Cluster size 3","L");
-  l2->AddEntry(h1p4,"Cluster size 4","L");
-  l2->Draw();
-
   h1p1->DrawNormalized("same");
   h1p1->Fit("gaus","N","",-2,2);
   h1p2->DrawNormalized("same");
@@ -211,6 +223,19 @@ void rechitresiduals() {
   h1p4->DrawNormalized("same");
   h1p4->Fit("gaus","N","",-2,2);
 
+  TLegend * l2 = new TLegend(0.6,0.67,0.98,0.91);
+  l2->SetBorderSize(0);
+  l2->SetFillStyle(0);
+  l2->AddEntry(h1p1,"Cluster size 1","L");
+  l2->AddEntry(h1p2,"Cluster size 2","L");
+  l2->AddEntry(h1p3,"Cluster size 3","L");
+  l2->AddEntry(h1p4,"Cluster size 4","L");
+  l2->Draw();
+
+  t1->Draw();
+  t2->Draw();
+
   c2->SaveAs("rechitpull_clustersize.png");
+  c2->SaveAs("rechitpull_clustersize.pdf");
 
 }
