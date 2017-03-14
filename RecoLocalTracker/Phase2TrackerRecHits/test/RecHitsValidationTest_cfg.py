@@ -32,12 +32,13 @@ process.TFileService = cms.Service('TFileService',
 )
 
 process.load('RecoLocalTracker.SiPhase2Clusterizer.phase2TrackerClusterizer_cfi')
+process.siPhase2Clusters.maxClusterSize = 1000
+
 process.load('RecoLocalTracker.Phase2TrackerRecHits.Phase2StripCPEESProducer_cfi')
 #process.load('RecoLocalTracker.Phase2TrackerRecHits.Phase2StripCPEGeometricESProducer_cfi')
 process.load('RecoLocalTracker.Phase2TrackerRecHits.Phase2TrackerRecHits_cfi')
 process.siPhase2RecHits.Phase2StripCPE = cms.ESInputTag("phase2StripCPEESProducer", "Phase2StripCPE")
 #process.siPhase2RecHits.Phase2StripCPE = cms.ESInputTag("phase2StripCPEGeometricESProducer", "Phase2StripCPEGeometric")
-
 
 # Analyzer
 process.analysis = cms.EDAnalyzer('Phase2TrackerRecHitsValidation',
@@ -47,7 +48,10 @@ process.analysis = cms.EDAnalyzer('Phase2TrackerRecHitsValidation',
     simhitsbarrel = cms.InputTag("g4SimHits", "TrackerHitsPixelBarrelLowTof"),
     simhitsendcap = cms.InputTag("g4SimHits", "TrackerHitsPixelEndcapLowTof"),
     simtracks = cms.InputTag("g4SimHits"),
-    ECasRings = cms.bool(True)
+    ECasRings = cms.bool(True),
+    SimTrackMinPt = cms.double(2.),
+    MinEta = cms.double(0.),
+    MaxEta = cms.double(10.)
 )
 
 # Processes to run
