@@ -198,7 +198,7 @@ void rechitresiduals() {
 
   TCanvas * c2 = new TCanvas();
   TH1 * hn2 = h1p1->DrawNormalized();
-  hn2->SetMaximum(0.13);
+  hn2->SetMaximum(0.2);
   hn2->SetXTitle("Residual pull");
   hn2->SetYTitle("Arbitrary units");
   h1p1->SetLineColor(kRed+1);
